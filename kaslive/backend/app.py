@@ -215,4 +215,155 @@ def get_krc20_analytics():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# =======
+# ============================================================================
+# BLOCKDAG ENDPOINTS
+# ============================================================================
+
+@app.route('/api/v1/blockdag/metrics', methods=['GET'])
+@limiter.limit("60 per minute")
+@cache.cached(timeout=30)
+def get_blockdag_metrics():
+    """Get BlockDAG metrics"""
+    try:
+        data = kaspa_service.get_blockdag_metrics()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# MINING ENDPOINTS
+# ============================================================================
+
+@app.route('/api/v1/mining/calculate', methods=['POST'])
+@limiter.limit("30 per minute")
+def calculate_mining():
+    """Calculate mining profitability"""
+    try:
+        data = request.get_json()
+        hashrate = data.get('hashrate', 0)
+        electricity_cost = data.get('electricity_cost', 0.12)
+        
+        result = kaspa_service.calculate_mining_profitability(hashrate, electricity_cost)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# PORTFOLIO ENDPOINTS (Database)
+# ============================================================================
+
+@app.route('/api/v1/portfolio', methods=['GET'])
+@limiter.limit("60 per minute")
+def get_user_portfolio():
+    """Get user portfolio"""
+    try:
+        user_id = request.args.get('user_id', 'demo')
+        db = get_db()
+        portfolios = db.query(Portfolio).filter_by(user_id=user_id, is_active=True).all()
+        
+        return jsonify([p.to_dict() for p in portfolios])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/v1/portfolio', methods=['POST'])
+@limiter.limit("30 per minute")
+def add_portfolio_wallet():
+    """Add wallet to portfolio"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'demo')
+        wallet_address = data.get('wallet_address')
+        label = data.get('label', '')
+        
+        if not wallet_address:
+            return jsonify({'error': 'wallet_address required'}), 400
+        
+        db = get_db()
+        portfolio = Portfolio(
+            user_id=user_id,
+            wallet_address=wallet_address,
+            label=label
+        )
+        db.add(portfolio)
+        db.commit()
+        
+        return jsonify(portfolio.to_dict()), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/v1/portfolio/<int:portfolio_id>', methods=['DELETE'])
+@limiter.limit("30 per minute")
+def delete_portfolio_wallet(portfolio_id):
+    """Delete wallet from portfolio"""
+    try:
+        db = get_db()
+        portfolio = db.query(Portfolio).filter_by(id=portfolio_id).first()
+        
+        if not portfolio:
+            return jsonify({'error': 'Portfolio not found'}), 404
+        
+        portfolio.is_active = False
+        db.commit()
+        
+        return jsonify({'message': 'Portfolio deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# TRANSACTIONS ENDPOINT
+# ============================================================================
+
+@app.route('/api/v1/transactions/recent', methods=['GET'])
+@limiter.limit("30 per minute")
+@cache.cached(timeout=10)
+def get_recent_transactions():
+    """Get recent network transactions"""
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        # Mock data for now - can be replaced with real API
+        transactions = [
+            {
+                'hash': f'tx_{i}abc123',
+                'amount': 1234.56 + i * 100,
+                'from': f'kaspa:qq{i}abc',
+                'to': f'kaspa:qp{i}def',
+                'timestamp': datetime.now().isoformat(),
+                'confirmations': 10 + i
+            }
+            for i in range(limit)
+        ]
+        return jsonify(transactions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# ERROR HANDLERS
+# ============================================================================
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({'error': 'Rate limit exceeded'}), 429
+
+# ============================================================================
+# RUN APPLICATION
+# ============================================================================
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV') == 'development'
+    
+    print(f"Starting KASLIVE v2.0 on port {port}")
+    if debug:
+        print("Environment: Development")
+    else:
+        print("Environment: Production")
+    
+    app.run(host='0.0.0.0', port=port, debug=debug)
