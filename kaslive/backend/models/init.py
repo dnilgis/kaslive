@@ -7,7 +7,7 @@ from .portfolio import Base, Portfolio, WhaleAlert, UserPreference
 # Database connection
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///kaslive.db')
 
-# Fix for Render PostgreSQL URL (uses postgres:// instead of postgresql://)
+# Fix for Render PostgreSQL URL
 if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
@@ -20,7 +20,7 @@ SessionLocal = scoped_session(sessionmaker(bind=engine))
 def init_db():
     """Initialize database tables"""
     Base.metadata.create_all(engine)
-    print("Database tables created successfully!")
+    print("Database tables created!")
 
 def get_db():
     """Get database session"""
