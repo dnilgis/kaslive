@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KASLIVE v2.0 // Advanced Kaspa Network Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1a2332;
+            --bg-elevated: #1f2937;
+            --accent-cyan: #00f0ff;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-yellow: #ffd700;
+            --accent-purple: #a855f7;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border: rgba(0, 240, 255, 0.15);
+            --glow: rgba(0, 240, 255, 0.3);
+            --glow-green: rgba(0, 255, 136, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            z-index: 100;
+            animation: slideDown 0.6s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px var(--glow);
+            letter-spacing: 0.1em;
+        }
+
+        .logo span {
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .version {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-left: 0.5rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-cyan);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .price-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .price-change.positive { color: var(--accent-green); }
+        .price-change.negative { color: var(--accent-red); }
+
+        /* Container */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Banner with Stats */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 255, 136, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Main Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.8s ease backwards;
+        }
+
+        .card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-icon {
+            font-size: 1.3rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Price Chart */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .chart-btn:hover,
+        .chart-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        /* Whale Alerts */
+        .whale-alerts {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .whale-alerts::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .whale-alerts::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        .whale-alerts::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 3px;
+        }
+
+        .alert-item {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-yellow);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 6px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-type {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .alert-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .alert-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .alert-amount {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Portfolio Tracker */
+        .portfolio-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .wallet-input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .wallet-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        .add-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-cyan);
+            border: none;
+            color: var(--bg-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn:hover {
+            box-shadow: 0 0 20px var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .portfolio-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-item {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .summary-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-top: 0.25rem;
+        }
+
+        /* Network Health Score */
+        .health-score {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-green) 0deg 324deg, var(--bg-tertiary) 324deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: rotateIn 1s ease;
+        }
+
+        @keyframes rotateIn {
+            from { transform: rotate(-90deg); opacity: 0; }
+            to { transform: rotate(0); opacity: 1; }
+        }
+
+        .score-inner {
+            width: 120px;
+            height: 120px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .score-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .score-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .health-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .health-metric {
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-name {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-good { color: var(--accent-green); }
+        .status-warning { color: var(--accent-yellow); }
+        .status-bad { color: var(--accent-red); }
+
+        /* Whale Watch Grid */
+        .whale-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .whale-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .whale-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            border-radius: 12px 12px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .whale-card:hover::before {
+            opacity: 1;
+        }
+
+        .whale-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, 0.2);
+        }
+
+        .whale-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .whale-rank {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+        }
+
+        .whale-label {
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .whale-address {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .whale-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin: 1rem 0;
+        }
+
+        .whale-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .whale-stat {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .whale-stat span {
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* KRC-20 Terminal */
+        .terminal-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .terminal-header {
+            background: var(--bg-tertiary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            letter-spacing: 0.05em;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .terminal-dot.active { 
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .terminal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .terminal-table thead {
+            background: var(--bg-tertiary);
+        }
+
+        .terminal-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: left;
+            padding: 1rem 1.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .terminal-table tbody tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .terminal-table tbody tr:hover {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .token-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .token-value {
+            color: var(--accent-cyan);
+        }
+
+        .change-positive { color: var(--accent-green); }
+        .change-negative { color: var(--accent-red); }
+
+        .scan-btn {
+            background: var(--bg-primary);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scan-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        /* BlockDAG Visualizer */
+        .blockdag-container {
+            position: relative;
+            height: 350px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.05) 0%, rgba(0, 255, 136, 0.05) 100%);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #blockdag-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .dag-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(10, 14, 26, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        .dag-legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(10, 14, 26, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.green { background: var(--accent-green); }
+        .legend-dot.cyan { background: var(--accent-cyan); }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .footer-credit {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .footer-credit a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .footer-credit a:hover {
+            text-shadow: 0 0 10px var(--glow);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero-banner {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .portfolio-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .whale-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .health-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .terminal-table {
+                font-size: 0.75rem;
+            }
+
+            .terminal-table th,
+            .terminal-table td {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Premium Badge */
+        .premium-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Mining Calculator */
+        .calc-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .calc-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .calc-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        .calc-result {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 255, 136, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .calc-result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+        }
+
+        .calc-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .calc-result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                KAS<span>LIVE</span>
+                <span class="version">v2.0</span>
+            </div>
+            <nav class="nav">
+                <a href="#analytics" class="nav-link">ANALYTICS</a>
+                <a href="#whale" class="nav-link">WHALE_WATCH</a>
+                <a href="#krc20" class="nav-link">KRC-20</a>
+                <a href="#dag" class="nav-link">BLOCKDAG</a>
+                <a href="#mining" class="nav-link">MINING</a>
+            </nav>
+            <div class="price-badge">
+                <span>$<span id="kas-price">0.0478</span></span>
+                <span class="price-change negative" id="price-change">-0.54%</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Hero Banner with Network Stats -->
+        <section class="hero-banner">
+            <div class="hero-stat">
+                <div class="stat-label">Market Cap</div>
+                <div class="stat-value" id="market-cap">$1.28B</div>
+                <div class="stat-change change-positive">+2.3%</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-label">24h Volume</div>
+                <div class="stat-value" id="volume-24h">$28.24M</div>
+                <div class="stat-change change-negative">-5.1%</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-label">Hashrate</div>
+                <div class="stat-value" id="hashrate">945 PH/s</div>
+                <div class="stat-change change-positive">+0.8%</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-label">Active Nodes</div>
+                <div class="stat-value" id="nodes">620</div>
+                <div class="stat-change status-good">HEALTHY</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-label">TXs/Min</div>
+                <div class="stat-value" id="txs-min">3.2k</div>
+                <div class="stat-change change-positive">+12%</div>
+            </div>
+        </section>
+
+        <!-- Main Grid: Chart + Alerts -->
+        <div class="main-grid" id="analytics">
+            <div class="card" style="animation-delay: 0.1s;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <span class="card-icon">📈</span>
+                            KAS/USDT Price Chart
+                        </div>
+                        <div class="card-subtitle">Real-time Market Data</div>
+                    </div>
+                </div>
+                <div class="chart-controls">
+                    <button class="chart-btn active" data-timeframe="1H">1H</button>
+                    <button class="chart-btn" data-timeframe="4H">4H</button>
+                    <button class="chart-btn" data-timeframe="1D">1D</button>
+                    <button class="chart-btn" data-timeframe="1W">1W</button>
+                    <button class="chart-btn" data-timeframe="1M">1M</button>
+                    <button class="chart-btn" data-timeframe="ALL">ALL</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="price-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="animation-delay: 0.2s;">
+                <span class="premium-badge">PREMIUM</span>
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <span class="card-icon">🚨</span>
+                            Whale Alerts
+                        </div>
+                        <div class="card-subtitle">Live Movement Detection</div>
+                    </div>
+                </div>
+                <div class="whale-alerts" id="whale-alerts">
+                    <!-- Alerts will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Tracker + Network Health -->
+        <div class="main-grid">
+            <div class="card" style="animation-delay: 0.3s;">
+                <span class="premium-badge">PREMIUM</span>
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <span class="card-icon">💼</span>
+                            Portfolio Tracker
+                        </div>
+                        <div class="card-subtitle">Track Your Holdings</div>
+                    </div>
+                </div>
+                <div class="portfolio-input">
+                    <input type="text" class="wallet-input" placeholder="Enter wallet address (kaspa:...)" id="wallet-address">
+                    <button class="add-btn" onclick="addWallet()">TRACK</button>
+                </div>
+                <div class="portfolio-summary">
+                    <div class="summary-item">
+                        <div class="summary-label">Total Balance</div>
+                        <div class="summary-value" id="total-balance">0 KAS</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">USD Value</div>
+                        <div class="summary-value" id="usd-value">$0.00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">24h Change</div>
+                        <div class="summary-value change-positive" id="portfolio-change">+0.00%</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Wallets Tracked</div>
+                        <div class="summary-value" id="wallet-count">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="animation-delay: 0.4s;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <span class="card-icon">💚</span>
+                            Network Health
+                        </div>
+                        <div class="card-subtitle">AI-Powered Analysis</div>
+                    </div>
+                </div>
+                <div class="health-score">
+                    <div class="score-circle">
+                        <div class="score-inner">
+                            <div class="score-value">90</div>
+                            <div class="score-label">SCORE</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="health-metrics">
+                    <div class="health-metric">
+                        <div class="metric-name">Decentralization</div>
+                        <div class="metric-status status-good">EXCELLENT</div>
+                    </div>
+                    <div class="health-metric">
+                        <div class="metric-name">Security</div>
+                        <div class="metric-status status-good">STRONG</div>
+                    </div>
+                    <div class="health-metric">
+                        <div class="metric-name">Speed</div>
+                        <div class="metric-status status-good">OPTIMAL</div>
+                    </div>
+                    <div class="health-metric">
+                        <div class="metric-name">Stability</div>
+                        <div class="metric-status status-warning">GOOD</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Whale Watch Section -->
+        <section id="whale" style="margin: 3rem 0;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <span class="card-icon">🐋</span>
+                        Whale Sonar - Top Holdings
+                    </div>
+                    <div class="card-subtitle">Real-time Whale Activity Tracking</div>
+                </div>
+            </div>
+            <div class="whale-grid" id="whale-grid">
+                <!-- Whale cards will be inserted here -->
+            </div>
+        </section>
+
+        <!-- BlockDAG Visualizer -->
+        <section class="card" id="dag" style="animation-delay: 0.5s; margin-bottom: 2rem;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <span class="card-icon">🌐</span>
+                        BlockDAG Visualizer
+                    </div>
+                    <div class="card-subtitle">Live Tangle Flow Visualization</div>
+                </div>
+            </div>
+            <div class="blockdag-container">
+                <canvas id="blockdag-canvas"></canvas>
+                <div class="dag-overlay">
+                    <div>BLOCKS: <span id="block-count">4,500,000</span></div>
+                    <div>BPS: <span id="bps">1.0</span></div>
+                    <div>TIP: <span id="tip-hash">0x4f...c1d</span></div>
+                </div>
+                <div class="dag-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot green"></span>
+                        <span>Confirmed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot cyan"></span>
+                        <span>Unconfirmed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KRC-20 Terminal -->
+        <section id="krc20" style="animation-delay: 0.6s;">
+            <div class="card-header" style="margin-bottom: 1rem;">
+                <div>
+                    <div class="card-title">
+                        <span class="card-icon">⚡</span>
+                        KRC-20 Token Terminal
+                    </div>
+                    <div class="card-subtitle">Live Asset Tracking & Analytics</div>
+                </div>
+            </div>
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <div class="terminal-title">&gt; LIVE_ASSET_TRACKING.KAS</div>
+                    <div class="terminal-controls">
+                        <span class="terminal-dot"></span>
+                        <span class="terminal-dot"></span>
+                        <span class="terminal-dot active"></span>
+                    </div>
+                </div>
+                <table class="terminal-table">
+                    <thead>
+                        <tr>
+                            <th>ASSET</th>
+                            <th>TVL</th>
+                            <th>VOL 24H</th>
+                            <th>CHANGE</th>
+                            <th>LPs</th>
+                            <th>MOMENTUM</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="krc20-table">
+                        <!-- KRC-20 tokens will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Mining Calculator -->
+        <section class="card" id="mining" style="animation-delay: 0.7s; margin-top: 2rem;">
+            <span class="premium-badge">PREMIUM</span>
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <span class="card-icon">⛏️</span>
+                        Mining Profitability Calculator
+                    </div>
+                    <div class="card-subtitle">Estimate Your Mining Returns</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <div class="calc-input-group">
+                        <label class="calc-label">Hashrate (GH/s)</label>
+                        <input type="number" class="calc-input" id="hashrate-input" value="100" onchange="calculateMining()">
+                    </div>
+                    <div class="calc-input-group">
+                        <label class="calc-label">Power Consumption (W)</label>
+                        <input type="number" class="calc-input" id="power-input" value="3000" onchange="calculateMining()">
+                    </div>
+                    <div class="calc-input-group">
+                        <label class="calc-label">Electricity Cost ($/kWh)</label>
+                        <input type="number" class="calc-input" id="electricity-input" value="0.12" step="0.01" onchange="calculateMining()">
+                    </div>
+                </div>
+                <div class="calc-result">
+                    <div class="calc-result-item">
+                        <span>Daily Revenue:</span>
+                        <span class="calc-result-value" id="daily-revenue">$0.00</span>
+                    </div>
+                    <div class="calc-result-item">
+                        <span>Daily Electricity Cost:</span>
+                        <span class="calc-result-value" id="daily-cost">$0.00</span>
+                    </div>
+                    <div class="calc-result-item">
+                        <span>Daily Profit:</span>
+                        <span class="calc-result-value" id="daily-profit">$0.00</span>
+                    </div>
+                    <div class="calc-result-item">
+                        <span>Monthly Profit:</span>
+                        <span class="calc-result-value" id="monthly-profit">$0.00</span>
+                    </div>
+                    <div class="calc-result-item">
+                        <span>KAS Mined/Day:</span>
+                        <span class="calc-result-value" id="kas-mined">0 KAS</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" class="footer-link">EXPLORER</a>
+                <a href="#" class="footer-link">API_ACCESS</a>
+                <a href="#" class="footer-link">DOCUMENTATION</a>
+                <a href="#" class="footer-link">GITHUB</a>
+                <a href="#" class="footer-link">SUPPORT</a>
+            </div>
+            <div>KASLIVE v2.0 // ADVANCED NETWORK INTELLIGENCE</div>
+            <div class="footer-credit">
+                A <a href="mailto:dnilgis@gmail.com">dnilgis</a> Project
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.7rem;">Built with 💙 for Kaspa Believers</div>
+        </div>
+    </footer>
+
+    <script>
+        // Sample whale data
+        const whales = [
+            { rank: 1, label: 'Dev Fund', address: 'kaspa:qz3...b7c', amount: '1.25B', lastTx: '2m ago', txCount: 1247, txVolume: '125M' },
+            { rank: 2, label: 'MEXC Exchange', address: 'kaspa:qx7...a11', amount: '350.00M', lastTx: '5m ago', txCount: 8943, txVolume: '2.1B' },
+            { rank: 3, label: 'Whale Alpha', address: 'kaspa:qp1...e3b', amount: '210.00M', lastTx: '12m ago', txCount: 534, txVolume: '89M' },
+            { rank: 4, label: 'Accumulator', address: 'kaspa:qz8...2g4', amount: '185.50M', lastTx: '8m ago', txCount: 2156, txVolume: '450M' },
+            { rank: 5, label: 'Diamond Hands', address: 'kaspa:qr3...k5h', amount: '172.30M', lastTx: '1h ago', txCount: 89, txVolume: '12M' },
+            { rank: 6, label: 'Early Miner', address: 'kaspa:qb6...m9j', amount: '156.80M', lastTx: '25m ago', txCount: 1843, txVolume: '320M' },
+            { rank: 7, label: 'Smart Trader', address: 'kaspa:qu4...p2k', amount: '145.20M', lastTx: '15m ago', txCount: 4521, txVolume: '1.8B' },
+            { rank: 8, label: 'HODLer Pro', address: 'kaspa:qi9...n7v', amount: '138.90M', lastTx: '3h ago', txCount: 156, txVolume: '18M' },
+            { rank: 9, label: 'Mining Pool', address: 'kaspa:qw2...x4c', amount: '127.50M', lastTx: '1m ago', txCount: 15234, txVolume: '3.2B' }
+        ];
+
+        const krc20Tokens = [
+            { asset: 'NACHO', tvl: '4.46M', vol: '115.4K', change: -4.70, lps: '2.1K', momentum: '🔥' },
+            { asset: 'KASPY', tvl: '1.07M', vol: '25.2K', change: 2.65, lps: '1.8K', momentum: '📈' },
+            { asset: 'KANGO', tvl: '776.5K', vol: '107.8K', change: -2.10, lps: '0.9K', momentum: '⚡' },
+            { asset: 'ZEAL', tvl: '719.6K', vol: '55.8K', change: -2.24, lps: '1.1K', momentum: '💎' },
+            { asset: 'KASPER', tvl: '473.3K', vol: '51.7K', change: -11.78, lps: '0.5K', momentum: '📉' },
+            { asset: 'PWWAS', tvl: '363.0K', vol: '45.7K', change: 0.88, lps: '0.7K', momentum: '🚀' },
+            { asset: 'MINER', tvl: '210.1K', vol: '22.1K', change: -1.55, lps: '0.4K', momentum: '⛏️' },
+            { asset: 'KAPPY', tvl: '189.4K', vol: '18.9K', change: 5.23, lps: '0.3K', momentum: '🔥' }
+        ];
+
+        // Render Whales
+        function renderWhales() {
+            const whaleGrid = document.getElementById('whale-grid');
+            whaleGrid.innerHTML = whales.map(whale => `
+                <div class="whale-card">
+                    <div class="whale-header">
+                        <div>
+                            <div class="whale-label">${whale.label}</div>
+                            <div class="whale-address">${whale.address}</div>
+                        </div>
+                        <div class="whale-rank">RANK #${whale.rank}</div>
+                    </div>
+                    <div class="whale-amount">${whale.amount} KAS</div>
+                    <div class="whale-stats">
+                        <div class="whale-stat">Last TX: <span>${whale.lastTx}</span></div>
+                        <div class="whale-stat">TXs: <span>${whale.txCount}</span></div>
+                        <div class="whale-stat">Volume: <span>${whale.txVolume}</span></div>
+                        <div class="whale-stat">Status: <span class="status-good">ACTIVE</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render KRC-20 Table
+        function renderKRC20() {
+            const table = document.getElementById('krc20-table');
+            table.innerHTML = krc20Tokens.map(token => `
+                <tr>
+                    <td class="token-name">${token.asset}</td>
+                    <td class="token-value">$${token.tvl}</td>
+                    <td class="token-value">$${token.vol}</td>
+                    <td class="${token.change >= 0 ? 'change-positive' : 'change-negative'}">
+                        ${token.change >= 0 ? '+' : ''}${token.change.toFixed(2)}%
+                    </td>
+                    <td>${token.lps}</td>
+                    <td>${token.momentum}</td>
+                    <td><button class="scan-btn">SCAN</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Whale Alerts
+        function generateWhaleAlert() {
+            const alerts = [
+                { type: '🐋 LARGE TRANSFER', amount: '5.2M KAS', from: 'qz3...b7c', to: 'Exchange', time: 'Just now' },
+                { type: '🔥 ACCUMULATION', amount: '2.8M KAS', from: 'Multiple', to: 'qp1...e3b', time: '3m ago' },
+                { type: '⚠️ WHALE ALERT', amount: '12.5M KAS', from: 'qx7...a11', to: 'Unknown', time: '5m ago' },
+                { type: '💎 HODL MOVE', amount: '8.1M KAS', from: 'Exchange', to: 'Cold Wallet', time: '8m ago' },
+                { type: '🚨 MAJOR MOVE', amount: '15.3M KAS', from: 'qz8...2g4', to: 'qr3...k5h', time: '12m ago' }
+            ];
+
+            const alertsContainer = document.getElementById('whale-alerts');
+            alertsContainer.innerHTML = alerts.map(alert => `
+                <div class="alert-item">
+                    <div class="alert-header">
+                        <span class="alert-type">${alert.type}</span>
+                        <span class="alert-time">${alert.time}</span>
+                    </div>
+                    <div class="alert-content">
+                        <span class="alert-amount">${alert.amount}</span>
+                        <div style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-muted);">
+                            From: ${alert.from} → To: ${alert.to}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Price Chart
+        function initPriceChart() {
+            const ctx = document.getElementById('price-chart').getContext('2d');
+            
+            // Generate sample price data
+            const now = Date.now();
+            const priceData = [];
+            let price = 0.0478;
+            for (let i = 24; i >= 0; i--) {
+                const volatility = (Math.random() - 0.5) * 0.002;
+                price = price + volatility;
+                priceData.push({
+                    x: now - (i * 3600000),
+                    y: price
+                });
+            }
+
+            window.priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'KAS/USDT',
+                        data: priceData,
+                        borderColor: 'rgba(0, 240, 255, 1)',
+                        backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: 'rgba(0, 240, 255, 1)',
+                        pointHoverBorderColor: '#0a0e1a',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 14, 26, 0.95)',
+                            titleColor: '#00f0ff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: 'rgba(0, 240, 255, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour'
+                            },
+                            grid: {
+                                color: 'rgba(0, 240, 255, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#6b7280',
+                                font: {
+                                    family: 'JetBrains Mono',
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(0, 240, 255, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#6b7280',
+                                font: {
+                                    family: 'JetBrains Mono',
+                                    size: 10
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toFixed(4);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart timeframe buttons
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // BlockDAG Visualization
+        class BlockDAGVisualizer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.blocks = [];
+                this.maxBlocks = 120;
+                this.init();
+            }
+
+            init() {
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+                this.animate();
+            }
+
+            resizeCanvas() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+
+            addBlock() {
+                if (this.blocks.length >= this.maxBlocks) {
+                    this.blocks.shift();
+                }
+
+                const block = {
+                    x: Math.random() * this.canvas.width,
+                    y: this.canvas.height + 20,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: -1.5 - Math.random() * 2,
+                    size: 3 + Math.random() * 5,
+                    opacity: 1,
+                    confirmed: Math.random() > 0.3,
+                    connections: []
+                };
+
+                // Create connections to nearby blocks
+                this.blocks.forEach(b => {
+                    const dist = Math.hypot(block.x - b.x, block.y - b.y);
+                    if (dist < 180 && Math.random() > 0.65) {
+                        block.connections.push(b);
+                    }
+                });
+
+                this.blocks.push(block);
+            }
+
+            update() {
+                this.blocks.forEach(block => {
+                    block.x += block.vx;
+                    block.y += block.vy;
+                    block.opacity -= 0.004;
+
+                    if (block.x < 0 || block.x > this.canvas.width) {
+                        block.vx *= -0.8;
+                    }
+                });
+
+                this.blocks = this.blocks.filter(b => b.opacity > 0 && b.y > -50);
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw connections
+                this.blocks.forEach(block => {
+                    block.connections.forEach(target => {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(block.x, block.y);
+                        this.ctx.lineTo(target.x, target.y);
+                        this.ctx.strokeStyle = `rgba(0, 240, 255, ${Math.min(block.opacity, target.opacity) * 0.15})`;
+                        this.ctx.lineWidth = 1;
+                        this.ctx.stroke();
+                    });
+                });
+
+                // Draw blocks
+                this.blocks.forEach(block => {
+                    const color = block.confirmed ? '0, 255, 136' : '0, 240, 255';
+                    
+                    // Glow
+                    this.ctx.beginPath();
+                    this.ctx.arc(block.x, block.y, block.size + 5, 0, Math.PI * 2);
+                    const gradient = this.ctx.createRadialGradient(
+                        block.x, block.y, 0,
+                        block.x, block.y, block.size + 5
+                    );
+                    gradient.addColorStop(0, `rgba(${color}, ${block.opacity * 0.5})`);
+                    gradient.addColorStop(1, `rgba(${color}, 0)`);
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+
+                    // Block
+                    this.ctx.beginPath();
+                    this.ctx.arc(block.x, block.y, block.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(${color}, ${block.opacity})`;
+                    this.ctx.fill();
+                });
+            }
+
+            animate() {
+                if (Math.random() > 0.6) {
+                    this.addBlock();
+                }
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Price update simulation
+        function updatePrice() {
+            const priceEl = document.getElementById('kas-price');
+            const changeEl = document.getElementById('price-change');
+            
+            const currentPrice = parseFloat(priceEl.textContent);
+            const change = (Math.random() - 0.5) * 0.002;
+            const newPrice = (currentPrice + change).toFixed(4);
+            const percentChange = ((change / currentPrice) * 100).toFixed(2);
+
+            priceEl.textContent = newPrice;
+            changeEl.textContent = `${percentChange >= 0 ? '+' : ''}${percentChange}%`;
+            changeEl.className = percentChange >= 0 ? 'price-change positive' : 'price-change negative';
+        }
+
+        // Portfolio Tracker
+        function addWallet() {
+            const address = document.getElementById('wallet-address').value;
+            if (!address) return;
+
+            // Simulate wallet tracking
+            const balance = (Math.random() * 1000000 + 10000).toFixed(2);
+            const kasPrice = parseFloat(document.getElementById('kas-price').textContent);
+            const usdValue = (balance * kasPrice).toFixed(2);
+
+            document.getElementById('total-balance').textContent = parseFloat(balance).toLocaleString() + ' KAS';
+            document.getElementById('usd-value').textContent = '$' + parseFloat(usdValue).toLocaleString();
+            document.getElementById('wallet-count').textContent = '1';
+            
+            document.getElementById('wallet-address').value = '';
+            
+            alert('✅ Wallet tracked successfully!');
+        }
+
+        // Mining Calculator
+        function calculateMining() {
+            const hashrate = parseFloat(document.getElementById('hashrate-input').value);
+            const power = parseFloat(document.getElementById('power-input').value);
+            const electricityCost = parseFloat(document.getElementById('electricity-input').value);
+            const kasPrice = parseFloat(document.getElementById('kas-price').textContent);
+
+            // Simple mining calculation (adjust based on actual network difficulty)
+            const networkHashrate = 945000; // PH/s
+            const blockReward = 179; // KAS per block
+            const blocksPerDay = 86400; // 1 block per second
+
+            const yourHashrateShare = (hashrate / 1000) / networkHashrate; // Convert GH to PH
+            const kasPerDay = yourHashrateShare * blockReward * blocksPerDay;
+            const dailyRevenue = kasPerDay * kasPrice;
+            const dailyElectricityCost = (power / 1000) * 24 * electricityCost;
+            const dailyProfit = dailyRevenue - dailyElectricityCost;
+            const monthlyProfit = dailyProfit * 30;
+
+            document.getElementById('daily-revenue').textContent = '$' + dailyRevenue.toFixed(2);
+            document.getElementById('daily-cost').textContent = '$' + dailyElectricityCost.toFixed(2);
+            document.getElementById('daily-profit').textContent = '$' + dailyProfit.toFixed(2);
+            document.getElementById('monthly-profit').textContent = '$' + monthlyProfit.toFixed(2);
+            document.getElementById('kas-mined').textContent = kasPerDay.toFixed(2) + ' KAS';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderWhales();
+            renderKRC20();
+            generateWhaleAlert();
+            initPriceChart();
+            new BlockDAGVisualizer('blockdag-canvas');
+            calculateMining();
+
+            // Update price every 5 seconds
+            setInterval(updatePrice, 5000);
+
+            // Update whale alerts every 10 seconds
+            setInterval(generateWhaleAlert, 10000);
+
+            // Smooth scroll
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
