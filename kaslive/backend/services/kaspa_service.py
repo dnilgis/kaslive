@@ -9,19 +9,17 @@ class KaspaService:
     def get_network_stats(self):
         """Get real-time Kaspa network statistics"""
         try:
-            # Fetch from Kaspa API
             response = requests.get(f"{self.kaspa_api}/info/blockdag", timeout=10)
             response.raise_for_status()
             data = response.json()
             
             # Calculate hashrate from difficulty
             difficulty = data.get('difficulty', 0)
-            blocks_per_second = 1.0  # Kaspa target is 1 BPS
+            blocks_per_second = 1.0
             hashrate = difficulty * 2 * blocks_per_second
             
-            # Fixed supply values (Kaspa has known tokenomics)
-            circulating_supply = 26500000000  # ~26.5B KAS currently mined
-            total_supply = 28700000000  # 28.7B KAS total cap
+            circulating_supply = 26500000000
+            total_supply = 28700000000
             
             return {
                 'hashrate': self._format_hashrate(hashrate),
@@ -30,15 +28,159 @@ class KaspaService:
                 'circulating_supply': circulating_supply,
                 'total_supply': total_supply,
                 'blocks_per_second': blocks_per_second,
-                'active_nodes': 20000,  # Kaspa has ~20k+ nodes
+                'active_nodes': 20000,
                 'transactions_per_minute': 3200,
                 'network_version': data.get('networkName', '0.13.0'),
                 'timestamp': datetime.now().isoformat()
             }
         except Exception as e:
             print(f"Error fetching network stats: {e}")
-            # Fallback with calculated values
             return self._get_fallback_stats()
+    
+    # NEW METHODS
+    
+    def get_daa_info(self):
+        """Get DAA Score and Blue Score information"""
+        try:
+            response = requests.get(f"{self.kaspa_api}/info/blockdag", timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            return {
+                'daa_score': data.get('virtualDaaScore', 0),
+                'blue_score': data.get('virtualBlueScore', 0),
+                'tips_count': data.get('tipHashes', []),
+                'difficulty': data.get('difficulty', 0),
+                'past_median_time': data.get('pastMedianTime', 0),
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            print(f"Error fetching DAA info: {e}")
+            return {
+                'daa_score': 0,
+                'blue_score': 0,
+                'tips_count': [],
+                'difficulty': 0,
+                'past_median_time': 0,
+                'timestamp': datetime.now().isoformat()
+            }
+    
+    def get_mempool_info(self):
+        """Get current mempool status"""
+        try:
+            response = requests.get(f"{self.kaspa_api}/info/mempool", timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            tx_count = len(data.get('transactions', []))
+            
+            return {
+                'transaction_count': tx_count,
+                'total_size_bytes': data.get('totalSize', 0),
+                'status': 'Normal' if tx_count < 1000 else 'Busy' if tx_count < 5000 else 'Congested',
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            print(f"Error fetching mempool: {e}")
+            return {
+                'transaction_count': 0,
+                'total_size_bytes': 0,
+                'status': 'Unknown',
+                'timestamp': datetime.now().isoformat()
+            }
+    
+    def get_blocks_per_second(self):
+        """Calculate real-time blocks per second"""
+        try:
+            # Get recent blocks
+            response = requests.get(f"{self.kaspa_api}/blocks?limit=100", timeout=10)
+            response.raise_for_status()
+            blocks = response.json()
+            
+            if len(blocks) < 2:
+                return {'bps': 1.0, 'period': '1 minute'}
+            
+            # Calculate time difference between first and last block
+            first_time = blocks[0].get('timestamp', 0)
+            last_time = blocks[-1].get('timestamp', 0)
+            time_diff = abs(first_time - last_time) / 1000  # Convert to seconds
+            
+            if time_diff > 0:
+                bps = len(blocks) / time_diff
+            else:
+                bps = 1.0
+            
+            return {
+                'bps': round(bps, 2),
+                'period': '100 blocks',
+                'target_bps': 1.0,
+                'performance': 'Excellent' if bps >= 0.95 else 'Good' if bps >= 0.8 else 'Low'
+            }
+        except Exception as e:
+            print(f"Error calculating BPS: {e}")
+            return {
+                'bps': 1.0,
+                'period': 'estimated',
+                'target_bps': 1.0,
+                'performance': 'Unknown'
+            }
+    
+    def get_comparison_data(self):
+        """Compare Kaspa with Bitcoin and Ethereum"""
+        try:
+            # Get Kaspa data
+            kaspa_stats = self.get_network_stats()
+            bps_data = self.get_blocks_per_second()
+            
+            # Get BTC/ETH prices from CoinGecko
+            response = requests.get(
+                'https://api.coingecko.com/api/v3/simple/price',
+                params={
+                    'ids': 'bitcoin,ethereum,kaspa',
+                    'vs_currencies': 'usd',
+                    'include_24hr_change': 'true',
+                    'include_market_cap': 'true'
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            prices = response.json()
+            
+            return {
+                'kaspa': {
+                    'name': 'Kaspa',
+                    'price': prices.get('kaspa', {}).get('usd', 0),
+                    'market_cap': prices.get('kaspa', {}).get('usd_market_cap', 0),
+                    'tps': bps_data['bps'] * 10,  # Rough estimate
+                    'block_time': '1 second',
+                    'finality': '~10 seconds',
+                    'consensus': 'GHOSTDAG (PoW)',
+                    'tx_fee': '$0.0001'
+                },
+                'bitcoin': {
+                    'name': 'Bitcoin',
+                    'price': prices.get('bitcoin', {}).get('usd', 0),
+                    'market_cap': prices.get('bitcoin', {}).get('usd_market_cap', 0),
+                    'tps': 7,
+                    'block_time': '10 minutes',
+                    'finality': '~60 minutes',
+                    'consensus': 'Nakamoto (PoW)',
+                    'tx_fee': '$2-$50'
+                },
+                'ethereum': {
+                    'name': 'Ethereum',
+                    'price': prices.get('ethereum', {}).get('usd', 0),
+                    'market_cap': prices.get('ethereum', {}).get('usd_market_cap', 0),
+                    'tps': 15,
+                    'block_time': '12 seconds',
+                    'finality': '~15 minutes',
+                    'consensus': 'Casper (PoS)',
+                    'tx_fee': '$1-$20'
+                }
+            }
+        except Exception as e:
+            print(f"Error fetching comparison: {e}")
+            return {}
     
     def get_network_health(self):
         """Calculate network health score"""
@@ -46,7 +188,7 @@ class KaspaService:
             stats = self.get_network_stats()
             
             # Health calculation based on multiple factors
-            node_score = min(20000 / 500 * 25, 25)  # 20k nodes
+            node_score = min(20000 / 500 * 25, 25)
             hashrate_val = self._parse_hashrate(stats['hashrate'])
             hashrate_score = min(hashrate_val / 800e15 * 25, 25)
             bps_score = min(stats['blocks_per_second'] / 1 * 25, 25)
@@ -105,9 +247,13 @@ class KaspaService:
         """Get BlockDAG specific metrics"""
         try:
             stats = self.get_network_stats()
+            daa = self.get_daa_info()
+            
             return {
-                'tips': 12,
+                'tips': len(daa['tips_count']),
                 'blocks_per_second': stats['blocks_per_second'],
+                'daa_score': daa['daa_score'],
+                'blue_score': daa['blue_score'],
                 'confirmation_time': 2.1,
                 'orphan_rate': 0.03,
                 'dag_size': stats['block_count']
@@ -117,6 +263,8 @@ class KaspaService:
             return {
                 'tips': 12,
                 'blocks_per_second': 1.0,
+                'daa_score': 0,
+                'blue_score': 0,
                 'confirmation_time': 2.1,
                 'orphan_rate': 0.03,
                 'dag_size': 45678900
@@ -128,22 +276,18 @@ class KaspaService:
             network_stats = self.get_network_stats()
             network_hashrate = self._parse_hashrate(network_stats['hashrate'])
             
-            # Daily KAS mined
             daily_blocks = 86400 * network_stats['blocks_per_second']
-            block_reward = 55  # Current block reward
+            block_reward = 55
             daily_network_reward = daily_blocks * block_reward
             
-            # User's share
             hashrate_share = hashrate / network_hashrate if network_hashrate > 0 else 0
             daily_kas = daily_network_reward * hashrate_share
             
-            # Get KAS price
             from .price_service import PriceService
             price_service = PriceService()
             price_data = price_service.get_current_price()
             kas_price = price_data['price']
             
-            # Calculate revenue and costs
             daily_revenue = daily_kas * kas_price
             power_consumption = hashrate * 0.0025
             daily_electricity = (power_consumption / 1000) * 24 * electricity_cost
