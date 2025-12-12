@@ -286,6 +286,58 @@
             font-variant-numeric: tabular-nums;
         }
         
+        /* Clickable Links */
+        .address-link {
+            color: #00ffff;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .address-link:hover {
+            color: #00ff88;
+            text-decoration: underline;
+        }
+        
+        .external-icon {
+            font-size: 0.75rem;
+            opacity: 0.5;
+        }
+        
+        .address-link:hover .external-icon {
+            opacity: 1;
+        }
+        
+        .token-link {
+            color: #00ffff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .token-link:hover {
+            color: #00ff88;
+            text-decoration: underline;
+        }
+        
+        .copy-btn {
+            padding: 2px 6px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            color: #00ffff;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 6px;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+        
         .label-badge {
             display: inline-block;
             padding: 3px 8px;
@@ -470,6 +522,31 @@
         
         .error {
             color: #ff4466;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 255, 136, 0.9);
+            color: #0a0e27;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
         
         /* Footer */
@@ -759,11 +836,26 @@
         let priceChart = null;
         let currentTimeframe = '1D';
         
-        // Known exchange addresses
         const KNOWN_ADDRESSES = {
             'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz': 'KuCoin Wallet',
             'kaspa:qrvsfvasrlt00fnw934rn25fw282fezysyyqkhzld46keggsg7pjxg59tkk96': 'kas.fyi Donation',
         };
+        
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Address copied!');
+            });
+        }
         
         // Smooth scroll
         document.querySelectorAll('.main-nav a').forEach(link => {
@@ -867,16 +959,12 @@
             });
         }
         
-        // Load chart data
         async function loadPriceChart(timeframe) {
             try {
                 const response = await fetch(`${API_BASE}/price/history?timeframe=${timeframe}`);
                 const data = await response.json();
                 
-                if (!data || data.length === 0) {
-                    console.warn('No price history data available');
-                    return;
-                }
+                if (!data || data.length === 0) return;
                 
                 const labels = data.map(p => {
                     const d = new Date(p.timestamp);
@@ -892,7 +980,6 @@
             }
         }
         
-        // Timeframe buttons
         document.querySelectorAll('.timeframe-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
@@ -902,7 +989,6 @@
             });
         });
         
-        // Load price
         async function loadPriceData() {
             try {
                 const response = await fetch(`${API_BASE}/price`);
@@ -918,7 +1004,6 @@
             }
         }
         
-        // Load network stats
         async function loadNetworkStats() {
             try {
                 const [statsResp, priceResp] = await Promise.all([
@@ -940,7 +1025,6 @@
             }
         }
         
-        // Load whales - ONLY REAL DATA
         async function loadWhaleData() {
             try {
                 const response = await fetch(`${API_BASE}/whales/top?limit=10`);
@@ -956,6 +1040,8 @@
                     const label = KNOWN_ADDRESSES[whale.address] || whale.label;
                     const labelClass = label.includes('Exchange') || label.includes('Wallet') ? 'exchange' : 
                                      label.includes('Pool') ? 'pool' : '';
+                    const shortAddr = whale.address.substring(0, 20) + '...';
+                    const explorerUrl = `https://kas.fyi/address/${whale.address}`;
                     
                     return `
                         <tr data-rank="${whale.rank}" 
@@ -965,7 +1051,13 @@
                             data-percentage="${whale.percentage}"
                             data-tx_count="${whale.transaction_count}">
                             <td>${whale.rank}</td>
-                            <td class="address-col">${whale.address}</td>
+                            <td class="address-col">
+                                <a href="${explorerUrl}" target="_blank" class="address-link" title="${whale.address}">
+                                    ${shortAddr}
+                                    <span class="external-icon">↗</span>
+                                </a>
+                                <button class="copy-btn" onclick="copyToClipboard('${whale.address}')" title="Copy address">📋</button>
+                            </td>
                             <td><span class="label-badge ${labelClass}">${label}</span></td>
                             <td class="number-col">${whale.balance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                             <td class="number-col">${whale.percentage.toFixed(2)}%</td>
@@ -979,7 +1071,6 @@
             }
         }
         
-        // Load alerts - ONLY REAL DATA
         async function loadWhaleAlerts() {
             try {
                 const response = await fetch(`${API_BASE}/whales/alerts?hours=24&limit=20`);
@@ -991,25 +1082,28 @@
                 }
                 
                 const feed = document.getElementById('alerts-feed');
-                feed.innerHTML = alerts.map(alert => `
-                    <div class="alert-item">
-                        <div class="alert-header">
-                            <span class="alert-type">${alert.type.replace(/_/g, ' ')}</span>
-                            <span class="alert-time">${new Date(alert.timestamp).toLocaleString()}</span>
+                feed.innerHTML = alerts.map(alert => {
+                    const txUrl = `https://kas.fyi/transaction/${alert.tx_hash}`;
+                    return `
+                        <div class="alert-item">
+                            <div class="alert-header">
+                                <span class="alert-type">${alert.type.replace(/_/g, ' ')}</span>
+                                <span class="alert-time">${new Date(alert.timestamp).toLocaleString()}</span>
+                            </div>
+                            <div class="alert-details">
+                                <span class="alert-amount">${alert.amount.toLocaleString()} KAS</span>
+                                from ${alert.from_address} → ${alert.to_address}
+                                <a href="${txUrl}" target="_blank" class="address-link" style="margin-left: 8px;">View TX ↗</a>
+                            </div>
                         </div>
-                        <div class="alert-details">
-                            <span class="alert-amount">${alert.amount.toLocaleString()} KAS</span>
-                            from ${alert.from_address} → ${alert.to_address}
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Error loading alerts:', error);
                 document.getElementById('alerts-feed').innerHTML = '<div class="error">Failed to load alerts</div>';
             }
         }
         
-        // Load KRC-20 - ONLY REAL DATA
         async function loadKRC20Data() {
             try {
                 const response = await fetch(`${API_BASE}/krc20/tokens`);
@@ -1021,32 +1115,34 @@
                 }
                 
                 const tbody = document.getElementById('krc20-tbody');
-                tbody.innerHTML = tokens.map(token => `
-                    <tr data-symbol="${token.symbol}" 
-                        data-name="${token.name}" 
-                        data-price="${token.price}"
-                        data-change="${token.change_24h}" 
-                        data-volume="${token.volume_24h}"
-                        data-mcap="${token.market_cap}" 
-                        data-holders="${token.holders}">
-                        <td><strong>${token.symbol}</strong></td>
-                        <td>${token.name}</td>
-                        <td class="number-col">$${token.price.toFixed(6)}</td>
-                        <td class="number-col ${token.change_24h >= 0 ? 'positive' : 'negative'}">
-                            ${token.change_24h >= 0 ? '+' : ''}${token.change_24h.toFixed(2)}%
-                        </td>
-                        <td class="number-col">$${(token.volume_24h / 1000).toFixed(0)}K</td>
-                        <td class="number-col">$${(token.market_cap / 1000000).toFixed(2)}M</td>
-                        <td class="number-col">${token.holders.toLocaleString()}</td>
-                    </tr>
-                `).join('');
+                tbody.innerHTML = tokens.map(token => {
+                    const tokenUrl = `https://kas.fyi/token/${token.symbol.toLowerCase()}`;
+                    return `
+                        <tr data-symbol="${token.symbol}" 
+                            data-name="${token.name}" 
+                            data-price="${token.price}"
+                            data-change="${token.change_24h}" 
+                            data-volume="${token.volume_24h}"
+                            data-mcap="${token.market_cap}" 
+                            data-holders="${token.holders}">
+                            <td><a href="${tokenUrl}" target="_blank" class="token-link">${token.symbol}</a></td>
+                            <td>${token.name}</td>
+                            <td class="number-col">$${token.price.toFixed(6)}</td>
+                            <td class="number-col ${token.change_24h >= 0 ? 'positive' : 'negative'}">
+                                ${token.change_24h >= 0 ? '+' : ''}${token.change_24h.toFixed(2)}%
+                            </td>
+                            <td class="number-col">$${(token.volume_24h / 1000).toFixed(0)}K</td>
+                            <td class="number-col">$${(token.market_cap / 1000000).toFixed(2)}M</td>
+                            <td class="number-col">${token.holders.toLocaleString()}</td>
+                        </tr>
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Error loading KRC-20:', error);
                 document.getElementById('krc20-tbody').innerHTML = '<tr><td colspan="7" class="error">Failed to load tokens</td></tr>';
             }
         }
         
-        // Load health
         async function loadNetworkHealth() {
             try {
                 const response = await fetch(`${API_BASE}/network/health`);
@@ -1075,7 +1171,6 @@
             }
         }
         
-        // Track wallet
         async function trackWallet() {
             const address = document.getElementById('wallet-address').value.trim();
             
@@ -1108,7 +1203,7 @@
                 document.getElementById('portfolio-change').textContent = `${priceData.change_24h >= 0 ? '+' : ''}${priceData.change_24h.toFixed(2)}%`;
                 document.getElementById('wallet-count').textContent = '1';
                 
-                alert(`Wallet tracked!\nBalance: ${data.balance.toLocaleString()} KAS`);
+                showToast(`Wallet tracked: ${data.balance.toLocaleString()} KAS`);
             } catch (error) {
                 console.error('Error tracking wallet:', error);
                 alert('Error tracking wallet. Please check the address.');
