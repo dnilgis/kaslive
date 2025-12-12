@@ -1,11 +1,11 @@
 import requests
 from datetime import datetime
 import os
+import random
 
 class KRC20Service:
     def __init__(self):
         self.krc20_api = "https://api.kaspa.org/krc20"
-        # Fallback to known tokens if API unavailable
         self.known_tokens = self._get_known_tokens()
         
     def get_all_tokens(self):
@@ -65,14 +65,12 @@ class KRC20Service:
             
         except Exception as e:
             print(f"Error fetching token details: {e}")
-            # Return from known tokens
             return self.known_tokens.get(symbol, {})
     
     def get_trending_tokens(self, limit=5):
         """Get trending KRC-20 tokens by volume"""
         try:
             tokens = self.get_all_tokens()
-            # Sort by 24h volume
             sorted_tokens = sorted(tokens, key=lambda x: x.get('volume_24h', 0), reverse=True)
             return sorted_tokens[:limit]
             
@@ -118,7 +116,7 @@ class KRC20Service:
                 'symbol': 'NACHO',
                 'name': 'Nacho the Kat',
                 'description': 'The original Kaspa meme coin',
-                'contract': 'krc20:nacho...',
+                'contract': 'krc20:nacho',
                 'website': 'https://nachothekat.com',
                 'twitter': '@nachothekat'
             },
@@ -126,7 +124,7 @@ class KRC20Service:
                 'symbol': 'KASPY',
                 'name': 'Kaspy',
                 'description': 'Kaspa ecosystem token',
-                'contract': 'krc20:kaspy...',
+                'contract': 'krc20:kaspy',
                 'website': 'https://kaspy.io',
                 'twitter': '@kaspy_io'
             },
@@ -134,7 +132,7 @@ class KRC20Service:
                 'symbol': 'KANGO',
                 'name': 'Kango',
                 'description': 'Kaspa NFT marketplace token',
-                'contract': 'krc20:kango...',
+                'contract': 'krc20:kango',
                 'website': 'https://kango.market',
                 'twitter': '@kango_nft'
             },
@@ -142,7 +140,7 @@ class KRC20Service:
                 'symbol': 'ZEAL',
                 'name': 'Zeal',
                 'description': 'Kaspa DeFi protocol',
-                'contract': 'krc20:zeal...',
+                'contract': 'krc20:zeal',
                 'website': 'https://zeal.finance',
                 'twitter': '@zeal_defi'
             },
@@ -150,7 +148,7 @@ class KRC20Service:
                 'symbol': 'KASPER',
                 'name': 'Kasper',
                 'description': 'Community-driven token',
-                'contract': 'krc20:kasper...',
+                'contract': 'krc20:kasper',
                 'website': 'https://kasper.io',
                 'twitter': '@kasper_token'
             },
@@ -158,7 +156,7 @@ class KRC20Service:
                 'symbol': 'PWWAS',
                 'name': 'PWWAS',
                 'description': 'Privacy-focused token',
-                'contract': 'krc20:pwwas...',
+                'contract': 'krc20:pwwas',
                 'website': 'https://pwwas.org',
                 'twitter': '@pwwas_token'
             },
@@ -166,7 +164,7 @@ class KRC20Service:
                 'symbol': 'MINER',
                 'name': 'Kaspa Miner',
                 'description': 'Mining rewards token',
-                'contract': 'krc20:miner...',
+                'contract': 'krc20:miner',
                 'website': 'https://kasminer.io',
                 'twitter': '@kas_miner'
             },
@@ -174,7 +172,7 @@ class KRC20Service:
                 'symbol': 'KAPPY',
                 'name': 'Kappy',
                 'description': 'Gaming ecosystem token',
-                'contract': 'krc20:kappy...',
+                'contract': 'krc20:kappy',
                 'website': 'https://kappy.games',
                 'twitter': '@kappy_games'
             }
@@ -182,8 +180,6 @@ class KRC20Service:
     
     def _get_fallback_tokens(self):
         """Fallback token list with mock data"""
-        import random
-        
         tokens_data = [
             {'symbol': 'NACHO', 'name': 'Nacho the Kat', 'base_price': 0.0234, 'base_vol': 2340000},
             {'symbol': 'KASPY', 'name': 'Kaspy', 'base_price': 0.0156, 'base_vol': 1890000},
@@ -191,4 +187,27 @@ class KRC20Service:
             {'symbol': 'ZEAL', 'name': 'Zeal', 'base_price': 0.0145, 'base_vol': 890000},
             {'symbol': 'KASPER', 'name': 'Kasper', 'base_price': 0.0067, 'base_vol': 760000},
             {'symbol': 'PWWAS', 'name': 'PWWAS', 'base_price': 0.0198, 'base_vol': 540000},
-            {'symbol': 'MINER', 'name': 'Kaspa Miner', 'base_price': 0.0112, 'base_vol': 4500
+            {'symbol': 'MINER', 'name': 'Kaspa Miner', 'base_price': 0.0112, 'base_vol': 450000},
+            {'symbol': 'KAPPY', 'name': 'Kappy', 'base_price': 0.0078, 'base_vol': 380000}
+        ]
+        
+        tokens = []
+        for t in tokens_data:
+            change = random.uniform(-15, 25)
+            price = t['base_price'] * (1 + change/100)
+            volume = t['base_vol'] * random.uniform(0.8, 1.3)
+            holders = random.randint(500, 5000)
+            
+            tokens.append({
+                'symbol': t['symbol'],
+                'name': t['name'],
+                'price': round(price, 6),
+                'change_24h': round(change, 2),
+                'volume_24h': int(volume),
+                'market_cap': int(price * random.randint(50000000, 500000000)),
+                'holders': holders,
+                'total_supply': random.randint(100000000, 1000000000),
+                'contract': f"krc20:{t['symbol'].lower()}"
+            })
+        
+        return tokens
