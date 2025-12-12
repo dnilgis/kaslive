@@ -4,7 +4,7 @@ import sys
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from flask_caching import Cache
 from flask_limiter import Limiter
@@ -17,8 +17,11 @@ from backend.services.kaspa_service import KaspaService
 from backend.services.whale_service import WhaleService
 from backend.services.krc20_service import KRC20Service
 
-# Initialize Flask app
-app = Flask(__name__)
+# Initialize Flask app with frontend paths
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+app = Flask(__name__, 
+            template_folder=os.path.join(basedir, 'frontend', 'templates'),
+            static_folder=os.path.join(basedir, 'frontend', 'static'))
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -42,6 +45,15 @@ price_service = PriceService()
 kaspa_service = KaspaService()
 whale_service = WhaleService()
 krc20_service = KRC20Service()
+
+# ============================================================================
+# FRONTEND ROUTE
+# ============================================================================
+
+@app.route('/')
+def index():
+    """Serve the main dashboard"""
+    return render_template('index.html')
 
 # ============================================================================
 # HEALTH CHECK
