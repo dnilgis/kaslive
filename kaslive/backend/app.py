@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from services.kaspa_service import KaspaService
 from services.price_service import PriceService
@@ -6,8 +6,16 @@ from services.whale_service import WhaleService
 from services.krc20_service import KRC20Service
 
 # Create Flask app FIRST before using it
-app = Flask(__name__)
+app = Flask(__name__, 
+            template_folder='../frontend/templates',
+            static_folder='../frontend/static')
 CORS(app)
+
+# Homepage route - serves the main UI
+@app.route('/', methods=['GET'])
+def index():
+    """Serve the main dashboard"""
+    return render_template('index.html')
 
 # Health check route
 @app.route('/health', methods=['GET'])
