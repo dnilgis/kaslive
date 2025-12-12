@@ -16,9 +16,6 @@ class Portfolio(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
-    def __repr__(self):
-        return f'<Portfolio {self.wallet_address}>'
-    
     def to_dict(self):
         return {
             'id': self.id,
@@ -37,14 +34,11 @@ class WhaleAlert(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(String(100), nullable=False, index=True)
-    alert_type = Column(String(50))  # SMS, EMAIL, TELEGRAM
-    threshold = Column(Float, default=1000000)  # Alert when transaction > this amount
+    alert_type = Column(String(50))
+    threshold = Column(Float, default=1000000)
     is_enabled = Column(Boolean, default=True)
-    contact_info = Column(String(200))  # Email, phone, telegram username
+    contact_info = Column(String(200))
     created_at = Column(DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<WhaleAlert {self.user_id} - {self.alert_type}>'
     
     def to_dict(self):
         return {
@@ -69,9 +63,6 @@ class UserPreference(Base):
     default_timeframe = Column(String(10), default='1D')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<UserPreference {self.user_id}>'
     
     def to_dict(self):
         return {
