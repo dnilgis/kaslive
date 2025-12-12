@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Add current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_caching import Cache
@@ -11,9 +16,6 @@ from backend.services.price_service import PriceService
 from backend.services.kaspa_service import KaspaService
 from backend.services.whale_service import WhaleService
 from backend.services.krc20_service import KRC20Service
-
-# Import database models
-from backend.models import init_db, get_db, Portfolio, WhaleAlert, UserPreference
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -32,12 +34,8 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]
 )
 
-# Initialize database
-try:
-    init_db()
-    print("Database initialized successfully!")
-except Exception as e:
-    print(f"Database initialization error: {e}")
+# Database is temporarily disabled - will add back later
+print("Running without database - database features temporarily disabled")
 
 # Initialize services
 price_service = PriceService()
@@ -249,67 +247,6 @@ def calculate_mining():
         return jsonify({'error': str(e)}), 500
 
 # ============================================================================
-# PORTFOLIO ENDPOINTS (Database)
-# ============================================================================
-
-@app.route('/api/v1/portfolio', methods=['GET'])
-@limiter.limit("60 per minute")
-def get_user_portfolio():
-    """Get user portfolio"""
-    try:
-        user_id = request.args.get('user_id', 'demo')
-        db = get_db()
-        portfolios = db.query(Portfolio).filter_by(user_id=user_id, is_active=True).all()
-        
-        return jsonify([p.to_dict() for p in portfolios])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/v1/portfolio', methods=['POST'])
-@limiter.limit("30 per minute")
-def add_portfolio_wallet():
-    """Add wallet to portfolio"""
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id', 'demo')
-        wallet_address = data.get('wallet_address')
-        label = data.get('label', '')
-        
-        if not wallet_address:
-            return jsonify({'error': 'wallet_address required'}), 400
-        
-        db = get_db()
-        portfolio = Portfolio(
-            user_id=user_id,
-            wallet_address=wallet_address,
-            label=label
-        )
-        db.add(portfolio)
-        db.commit()
-        
-        return jsonify(portfolio.to_dict()), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/v1/portfolio/<int:portfolio_id>', methods=['DELETE'])
-@limiter.limit("30 per minute")
-def delete_portfolio_wallet(portfolio_id):
-    """Delete wallet from portfolio"""
-    try:
-        db = get_db()
-        portfolio = db.query(Portfolio).filter_by(id=portfolio_id).first()
-        
-        if not portfolio:
-            return jsonify({'error': 'Portfolio not found'}), 404
-        
-        portfolio.is_active = False
-        db.commit()
-        
-        return jsonify({'message': 'Portfolio deleted successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ============================================================================
 # TRANSACTIONS ENDPOINT
 # ============================================================================
 
@@ -320,7 +257,6 @@ def get_recent_transactions():
     """Get recent network transactions"""
     try:
         limit = request.args.get('limit', 20, type=int)
-        # Mock data for now - can be replaced with real API
         transactions = [
             {
                 'hash': f'tx_{i}abc123',
@@ -361,9 +297,6 @@ if __name__ == '__main__':
     debug = os.getenv('FLASK_ENV') == 'development'
     
     print(f"Starting KASLIVE v2.0 on port {port}")
-    if debug:
-        print("Environment: Development")
-    else:
-        print("Environment: Production")
+    print(f"Environment: {'Development' if debug else 'Production'}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
