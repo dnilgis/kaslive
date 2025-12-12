@@ -25,7 +25,7 @@ class WhaleService:
                     'rank': i + 1,
                     'address': address,
                     'balance': balance,
-                    'label': known_labels.get(address, 'Unknown'),
+                    'label': known_labels.get(address[:10], 'Unknown'),
                     'transaction_count': addr.get('txCount', 0),
                     'percentage': (balance / 28700000000) * 100  # % of total supply
                 })
@@ -120,26 +120,75 @@ class WhaleService:
     def _get_known_labels(self):
         """Return known address labels"""
         return {
-            'kaspa:qq...': 'Dev Fund',
-            'kaspa:qp...': 'MEXC Exchange',
-            'kaspa:qz...': 'Mining Pool',
-            'kaspa:qr...': 'KuCoin Exchange',
-            'kaspa:qs...': 'Gate.io Exchange',
-            'kaspa:qt...': 'Treasury',
-            'kaspa:qu...': 'Binance Deposit',
-            'kaspa:qv...': 'Early Adopter',
-            'kaspa:qw...': 'Strategic Reserve',
-            'kaspa:qx...': 'Foundation'
+            'kaspa:qq': 'Dev Fund',
+            'kaspa:qp': 'MEXC Exchange',
+            'kaspa:qz': 'Mining Pool',
+            'kaspa:qr': 'KuCoin Exchange',
+            'kaspa:qs': 'Gate.io Exchange',
+            'kaspa:qt': 'Treasury',
+            'kaspa:qu': 'Binance Deposit',
+            'kaspa:qv': 'Early Adopter',
+            'kaspa:qw': 'Strategic Reserve',
+            'kaspa:qx': 'Foundation'
         }
     
     def _get_mock_whales(self):
         """Fallback mock whale data"""
         return [
-            {'rank': 1, 'address': 'kaspa:qq...a7c', 'balance': 856234567, 'label': 'Dev Fund', 'transaction_count': 1234, 'percentage': 2.98},
-            {'rank': 2, 'address': 'kaspa:qp...8f2', 'balance': 623456789, 'label': 'MEXC Exchange', 'transaction_count': 45678, 'percentage': 2.17},
-            {'rank': 3, 'address': 'kaspa:qz...d4e', 'balance': 445678901, 'label': 'Mining Pool', 'transaction_count': 23456, 'percentage': 1.55},
-            {'rank': 4, 'address': 'kaspa:qr...2b9', 'balance': 389012345, 'label': 'KuCoin Exchange', 'transaction_count': 34567, 'percentage': 1.36},
-            {'rank': 5, 'address': 'kaspa:qs...7a1', 'balance': 312345678, 'label': 'Gate.io Exchange', 'transaction_count': 28901, 'percentage': 1.09},
-            {'rank': 6, 'address': 'kaspa:qt...5c3', 'balance': 267890123, 'label': 'Treasury', 'transaction_count': 567, 'percentage': 0.93},
-            {'rank': 7, 'address': 'kaspa:qu...9e6', 'balance': 223456789, 'label': 'Binance Deposit', 'transaction_count': 45123, 'percentage': 0.78},
-            {'rank': 8, 'address': 'kaspa:qv...1f4', 'balan
+            {'rank': 1, 'address': 'kaspa:qqa7c', 'balance': 856234567, 'label': 'Dev Fund', 'transaction_count': 1234, 'percentage': 2.98},
+            {'rank': 2, 'address': 'kaspa:qp8f2', 'balance': 623456789, 'label': 'MEXC Exchange', 'transaction_count': 45678, 'percentage': 2.17},
+            {'rank': 3, 'address': 'kaspa:qzd4e', 'balance': 445678901, 'label': 'Mining Pool', 'transaction_count': 23456, 'percentage': 1.55},
+            {'rank': 4, 'address': 'kaspa:qr2b9', 'balance': 389012345, 'label': 'KuCoin Exchange', 'transaction_count': 34567, 'percentage': 1.36},
+            {'rank': 5, 'address': 'kaspa:qs7a1', 'balance': 312345678, 'label': 'Gate.io Exchange', 'transaction_count': 28901, 'percentage': 1.09},
+            {'rank': 6, 'address': 'kaspa:qt5c3', 'balance': 267890123, 'label': 'Treasury', 'transaction_count': 567, 'percentage': 0.93},
+            {'rank': 7, 'address': 'kaspa:qu9e6', 'balance': 223456789, 'label': 'Binance Deposit', 'transaction_count': 45123, 'percentage': 0.78},
+            {'rank': 8, 'address': 'kaspa:qv1f4', 'balance': 198765432, 'label': 'Early Adopter', 'transaction_count': 234, 'percentage': 0.69},
+            {'rank': 9, 'address': 'kaspa:qw6d8', 'balance': 176543210, 'label': 'Strategic Reserve', 'transaction_count': 89, 'percentage': 0.62},
+            {'rank': 10, 'address': 'kaspa:qx3a2', 'balance': 154321098, 'label': 'Foundation', 'transaction_count': 456, 'percentage': 0.54}
+        ]
+    
+    def _get_mock_alerts(self):
+        """Fallback mock alert data"""
+        now = datetime.now()
+        return [
+            {
+                'type': 'LARGE_TRANSFER',
+                'amount': 6234567,
+                'from_address': 'kaspa:qq3b7c',
+                'to_address': 'kaspa:qp8f2a',
+                'timestamp': (now - timedelta(minutes=15)).isoformat(),
+                'tx_hash': 'abc123def456'
+            },
+            {
+                'type': 'ACCUMULATION',
+                'amount': 2876543,
+                'from_address': 'Multiple',
+                'to_address': 'kaspa:qp1e4d',
+                'timestamp': (now - timedelta(hours=1)).isoformat(),
+                'tx_hash': 'def456ghi789'
+            },
+            {
+                'type': 'WHALE_ALERT',
+                'amount': 12543210,
+                'from_address': 'kaspa:qx7a1c',
+                'to_address': 'Unknown',
+                'timestamp': (now - timedelta(hours=2)).isoformat(),
+                'tx_hash': 'ghi789jkl012'
+            },
+            {
+                'type': 'HODL_MOVE',
+                'amount': 543210,
+                'from_address': 'kaspa:qz4d5e',
+                'to_address': 'kaspa:qr2b9a',
+                'timestamp': (now - timedelta(hours=3)).isoformat(),
+                'tx_hash': 'jkl012mno345'
+            },
+            {
+                'type': 'LARGE_TRANSFER',
+                'amount': 5234567,
+                'from_address': 'kaspa:qs7a1b',
+                'to_address': 'Exchange',
+                'timestamp': (now - timedelta(hours=5)).isoformat(),
+                'tx_hash': 'mno345pqr678'
+            }
+        ]
