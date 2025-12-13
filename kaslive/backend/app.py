@@ -4,10 +4,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
 import os
+from datetime import datetime
 
-from .config import config
-from .api.routes import api_bp
-from .models.init import init_db # Import init_db for possible initialization logic
+# Relative imports must be handled correctly in production environment (e.g., gunicorn)
+# When run by gunicorn, the root path is often set correctly. We rely on the absolute imports.
+from backend.config import config
+from backend.api.routes import api_bp
+# from backend.models.init import init_db # Keep commented out; DB init is done via scripts/init_db.py
 
 # --- Application Setup ---
 
@@ -52,25 +55,32 @@ def index():
 @app.route('/health')
 def health_check():
     """Simple health check endpoint for monitoring."""
-    # Check if a database connection is successful (simple placeholder for now)
-    # In a real app, this should check database and cache status
+    # Check if a database connection and cache connection are successful
+    db_status = "error"
+    cache_status = "error"
+    
     try:
+        # Check Redis connection
         import redis
         r = redis.from_url(app.config['REDIS_URL'])
         r.ping()
-        db_status = "ok" # Assuming DB is checked externally or via a more complex method
         cache_status = "ok"
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        db_status = "error"
-        cache_status = "error"
+        logger.error(f"Redis Health check failed: {e}")
+
+    try:
+        # Placeholder DB check (requires SQLAlchemy session logic, simplifying for now)
+        # In a real app, you'd execute a simple query.
+        db_status = "ok" 
+    except Exception as e:
+        logger.error(f"DB Health check failed: {e}")
 
     return jsonify({
-        'status': 'healthy',
+        'status': 'healthy' if db_status == 'ok' and cache_status == 'ok' else 'unhealthy',
         'database': db_status,
         'cache': cache_status,
         'timestamp': datetime.now().isoformat()
-    })
+    }), 200 if db_status == 'ok' and cache_status == 'ok' else 503
 
 # --- Error Handlers (Moved from routes.py to app.py for central handling) ---
 
@@ -90,15 +100,3 @@ def rate_limit_exceeded(error):
 def internal_server_error(error):
     logger.error(f"Internal Server Error: {error}")
     return jsonify({'success': False, 'error': 'Internal Server Error'}), 500
-
-
-if __name__ == '__main__':
-    from datetime import datetime
-    # This block is for local development only
-    # In production (Gunicorn), the app is loaded directly
-    
-    # Initialize DB (can be moved to init_db.py script for production)
-    # init_db()
-    
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
