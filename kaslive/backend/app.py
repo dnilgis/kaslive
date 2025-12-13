@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 import os
 from collections import defaultdict
 
-# Support custom frontend folder structure
+# Support backend/frontend folder structure
 app = Flask(__name__, 
-            template_folder='frontend/templates',
-            static_folder='frontend/static')
+            template_folder='../frontend/templates',
+            static_folder='../frontend/static')
 CORS(app)
 
 # API Configuration
