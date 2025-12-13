@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V9.1</title>
+    <title>KASLIVE // TERMINAL V9.2</title>
     <style>
         /* --- IMPORTS & VARS --- */
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&display=swap');
@@ -17,6 +17,8 @@
             --hex-cyan: #00e5ff;
             --hex-blue: #2E86DE; 
             --hex-purple: #bd00ff;
+            --hex-gold: #ffd700;
+            --hex-silver: #c0c0c0;
             
             --bg-deep: #020406;
             --panel-bg: rgba(5, 12, 16, 0.85);
@@ -54,7 +56,8 @@
             width: 98vw;
             height: 96vh;
             display: grid;
-            grid-template-columns: 280px 1fr 280px; 
+            /* WIDER SIDES (350px), NARROWER CENTER */
+            grid-template-columns: 350px 1fr 350px; 
             grid-template-rows: 70px 1fr 60px; 
             grid-template-areas: 
                 "header header header"
@@ -198,14 +201,14 @@
         table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left; }
         thead { position: sticky; top: 0; background: #0a1410; z-index: 2; }
         th { 
-            padding: 8px 12px; color: var(--hex-dim); font-weight: normal; 
+            padding: 8px 10px; color: var(--hex-dim); font-weight: normal; 
             font-size: 0.6rem; letter-spacing: 1px; border-bottom: 1px solid rgba(0, 255, 65, 0.3); 
         }
         td { 
-            padding: 6px 12px; /* Tighter padding */
+            padding: 6px 10px; /* Tighter padding */
             border-bottom: 1px solid rgba(0, 255, 65, 0.05); 
             transition: background 0.2s; white-space: nowrap; 
-            overflow: hidden; text-overflow: ellipsis;
+            overflow: hidden; text-overflow: ellipsis; max-width: 120px; /* Force Truncation */
         }
         tr:hover td { background: rgba(0, 255, 65, 0.08); color: #fff; cursor: crosshair; }
 
@@ -321,7 +324,7 @@
                 <div class="brand">
                     <span style="color:var(--hex-green)">KAS</span><span style="color:var(--hex-blue)">LIVE</span>
                 </div>
-                <div style="font-size:0.7rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 2px 5px;">v9.1</div>
+                <div style="font-size:0.7rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 2px 5px;">v9.2 [MAINNET]</div>
             </div>
             
             <div class="price-container">
@@ -380,7 +383,7 @@
                 <table id="whaleTable">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th style="width: 40px">#</th>
                             <th>ADDRESS</th>
                             <th>TAG</th>
                             <th style="text-align:right">BALANCE (KAS)</th>
@@ -455,6 +458,14 @@
                     <div class="detail-val mono-num">3.79 KAS</div>
                 </div>
                 <div class="detail-item">
+                    <div class="detail-label" style="color:var(--hex-gold)">GOLD (PAXG)</div>
+                    <div class="detail-val mono-num" id="goldPrice">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label" style="color:var(--hex-silver)">SILVER (KAG)</div>
+                    <div class="detail-val mono-num" id="silverPrice">--</div>
+                </div>
+                <div class="detail-item">
                     <div class="detail-label">REC. FEE</div>
                     <div class="detail-val mono-num" style="color:var(--hex-green)">0.0001 KAS</div>
                 </div>
@@ -490,8 +501,8 @@
         const KAS_FYI_KEY = ''; 
         const KASPLEX_LIST_URL = 'https://api.kasplex.org/v1/krc20/tokenlist'; 
         const KASPLEX_OP_URL = 'https://api.kasplex.org/v1/krc20/oplist?limit=20';
-        // USE "coins/markets" to get 24h High/Low for Ranges
-        const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa';
+        // FETCH KASPA, BITCOIN, ETHEREUM, PAX GOLD, KINESIS SILVER
+        const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
         const NODES_RAW_URL = 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'; // Attempt fetch
         
         const TOTAL_SUPPLY = 28700000000;
@@ -560,6 +571,8 @@
                 const btcData = data.find(c => c.id === 'bitcoin');
                 const ethData = data.find(c => c.id === 'ethereum');
                 const kasData = data.find(c => c.id === 'kaspa');
+                const goldData = data.find(c => c.id === 'pax-gold');
+                const silverData = data.find(c => c.id === 'kinesis-silver');
                 
                 currentKasPrice = kasData.current_price;
 
@@ -573,6 +586,10 @@
                 // Prices
                 document.getElementById('btcPrice').innerText = '$' + btcData.current_price.toLocaleString();
                 document.getElementById('ethPrice').innerText = '$' + ethData.current_price.toLocaleString();
+                
+                if(goldData) document.getElementById('goldPrice').innerText = '$' + goldData.current_price.toLocaleString();
+                if(silverData) document.getElementById('silverPrice').innerText = '$' + silverData.current_price.toFixed(2);
+
 
                 // RATIO CALCULATION
                 // BTC (Sats)
