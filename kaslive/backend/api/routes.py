@@ -1,22 +1,20 @@
 """
 API Routes for KASLIVE v2.0
-Main endpoints for data retrieval
+All public and authenticated endpoints are defined here.
 """
 
 from flask import Blueprint, jsonify, request
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 import logging
 
 from backend.services.kaspa_service import KaspaService
 from backend.services.price_service import PriceService
 from backend.services.whale_service import WhaleService
 from backend.services.krc20_service import KRC20Service
+from backend.utils.cache import cached
 
 logger = logging.getLogger(__name__)
 
 api_bp = Blueprint('api', __name__)
-limiter = Limiter(key_func=get_remote_address)
 
 # Initialize services
 kaspa_service = KaspaService()
@@ -24,136 +22,126 @@ price_service = PriceService()
 whale_service = WhaleService()
 krc20_service = KRC20Service()
 
+# The rate limiter is now initialized globally in app.py
+
+# Helper function for consistent API responses
+def api_response(data, status=200):
+    """Generates a consistent successful JSON response."""
+    return jsonify({
+        'success': True,
+        'data': data
+    }), status
+
+# Helper function for handling service failures without fallback data
+def handle_service_failure(e, error_message, status=503):
+    """Logs error and returns a structured failure response."""
+    logger.error(f"Service error ({error_message}): {str(e)}")
+    # IMPORTANT: Returning 503 Service Unavailable or 500 Internal Server Error
+    # instead of mock/fallback data as requested by the user.
+    return jsonify({
+        'success': False,
+        'error': error_message
+    }), status
+
 
 @api_bp.route('/price', methods=['GET'])
-@limiter.limit("60 per minute")
-def get_price():
-    """Get current KAS price"""
+@cached(ttl=15, key_prefix="price")
+def get_current_price():
+    """Get current KAS price and market data."""
     try:
         price_data = price_service.get_current_price()
-        return jsonify({
-            'success': True,
-            'data': price_data
-        }), 200
+        if price_data is None:
+             # Treat None from service as a recoverable failure
+            return handle_service_failure(None, 'Price data currently unavailable from upstream API.', 503)
+
+        return api_response(price_data)
     except Exception as e:
-        logger.error(f"Error fetching price: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch price data'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch price data')
 
 
 @api_bp.route('/price/history', methods=['GET'])
-@limiter.limit("30 per minute")
+@cached(ttl=300, key_prefix="price_history")
 def get_price_history():
-    """Get historical price data"""
+    """Get historical price data."""
     try:
-        timeframe = request.args.get('timeframe', '1D')  # 1H, 4H, 1D, 1W, 1M
+        timeframe = request.args.get('timeframe', '1D')
         limit = min(int(request.args.get('limit', 100)), 1000)
         
         history = price_service.get_price_history(timeframe, limit)
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'timeframe': timeframe,
-                'prices': history
-            }
-        }), 200
+        if not history:
+            return handle_service_failure(None, 'Historical price data currently unavailable.', 503)
+
+        return api_response({
+            'timeframe': timeframe,
+            'prices': history
+        })
     except Exception as e:
-        logger.error(f"Error fetching price history: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch price history'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch price history')
 
 
 @api_bp.route('/network/stats', methods=['GET'])
-@limiter.limit("60 per minute")
+@cached(ttl=30, key_prefix="network_stats")
 def get_network_stats():
-    """Get current network statistics"""
+    """Get current network statistics (hashrate, difficulty, supply)."""
     try:
         stats = kaspa_service.get_network_stats()
-        return jsonify({
-            'success': True,
-            'data': stats
-        }), 200
+        if stats is None:
+            return handle_service_failure(None, 'Network statistics API unavailable.', 503)
+        return api_response(stats)
     except Exception as e:
-        logger.error(f"Error fetching network stats: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch network stats'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch network stats')
 
 
 @api_bp.route('/network/health', methods=['GET'])
-@limiter.limit("30 per minute")
+@cached(ttl=60, key_prefix="network_health")
 def get_network_health():
-    """Get network health score and metrics"""
+    """Calculate and get network health score and metrics."""
     try:
         health = kaspa_service.calculate_network_health()
-        return jsonify({
-            'success': True,
-            'data': health
-        }), 200
+        if health is None:
+            return handle_service_failure(None, 'Cannot calculate network health (dependent APIs failed).', 503)
+        return api_response(health)
     except Exception as e:
-        logger.error(f"Error calculating network health: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to calculate network health'
-        }), 500
+        return handle_service_failure(e, 'Failed to calculate network health')
 
 
 @api_bp.route('/whales/top', methods=['GET'])
-@limiter.limit("30 per minute")
+@cached(ttl=300, key_prefix="top_whales")
 def get_top_whales():
-    """Get top whale addresses"""
+    """Get top whale addresses."""
     try:
         limit = min(int(request.args.get('limit', 10)), 100)
         whales = whale_service.get_top_whales(limit)
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'whales': whales,
-                'count': len(whales)
-            }
-        }), 200
+        return api_response({
+            'whales': whales,
+            'count': len(whales)
+        })
     except Exception as e:
-        logger.error(f"Error fetching whales: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch whale data'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch whale data')
 
 
 @api_bp.route('/whales/alerts', methods=['GET'])
-@limiter.limit("30 per minute")
+@cached(ttl=60, key_prefix="whale_alerts")
 def get_whale_alerts():
-    """Get recent whale movement alerts"""
+    """Get recent whale movement alerts."""
     try:
         limit = min(int(request.args.get('limit', 10)), 50)
         alerts = whale_service.get_recent_alerts(limit)
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'alerts': alerts,
-                'count': len(alerts)
-            }
-        }), 200
+        return api_response({
+            'alerts': alerts,
+            'count': len(alerts)
+        })
     except Exception as e:
-        logger.error(f"Error fetching whale alerts: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch whale alerts'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch whale alerts')
 
 
 @api_bp.route('/wallet/<address>', methods=['GET'])
-@limiter.limit("60 per minute")
+@cached(ttl=30, key_prefix="wallet_data")
 def get_wallet_balance(address):
-    """Get wallet balance and transactions"""
+    """Get wallet balance and transaction count."""
     try:
         if not kaspa_service.is_valid_address(address):
             return jsonify({
@@ -162,168 +150,66 @@ def get_wallet_balance(address):
             }), 400
         
         wallet_data = kaspa_service.get_wallet_data(address)
-        
-        return jsonify({
-            'success': True,
-            'data': wallet_data
-        }), 200
+        if wallet_data is None:
+            return handle_service_failure(None, f'Could not retrieve data for address: {address}', 404)
+
+        return api_response(wallet_data)
     except Exception as e:
-        logger.error(f"Error fetching wallet data: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch wallet data'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch wallet data')
 
 
 @api_bp.route('/krc20/tokens', methods=['GET'])
-@limiter.limit("30 per minute")
+@cached(ttl=3600, key_prefix="krc20_tokens")
 def get_krc20_tokens():
-    """Get KRC-20 token list and stats"""
+    """Get KRC-20 token list and stats."""
     try:
-        tokens = krc20_service.get_all_tokens()
+        tokens = krc20_service.get_token_list()
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'tokens': tokens,
-                'count': len(tokens)
-            }
-        }), 200
+        return api_response({
+            'tokens': tokens,
+            'count': len(tokens)
+        })
     except Exception as e:
-        logger.error(f"Error fetching KRC-20 tokens: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch KRC-20 tokens'
-        }), 500
-
-
-@api_bp.route('/krc20/token/<symbol>', methods=['GET'])
-@limiter.limit("60 per minute")
-def get_krc20_token(symbol):
-    """Get detailed info for a specific KRC-20 token"""
-    try:
-        token = krc20_service.get_token_details(symbol.upper())
-        
-        if not token:
-            return jsonify({
-                'success': False,
-                'error': 'Token not found'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'data': token
-        }), 200
-    except Exception as e:
-        logger.error(f"Error fetching token details: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch token details'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch KRC-20 tokens')
 
 
 @api_bp.route('/blockdag/metrics', methods=['GET'])
-@limiter.limit("60 per minute")
+@cached(ttl=60, key_prefix="blockdag_metrics")
 def get_blockdag_metrics():
-    """Get BlockDAG metrics"""
+    """Get BlockDAG metrics (tips, blue score, BPS)."""
     try:
         metrics = kaspa_service.get_blockdag_metrics()
-        
-        return jsonify({
-            'success': True,
-            'data': metrics
-        }), 200
+        if metrics is None:
+            return handle_service_failure(None, 'BlockDAG metrics API unavailable.', 503)
+        return api_response(metrics)
     except Exception as e:
-        logger.error(f"Error fetching BlockDAG metrics: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch BlockDAG metrics'
-        }), 500
+        return handle_service_failure(e, 'Failed to fetch BlockDAG metrics')
 
 
 @api_bp.route('/mining/calculate', methods=['POST'])
-@limiter.limit("30 per minute")
+@cached(ttl=60, key_prefix="mining_calc")
 def calculate_mining():
-    """Calculate mining profitability"""
+    """Calculate mining profitability based on user input and current network data."""
     try:
         data = request.get_json()
         
-        hashrate = float(data.get('hashrate', 100))  # GH/s
-        power = float(data.get('power', 3000))  # Watts
-        electricity_cost = float(data.get('electricity_cost', 0.12))  # $/kWh
+        # Ensure all necessary inputs are present and valid
+        hashrate = float(data.get('hashrate'))  # GH/s
+        power = float(data.get('power'))  # Watts (Removed for simplification in service logic)
+        electricity_cost = float(data.get('electricity_cost'))  # $/kWh
         
         calculation = kaspa_service.calculate_mining_profitability(
-            hashrate, power, electricity_cost
+            hashrate, electricity_cost
         )
+
+        if calculation is None:
+            return handle_service_failure(None, 'Network data required for calculation is unavailable.', 503)
         
-        return jsonify({
-            'success': True,
-            'data': calculation
-        }), 200
-    except ValueError as e:
+        return api_response(calculation)
+    except (ValueError, TypeError) as e:
         return jsonify({
             'success': False,
-            'error': 'Invalid input parameters'
+            'error': 'Invalid input parameters (hashrate, electricity_cost must be numbers).'
         }), 400
     except Exception as e:
-        logger.error(f"Error calculating mining: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to calculate mining profitability'
-        }), 500
-
-
-@api_bp.route('/transactions/recent', methods=['GET'])
-@limiter.limit("60 per minute")
-def get_recent_transactions():
-    """Get recent network transactions"""
-    try:
-        limit = min(int(request.args.get('limit', 20)), 100)
-        transactions = kaspa_service.get_recent_transactions(limit)
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'transactions': transactions,
-                'count': len(transactions)
-            }
-        }), 200
-    except Exception as e:
-        logger.error(f"Error fetching transactions: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch transactions'
-        }), 500
-
-
-# Error handlers
-@api_bp.errorhandler(400)
-def bad_request(error):
-    return jsonify({
-        'success': False,
-        'error': 'Bad request'
-    }), 400
-
-
-@api_bp.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'success': False,
-        'error': 'Resource not found'
-    }), 404
-
-
-@api_bp.errorhandler(429)
-def rate_limit_exceeded(error):
-    return jsonify({
-        'success': False,
-        'error': 'Rate limit exceeded'
-    }), 429
-
-
-@api_bp.errorhandler(500)
-def internal_server_error(error):
-    return jsonify({
-        'success': False,
-        'error': 'Internal server error'
-    }), 500
+        return handle_service_failure(e, 'Failed to calculate mining profitability')
