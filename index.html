@@ -3,60 +3,530 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAS // ARTIFACT</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>KASPA // ORCA TERMINAL</title>
+    <style>
+        /* --- IMPORTS & VARS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --phosphor-main: #00ff41;
+            --phosphor-dim: #008F11;
+            --phosphor-bright: #ccffcc;
+            --alert-red: #ff2a2a;
+            --barrel-yellow: #ffea00;
+            --deep-ocean: #020a0f;
+            --chum-water: #0f2d2e;
+            --grid-line: rgba(0, 255, 65, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: var(--phosphor-main);
+            font-family: 'Share Tech Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- THE CRT SCREEN EFFECT --- */
+        .crt-container {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, var(--chum-water) 0%, var(--deep-ocean) 90%);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #111;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        /* Scanlines */
+        .crt-container::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Flicker */
+        .crt-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0;
+            z-index: 10;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.027; }
+            5% { opacity: 0.04; }
+            10% { opacity: 0.02; }
+            100% { opacity: 0.027; }
+        }
+
+        /* Text Bloom */
+        .glow-text {
+            text-shadow: 0 0 5px var(--phosphor-dim), 0 0 10px var(--phosphor-main);
+        }
+
+        /* --- LAYOUT GRID --- */
+        .hud-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 80px 1fr 100px;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* --- MODULES --- */
+        .panel {
+            border: 1px solid var(--grid-line);
+            background: rgba(0, 20, 0, 0.2);
+            padding: 15px;
+            position: relative;
+            backdrop-filter: blur(2px);
+        }
+
+        .panel::after {
+            /* Corner accents */
+            content: "";
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border: 1px solid transparent;
+            border-image: linear-gradient(45deg, var(--phosphor-main) 5%, transparent 5%, transparent 95%, var(--phosphor-main) 95%) 1;
+            opacity: 0.5;
+        }
+
+        h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--grid-line);
+            padding-bottom: 5px;
+        }
+
+        /* --- TOP BAR --- */
+        .header-l { grid-column: 1; display: flex; align-items: center; }
+        .header-c { grid-column: 2; display: flex; justify-content: center; align-items: center; flex-direction: column;}
+        .header-r { grid-column: 3; text-align: right; }
+
+        .logo { font-size: 2rem; font-weight: bold; letter-spacing: 5px; }
+        .live-tag { font-size: 0.7rem; background: var(--phosphor-main); color: black; padding: 2px 5px; animation: pulse 2s infinite; }
+
+        .big-price {
+            font-size: 3.5rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .price-change {
+            font-size: 1rem;
+            color: var(--phosphor-dim);
+        }
+
+        /* --- LEFT WING (DATA STREAM) --- */
+        .left-wing { grid-row: 2; grid-column: 1; overflow: hidden; }
+        .data-stream {
+            font-size: 0.75rem;
+            line-height: 1.4;
+            opacity: 0.8;
+            height: 100%;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column-reverse; /* Newest at bottom */
+        }
+        .log-entry { margin-bottom: 4px; border-left: 2px solid transparent; padding-left: 5px; }
+        .log-entry.buy { border-color: var(--phosphor-main); color: #ccffcc; }
+        .log-entry.sell { border-color: var(--alert-red); color: #ffcccc; }
+        .log-entry.whale { background: rgba(0, 255, 65, 0.1); text-shadow: 0 0 8px var(--phosphor-main); font-weight: bold;}
+
+        /* --- CENTER (THE RADAR) --- */
+        .radar-zone {
+            grid-row: 2;
+            grid-column: 2;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sonar-ring {
+            width: 500px;
+            height: 500px;
+            border: 1px dashed var(--phosphor-dim);
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle, rgba(0,255,65,0.05) 0%, rgba(0,0,0,0) 70%);
+        }
+
+        .sonar-ring::before {
+            /* Crosshairs */
+            content: "";
+            position: absolute;
+            top: 50%; left: 0; right: 0; height: 1px;
+            background: var(--grid-line);
+        }
+        .sonar-ring::after {
+            content: "";
+            position: absolute;
+            left: 50%; top: 0; bottom: 0; width: 1px;
+            background: var(--grid-line);
+        }
+
+        .sweep {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 255, 65, 0.1) 60deg, var(--phosphor-main) 90deg, transparent 91deg);
+            animation: radar-spin 4s linear infinite;
+            z-index: 2;
+        }
+
+        .blip {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--phosphor-main);
+            box-shadow: 0 0 5px var(--phosphor-main);
+            opacity: 0;
+            transition: opacity 1s;
+        }
+        .blip.whale { background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; }
+        .blip.sell { background: var(--alert-red); box-shadow: 0 0 5px var(--alert-red); }
+
+        .barrel {
+            position: absolute;
+            width: 20px;
+            height: 28px;
+            background: var(--barrel-yellow);
+            border: 2px solid #fff;
+            border-radius: 4px;
+            color: black;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 20;
+            box-shadow: 0 0 10px var(--barrel-yellow);
+            animation: bob 2s ease-in-out infinite;
+        }
+
+        /* --- RIGHT WING (ENGINE) --- */
+        .right-wing { grid-row: 2; grid-column: 3; display: flex; flex-direction: column; gap: 10px;}
+        .metric-box { margin-bottom: 15px; }
+        .metric-val { font-size: 1.5rem; font-weight: bold; }
+        .metric-label { font-size: 0.7rem; color: var(--phosphor-dim); }
+        
+        .bar-container { width: 100%; height: 10px; background: #002200; border: 1px solid var(--phosphor-dim); margin-top: 5px;}
+        .bar-fill { height: 100%; background: var(--phosphor-main); width: 0%; transition: width 0.5s; box-shadow: 0 0 5px var(--phosphor-main); }
+
+        /* --- BOTTOM (CONTROLS) --- */
+        .controls { 
+            grid-row: 3; grid-column: 1 / -1; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--grid-line);
+            padding-top: 10px;
+        }
+
+        .status-msg {
+            font-size: 1.2rem;
+            color: var(--barrel-yellow);
+            text-transform: uppercase;
+            animation: alert-pulse 1s infinite;
+            display: none; /* Hidden by default */
+        }
+
+        /* The Smile Button */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--alert-red);
+            padding: 5px 15px;
+            border-radius: 4px;
+        }
+        
+        .switch-label { font-size: 0.8rem; color: var(--alert-red); letter-spacing: 1px; }
+
+        .toggle-btn {
+            width: 60px; height: 30px; background: #300; border: 2px solid var(--alert-red);
+            position: relative; cursor: pointer;
+        }
+        .toggle-btn::after {
+            content: ""; position: absolute; left: 2px; top: 2px; bottom: 2px; width: 25px;
+            background: var(--alert-red); transition: left 0.3s;
+        }
+        .toggle-btn.active::after { left: 30px; background: #fff; box-shadow: 0 0 10px #fff;}
+
+        /* --- ANIMATIONS --- */
+        @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes alert-pulse { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
+    </style>
 </head>
 <body>
-    <canvas id="art-canvas"></canvas>
-    <div class="noise-overlay"></div>
 
-    <main class="gallery">
-        <header class="ye-header">
-            <h1>KASPA</h1>
-            <div class="status-box">
-                <span id="connection-status">LIVE SIGNAL</span>
-            </div>
-        </header>
-
-        <section class="hero-section">
-            <div class="giant-number" id="price-display">0.0000</div>
-            <div class="meta-data">
-                <span id="price-change">--%</span>
-                <span class="label">CURRENT VALUE</span>
-            </div>
-        </section>
-
-        <section class="chaos-grid">
+    <div class="crt-container">
+        <div class="hud-grid">
             
-            <div class="stat-block tps-block">
-                <span class="label">VELOCITY (TPS)</span>
-                <div class="value" id="tps-display">0.00</div>
+            <div class="header-l glow-text">
+                <div class="logo">KASPA <span style="font-size:0.5em; vertical-align: middle;">// ORCA</span></div>
+            </div>
+            
+            <div class="header-c glow-text">
+                <div class="big-price" id="priceDisplay">$0.0462</div>
+                <div class="price-change" id="priceChange">-0.03%</div>
             </div>
 
-            <div class="stat-block hash-block">
-                <span class="label vertical-text">COMPUTE POWER</span>
-                <div class="value" id="hashrate-display">-- PH/s</div>
+            <div class="header-r">
+                <span class="live-tag">LIVE SIGNAL</span>
+                <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.6;">BLOCKDAG LATENCY: 12ms</div>
             </div>
 
-            <div class="chart-block">
-                <canvas id="priceChart"></canvas>
+            <div class="panel left-wing">
+                <h3>// LIVE FEED</h3>
+                <div class="data-stream" id="tape">
+                    </div>
             </div>
-        </section>
 
-        <section class="ticker-tape">
-            <div class="ticker-content" id="miner-ticker">
-                WAITING FOR BLOCKS // WAITING FOR BLOCKS // 
+            <div class="radar-zone">
+                <div class="sonar-ring" id="radar">
+                    <div class="sweep"></div>
+                    </div>
             </div>
-        </section>
 
-        <footer class="console-footer">
-            <div id="sonar-msg">SYSTEM LISTENING...</div>
-            <div id="last-hash">HASH: ----------------</div>
-        </footer>
-    </main>
+            <div class="panel right-wing">
+                <h3>// ENGINE VITALS</h3>
+                
+                <div class="metric-box">
+                    <div class="metric-label">HASHRATE (PH/s)</div>
+                    <div class="metric-val glow-text" id="hashrate">490.31</div>
+                    <div class="bar-container"><div class="bar-fill" style="width: 85%;"></div></div>
+                </div>
 
-    <script src="app.js"></script>
+                <div class="metric-box">
+                    <div class="metric-label">VELOCITY (TPS)</div>
+                    <div class="metric-val glow-text" id="tps">120.5</div>
+                    <div class="bar-container"><div class="bar-fill" id="tps-bar" style="width: 40%;"></div></div>
+                </div>
+
+                <div class="metric-box">
+                    <div class="metric-label">PRESSURE</div>
+                    <div class="metric-val glow-text" style="color:var(--barrel-yellow)">HOLDING</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div style="font-size: 0.8rem; opacity: 0.5;">
+                    SYSTEM: LISTENING<br>
+                    AUDIO: ENABLED (PULSE)
+                </div>
+
+                <div class="status-msg" id="alertMsg">"HE CAN'T STAY DOWN WITH 3 BARRELS!"</div>
+
+                <div class="switch-container">
+                    <div class="switch-label">SMILE YOU SON OF A...</div>
+                    <div class="toggle-btn" id="panicBtn"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* --- THE KINETIC ENGINE --- */
+        
+        // Config
+        const CONFIG = {
+            basePrice: 0.0462,
+            volatility: 0.0001,
+            radarSize: 500, // px
+            centerX: 250,
+            centerY: 250
+        };
+
+        let currentPrice = CONFIG.basePrice;
+        let tps = 120;
+        let barrelsDeployed = 0;
+
+        // Elements
+        const elPrice = document.getElementById('priceDisplay');
+        const elTape = document.getElementById('tape');
+        const elRadar = document.getElementById('radar');
+        const elTps = document.getElementById('tps');
+        const elTpsBar = document.getElementById('tps-bar');
+        const elAlert = document.getElementById('alertMsg');
+        const elPanic = document.getElementById('panicBtn');
+
+        // Helper: Random Range
+        const rand = (min, max) => Math.random() * (max - min) + min;
+
+        // 1. PRICE TICKER (Brownian Motion)
+        setInterval(() => {
+            const delta = rand(-CONFIG.volatility, CONFIG.volatility);
+            currentPrice += delta;
+            
+            // Format
+            const pStr = currentPrice.toFixed(6);
+            // Highlight structure: $0.0462 [4727]
+            const mainP = pStr.substring(0, 7); 
+            const subP = pStr.substring(7);
+            
+            elPrice.innerHTML = `${mainP}<span style="opacity:0.5; font-size:0.7em">${subP}</span>`;
+
+            // Random TPS fluctuation
+            tps = Math.floor(rand(50, 300));
+            elTps.innerText = tps + ".0";
+            elTpsBar.style.width = (tps / 500 * 100) + "%";
+
+            // Barrel Logic (If price dumps hard)
+            if(delta < -0.00008 && barrelsDeployed < 3) {
+                deployBarrel();
+            }
+
+        }, 500);
+
+        // 2. RADAR BLIPS (Simulating Order Book)
+        function spawnBlip() {
+            const blip = document.createElement('div');
+            const isBuy = Math.random() > 0.5;
+            const isWhale = Math.random() > 0.95; // 5% chance of whale
+
+            blip.className = `blip ${isWhale ? 'whale' : ''} ${isBuy ? 'buy' : 'sell'}`;
+            
+            // Random position within circle
+            const angle = rand(0, 360) * (Math.PI / 180);
+            const dist = rand(50, 240); // 50px from center to edge
+            
+            const x = CONFIG.centerX + (dist * Math.cos(angle));
+            const y = CONFIG.centerY + (dist * Math.sin(angle));
+
+            blip.style.left = x + 'px';
+            blip.style.top = y + 'px';
+
+            // Size based on whale status
+            const size = isWhale ? rand(15, 30) : rand(3, 6);
+            blip.style.width = size + 'px';
+            blip.style.height = size + 'px';
+
+            elRadar.appendChild(blip);
+
+            // Life cycle
+            setTimeout(() => blip.style.opacity = 0.8, 100); // Fade in
+            
+            // Whale Logic: Log to Tape
+            if(isWhale) {
+                const type = isBuy ? "BUY" : "SELL";
+                const amt = Math.floor(rand(100, 999));
+                addToTape(`${type} ORDER: ${amt}K KAS DETECTED`, isBuy ? 'buy' : 'sell', true);
+                
+                // Shake screen on Whale Sell
+                if(!isBuy) {
+                    document.body.classList.add('shake');
+                    setTimeout(() => document.body.classList.remove('shake'), 500);
+                }
+            }
+
+            // Cleanup
+            setTimeout(() => {
+                blip.style.opacity = 0;
+                setTimeout(() => blip.remove(), 1000);
+            }, 3500); // Persist for one rotation
+        }
+
+        // Run radar loop
+        setInterval(spawnBlip, 200);
+
+        // 3. TAPE LOGIC
+        function addToTape(text, type, isImportant) {
+            const div = document.createElement('div');
+            div.className = `log-entry ${type} ${isImportant ? 'whale' : ''}`;
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            div.innerText = `[${time}] ${text}`;
+            elTape.prepend(div);
+            
+            if(elTape.children.length > 20) elTape.lastChild.remove();
+        }
+
+        // Fill tape with simulated small trades
+        setInterval(() => {
+            if(Math.random() > 0.7) {
+                const isBuy = Math.random() > 0.5;
+                const amt = Math.floor(rand(100, 5000));
+                addToTape(`Traded ${amt} KAS @ ${currentPrice.toFixed(4)}`, isBuy ? 'buy' : 'sell', false);
+            }
+        }, 800);
+
+        // 4. BARREL SYSTEM
+        function deployBarrel() {
+            barrelsDeployed++;
+            const b = document.createElement('div');
+            b.className = 'barrel';
+            b.innerText = 'SUP'; // Support
+            
+            // Position slightly randomly near bottom center of radar
+            b.style.left = (CONFIG.centerX + rand(-50, 50)) + 'px';
+            b.style.top = (CONFIG.centerY + rand(50, 100)) + 'px';
+            
+            elRadar.appendChild(b);
+            
+            addToTape(`/// SUPPORT BARREL ${barrelsDeployed} DEPLOYED ///`, 'buy', true);
+
+            if(barrelsDeployed === 3) {
+                elAlert.style.display = 'block';
+                setTimeout(() => { elAlert.style.display = 'none'; barrelsDeployed = 0; document.querySelectorAll('.barrel').forEach(e => e.remove())}, 5000);
+            }
+        }
+
+        // 5. THE PANIC BUTTON
+        elPanic.addEventListener('click', () => {
+            elPanic.classList.toggle('active');
+            if(elPanic.classList.contains('active')) {
+                // EXPLOSION EFFECT
+                elRadar.innerHTML += `<div style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.8); border-radius:50%; z-index:99; transition: opacity 0.5s;" id="flash"></div>`;
+                setTimeout(() => document.getElementById('flash').style.opacity = 0, 100);
+                setTimeout(() => document.getElementById('flash').remove(), 600);
+                
+                addToTape(`*** MARKET SELL EXECUTED ***`, 'sell', true);
+                elAlert.innerText = "SMILE YOU SON OF A...";
+                elAlert.style.display = 'block';
+                document.body.classList.add('shake');
+            } else {
+                elAlert.style.display = 'none';
+                elAlert.innerText = "HE CAN'T STAY DOWN WITH 3 BARRELS!";
+            }
+        });
+
+    </script>
 </body>
 </html>
