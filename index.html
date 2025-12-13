@@ -3,95 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasLive | Whale Watch & Intelligence</title>
+    <title>KasLive | Network Intelligence Terminal</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <canvas id="bg-canvas"></canvas>
+    
+    <div id="flash-overlay"></div>
 
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fa-solid fa-network-wired"></i> KasLive <span class="badge">WHALE WATCH</span>
+                <i class="fa-solid fa-microchip"></i> KAS<span class="highlight">LIVE</span> <span class="badge">V4.0 TERMINAL</span>
             </div>
             <div class="status-indicator">
-                <span class="dot pulse"></span> Live Network
+                <span class="dot pulse"></span> <span id="connection-status">CONNECTED</span>
             </div>
         </header>
 
         <div class="dashboard-grid">
-            <div class="card">
-                <h3><i class="fa-solid fa-coins"></i> KAS Price</h3>
-                <div class="metric-value" id="price-display">Loading...</div>
+            <div class="card glass">
+                <h3><i class="fa-solid fa-coins"></i> Price (USD)</h3>
+                <div class="metric-value glitch" id="price-display">Fetching...</div>
                 <div class="sub-text" id="price-change">--</div>
             </div>
-            <div class="card">
-                <h3><i class="fa-solid fa-layer-group"></i> Market Cap</h3>
-                <div class="metric-value" id="mcap-display">Loading...</div>
-                <div class="sub-text" id="vol-display">Vol: --</div>
+            <div class="card glass">
+                <h3><i class="fa-solid fa-network-wired"></i> Network TPS</h3>
+                <div class="metric-value" id="tps-display">0.00</div>
+                <div class="sub-text">Transactions / Sec</div>
             </div>
-            <div class="card">
-                <h3><i class="fa-solid fa-microchip"></i> Hashrate</h3>
+            <div class="card glass">
+                <h3><i class="fa-solid fa-server"></i> Hashrate</h3>
                 <div class="metric-value" id="hashrate-display">Loading...</div>
-                <div class="sub-text">Network Power</div>
+                <div class="sub-text">Global Compute Power</div>
             </div>
-            <div class="card">
-                <h3><i class="fa-solid fa-address-card"></i> Active Addr</h3>
-                <div class="metric-value" id="active-addr-display">--</div>
-                <div class="sub-text">24h Activity</div>
+            <div class="card glass">
+                <h3><i class="fa-solid fa-clock"></i> Block Time</h3>
+                <div class="metric-value" id="bps-display">1.00 s</div>
+                <div class="sub-text">Target: 1 BPS</div>
             </div>
         </div>
 
-        <div class="split-section whale-section">
+        <div class="split-section">
             
-            <div class="card sonar-card">
+            <div class="card glass sonar-card">
                 <div class="sonar-header">
-                    <h3><i class="fa-solid fa-radar"></i> Whale Sonar</h3>
-                    <div class="live-indicator">ACTIVE</div>
+                    <h3><i class="fa-solid fa-radar"></i> Transaction Sonar</h3>
+                    <div class="live-indicator">SCANNING</div>
                 </div>
-                <div class="sonar-visual">
-                    <div class="radar-circle"></div>
+                <div class="sonar-container">
+                    <div class="radar-grid"></div>
                     <div class="radar-sweep"></div>
-                    <div class="sonar-message" id="sonar-msg">Scanning for heavy blocks...</div>
+                    <div class="sonar-text" id="sonar-msg">NO ANOMALIES DETECTED</div>
                 </div>
-                <div class="whale-log" id="whale-log">
-                    </div>
+                <div class="console-log" id="whale-log">
+                    <div class="log-entry">System initialized... monitoring chain.</div>
+                </div>
             </div>
 
-            <div class="card miner-card">
-                <h3><i class="fa-solid fa-users"></i> Top Active Addresses (Miners)</h3>
+            <div class="card glass">
+                <h3><i class="fa-solid fa-hammer"></i> Top Block Producers (Last 50)</h3>
                 <div class="table-header">
-                    <span>Address (Short)</span>
-                    <span>Blocks Found</span>
+                    <span>Identity / Pool</span>
+                    <span>Blocks</span>
                 </div>
                 <div class="miner-list" id="miner-list">
-                    <div class="list-item">Loading miner data...</div>
+                    <div class="list-item">Parsing block headers...</div>
                 </div>
             </div>
         </div>
 
-        <div class="card chart-card">
-            <h3><i class="fa-solid fa-chart-line"></i> Market & Volatility</h3>
+        <div class="card glass chart-card">
+            <h3><i class="fa-solid fa-chart-area"></i> Market Volatility Index</h3>
             <div class="chart-container">
                 <canvas id="priceChart"></canvas>
             </div>
         </div>
 
-        <div class="card feed-card">
-            <h3><i class="fa-solid fa-cube"></i> Raw Block Feed</h3>
-            <div class="table-header-feed">
-                <span>Time</span>
-                <span>TX Count</span>
-                <span>Hash</span>
-            </div>
-            <div class="scroll-feed" id="block-feed">
-                </div>
-        </div>
-
         <footer>
-            <p>KasLive Intelligence v3.0 | <a href="https://kaspa.org">Official Docs</a></p>
+            <p>SYSTEM STATUS: <span style="color:var(--accent-color)">ONLINE</span> | NODES SYNCED</p>
         </footer>
     </div>
 
