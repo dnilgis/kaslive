@@ -1,8 +1,15 @@
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
+import sys
+import os
+
+# --- Path fix for deployment environment ---
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# ------------------------------------------
+
 from backend.config import Config
 
 logger = logging.getLogger(__name__)
@@ -66,15 +73,21 @@ class PriceService:
         try:
             # Map timeframes to days for CoinGecko API
             days_map = {
-                '1H': 0.042,  # 1 hour (less than 1 day needs special handling, using 1 day for Coingecko for safety)
-                '4H': 0.167,  
-                '1D': 1,
-                '1W': 7,
-                '1M': 30,
+                '1H': 1,  # Using 1 day for Coingecko for safety/granularity. 
+                '4H': 1,  
+                '1D': 7,
+                '1W': 30,
+                '1M': 90,
                 'ALL': 'max'
             }
             
+            # Resolve to days (defaulting to 7 days if unknown, or using max)
             days = days_map.get(timeframe, 7)
+            if timeframe == 'ALL':
+                days = 'max'
+            elif timeframe in ['1H', '4H']:
+                # For very short timeframes, use 1 day (Coingecko often only supports 1 day min)
+                days = 1
             
             url = f"{self.coingecko_api}/coins/kaspa/market_chart"
             params = {
