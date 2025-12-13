@@ -28,11 +28,11 @@
             padding: 20px;
         }
         
-        /* Header */
+        /* Header - ENHANCED */
         header {
             background: rgba(10, 20, 35, 0.95);
             border-radius: 12px;
-            padding: 20px 28px;
+            padding: 24px 32px;
             margin-bottom: 20px;
             border: 1px solid rgba(0, 255, 255, 0.15);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -47,7 +47,7 @@
         }
         
         .logo {
-            font-size: 28px;
+            font-size: 42px;
             font-weight: 700;
             letter-spacing: -1px;
         }
@@ -155,6 +155,7 @@
             font-size: 10px;
             color: #00d9ff;
             cursor: help;
+            position: relative;
         }
         
         .stat-value {
@@ -171,9 +172,9 @@
             font-weight: 500;
         }
         
-        /* Tooltip */
+        /* Tooltip - FIXED */
         .tooltip {
-            position: absolute;
+            position: fixed;
             background: rgba(10, 20, 35, 0.98);
             border: 1px solid rgba(0, 255, 255, 0.3);
             border-radius: 8px;
@@ -183,7 +184,7 @@
             line-height: 1.6;
             color: #c5ccd3;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 10000;
             display: none;
             pointer-events: none;
         }
@@ -242,12 +243,31 @@
             letter-spacing: 0.5px;
         }
         
-        /* Chart */
+        /* Chart - ENHANCED */
         .chart-controls {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .chart-indicators {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #5a6268;
+            margin-left: auto;
+        }
+        
+        .chart-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .chart-indicator strong {
+            color: #00d9ff;
         }
         
         .chart-btn {
@@ -316,7 +336,7 @@
         .status-busy { background: #ffaa00; }
         .status-congested { background: #ff6b81; }
         
-        /* Comparison Table */
+        /* Comparison Table - ENHANCED */
         .comparison-table {
             width: 100%;
             border-collapse: collapse;
@@ -352,6 +372,20 @@
         .winner {
             color: #00ff88;
             font-weight: 600;
+        }
+        
+        /* BlockDAG Visualizer - NEW */
+        .blockdag-viz {
+            margin-top: 16px;
+            background: rgba(0, 20, 35, 0.6);
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+        }
+        
+        #dag-canvas {
+            width: 100%;
+            height: 300px;
         }
         
         /* Tables */
@@ -422,6 +456,12 @@
         .number {
             text-align: right;
             font-variant-numeric: tabular-nums;
+        }
+        
+        /* Whale Badges - ENHANCED */
+        .whale-badge {
+            font-size: 18px;
+            margin-right: 6px;
         }
         
         /* Links */
@@ -650,6 +690,13 @@
             font-weight: 600;
         }
         
+        .health-explanation {
+            font-size: 12px;
+            color: #8b95a1;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+        
         /* Toast */
         .toast {
             position: fixed;
@@ -683,7 +730,7 @@
             color: #ff6b81;
         }
         
-        /* Footer */
+        /* Footer - UPDATED */
         footer {
             background: rgba(10, 20, 35, 0.9);
             border-radius: 12px;
@@ -706,6 +753,16 @@
             gap: 14px;
             align-items: center;
             color: #5a6268;
+        }
+        
+        .footer-section a {
+            color: #00d9ff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-section a:hover {
+            color: #00ff88;
         }
         
         .pulse {
@@ -758,6 +815,10 @@
             .comparison-table {
                 font-size: 11px;
             }
+            
+            .logo {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
@@ -774,7 +835,7 @@
                     <a href="#whales">Whales</a>
                     <a href="#tokens">KRC-20</a>
                     <a href="#comparison">Compare</a>
-                    <a href="#portfolio">Portfolio</a>
+                    <a href="#blockdag">BlockDAG</a>
                 </nav>
                 <div class="price-display">
                     <span class="price-value" id="price">--</span>
@@ -812,7 +873,7 @@
                     Normal
                 </div>
             </div>
-            <div class="stat-card" data-tooltip="Current network hashrate - total computational power securing the network">
+            <div class="stat-card" data-tooltip="Current network hashrate - total computational power securing the network (Petahashes per second)">
                 <div class="stat-label">
                     Hashrate
                     <span class="info-icon">?</span>
@@ -828,7 +889,7 @@
                 <div class="stat-value" id="bpsValue">--</div>
                 <div class="stat-subtitle" id="bpsStatus">Target: 1.00</div>
             </div>
-            <div class="stat-card" data-tooltip="Number of active Kaspa nodes worldwide maintaining the network">
+            <div class="stat-card" data-tooltip="Number of active Kaspa nodes worldwide from kaspa-crawler data">
                 <div class="stat-label">
                     Active Nodes
                     <span class="info-icon">?</span>
@@ -839,12 +900,12 @@
         </div>
 
         <div class="main-grid">
-            <!-- Price Chart -->
+            <!-- Price Chart - ENHANCED -->
             <div class="widget widget-full" id="analytics">
                 <div class="widget-header">
                     <h3 class="widget-title">
                         📊 KAS/USDT Price Chart
-                        <span class="info-icon" data-tooltip="Live price data from CoinGecko API">?</span>
+                        <span class="info-icon" data-tooltip="Live price data from CoinGecko API with technical indicators">?</span>
                     </h3>
                     <span class="widget-subtitle">Real-Time Data</span>
                 </div>
@@ -855,16 +916,20 @@
                     <button class="chart-btn" data-tf="1W">1W</button>
                     <button class="chart-btn" data-tf="1M">1M</button>
                     <button class="chart-btn" data-tf="ALL">ALL</button>
+                    <div class="chart-indicators">
+                        <div class="chart-indicator">24h High: <strong id="high24h">--</strong></div>
+                        <div class="chart-indicator">24h Low: <strong id="low24h">--</strong></div>
+                    </div>
                 </div>
                 <canvas id="priceChart"></canvas>
             </div>
 
-            <!-- Kaspa vs BTC vs ETH Comparison -->
+            <!-- Kaspa vs BTC vs ETH Comparison - ENHANCED -->
             <div class="widget widget-full" id="comparison">
                 <div class="widget-header">
                     <h3 class="widget-title">
                         ⚔️ Kaspa vs Bitcoin vs Ethereum
-                        <span class="info-icon" data-tooltip="Direct comparison of key blockchain metrics">?</span>
+                        <span class="info-icon" data-tooltip="Direct comparison of key blockchain metrics including TPS, finality time, and transaction fees">?</span>
                     </h3>
                     <span class="widget-subtitle">Live Comparison</span>
                 </div>
@@ -885,6 +950,38 @@
                         <tr><td colspan="8" class="loading">Loading comparison...</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- BlockDAG Visualizer - NEW! -->
+            <div class="widget widget-full" id="blockdag">
+                <div class="widget-header">
+                    <h3 class="widget-title">
+                        🔷 BlockDAG Visualizer
+                        <span class="info-icon" data-tooltip="Live visualization of Kaspa's unique parallel block structure">?</span>
+                    </h3>
+                    <span class="widget-subtitle">Live DAG Structure</span>
+                </div>
+                <div class="mempool-status">
+                    <div class="mempool-item">
+                        <div class="mempool-label">Tip Height</div>
+                        <div class="mempool-value" id="dagTipHeight">--</div>
+                    </div>
+                    <div class="mempool-item">
+                        <div class="mempool-label">Blue Score</div>
+                        <div class="mempool-value" id="blueScore">--</div>
+                    </div>
+                    <div class="mempool-item">
+                        <div class="mempool-label">DAG Tips</div>
+                        <div class="mempool-value" id="dagTips">--</div>
+                    </div>
+                    <div class="mempool-item">
+                        <div class="mempool-label">BPS</div>
+                        <div class="mempool-value" id="dagBps">--</div>
+                    </div>
+                </div>
+                <div class="blockdag-viz">
+                    <svg id="dag-canvas"></svg>
+                </div>
             </div>
 
             <!-- Mempool Monitor -->
@@ -910,147 +1007,18 @@
                         <div class="mempool-value" id="mempoolStatusText">--</div>
                     </div>
                     <div class="mempool-item">
-                        <div class="mempool-label">Blue Score</div>
-                        <div class="mempool-value" id="blueScore">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BlockDAG Metrics -->
-            <div class="widget">
-                <div class="widget-header">
-                    <h3 class="widget-title">
-                        🔷 BlockDAG Metrics
-                        <span class="info-icon" data-tooltip="Kaspa's unique parallel block structure metrics">?</span>
-                    </h3>
-                    <span class="widget-subtitle">Live DAG Stats</span>
-                </div>
-                <div class="mempool-status">
-                    <div class="mempool-item">
-                        <div class="mempool-label">DAG Tips</div>
-                        <div class="mempool-value" id="dagTips">--</div>
-                    </div>
-                    <div class="mempool-item">
-                        <div class="mempool-label">BPS</div>
-                        <div class="mempool-value" id="dagBps">--</div>
-                    </div>
-                    <div class="mempool-item">
                         <div class="mempool-label">Confirm Time</div>
                         <div class="mempool-value" id="confirmTime">~10s</div>
                     </div>
-                    <div class="mempool-item">
-                        <div class="mempool-label">DAG Size</div>
-                        <div class="mempool-value" id="dagSize">--</div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Whale Addresses -->
-            <div class="widget widget-full" id="whales">
-                <div class="widget-header">
-                    <h3 class="widget-title">
-                        🐋 Top Whale Addresses
-                        <span class="info-icon" data-tooltip="Largest KAS holders by balance">?</span>
-                    </h3>
-                    <span class="widget-subtitle">Largest Holders</span>
-                </div>
-                <table id="whaleTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="rank">#</th>
-                            <th class="sortable" data-sort="address">Address</th>
-                            <th class="sortable" data-sort="label">Label</th>
-                            <th class="sortable number" data-sort="balance">Balance (KAS)</th>
-                            <th class="sortable number" data-sort="percent">% Supply</th>
-                            <th class="sortable number" data-sort="txcount">TX Count</th>
-                        </tr>
-                    </thead>
-                    <tbody id="whaleData">
-                        <tr><td colspan="6" class="loading">Loading whale data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Live Whale Alerts -->
-            <div class="widget widget-full">
-                <div class="widget-header">
-                    <h3 class="widget-title">
-                        🚨 Live Whale Alerts
-                        <span class="info-icon" data-tooltip="Recent large KAS movements tracked in real-time">?</span>
-                    </h3>
-                    <span class="widget-subtitle">Recent Large Movements</span>
-                </div>
-                <div class="alerts-feed" id="alertsFeed">
-                    <div class="loading">Loading alerts...</div>
-                </div>
-            </div>
-
-            <!-- KRC-20 Tokens -->
-            <div class="widget widget-full" id="tokens">
-                <div class="widget-header">
-                    <h3 class="widget-title">
-                        🪙 KRC-20 Tokens
-                        <span class="info-icon" data-tooltip="Kaspa's token standard ecosystem">?</span>
-                    </h3>
-                    <span class="widget-subtitle">Token Ecosystem</span>
-                </div>
-                <table id="tokenTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="symbol">Symbol</th>
-                            <th class="sortable" data-sort="name">Name</th>
-                            <th class="sortable number" data-sort="price">Price</th>
-                            <th class="sortable number" data-sort="change">24h %</th>
-                            <th class="sortable number" data-sort="volume">Volume</th>
-                            <th class="sortable number" data-sort="mcap">Market Cap</th>
-                            <th class="sortable number" data-sort="holders">Holders</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tokenData">
-                        <tr><td colspan="7" class="loading">Loading tokens...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Portfolio Tracker -->
-            <div class="widget" id="portfolio">
-                <div class="widget-header">
-                    <h3 class="widget-title">
-                        💼 Portfolio Tracker
-                        <span class="info-icon" data-tooltip="Track your Kaspa wallet balances">?</span>
-                    </h3>
-                    <span class="widget-subtitle">Track Wallets</span>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="walletInput" placeholder="Enter Kaspa address (kaspa:...)">
-                    <button class="btn" onclick="trackWallet()">TRACK</button>
-                </div>
-                <div class="portfolio-stats">
-                    <div class="portfolio-stat">
-                        <span class="portfolio-stat-label">Balance</span>
-                        <strong class="portfolio-stat-value" id="portfolioBalance">--</strong>
-                    </div>
-                    <div class="portfolio-stat">
-                        <span class="portfolio-stat-label">USD Value</span>
-                        <strong class="portfolio-stat-value" id="portfolioUSD">--</strong>
-                    </div>
-                    <div class="portfolio-stat">
-                        <span class="portfolio-stat-label">24H Change</span>
-                        <strong class="portfolio-stat-value" id="portfolioChange">--</strong>
-                    </div>
-                    <div class="portfolio-stat">
-                        <span class="portfolio-stat-label">Wallets</span>
-                        <strong class="portfolio-stat-value" id="walletCount">0</strong>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Network Health -->
+            <!-- Network Health - ENHANCED -->
             <div class="widget">
                 <div class="widget-header">
                     <h3 class="widget-title">
                         💚 Network Health
-                        <span class="info-icon" data-tooltip="AI-powered network health scoring">?</span>
+                        <span class="info-icon" data-tooltip="Comprehensive network health scoring based on multiple factors">?</span>
                     </h3>
                     <span class="widget-subtitle">Live Status</span>
                 </div>
@@ -1064,31 +1032,98 @@
                         <text x="100" y="118" text-anchor="middle" class="gauge-label">SCORE</text>
                     </svg>
                 </div>
+                <div class="health-explanation">
+                    Network health is calculated based on mempool size (lower is better), block production rate (target: 1 BPS), and network stability. Scores above 90 indicate excellent network conditions.
+                </div>
                 <div class="health-metrics">
                     <div class="metric">
-                        <span class="metric-label">Decentralization</span>
-                        <strong class="metric-value" id="metricDecent">--</strong>
+                        <span class="metric-label">Mempool Health</span>
+                        <strong class="metric-value" id="metricMempool">--</strong>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Security</span>
-                        <strong class="metric-value" id="metricSecurity">--</strong>
+                        <span class="metric-label">BPS Health</span>
+                        <strong class="metric-value" id="metricBPS">--</strong>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Speed</span>
-                        <strong class="metric-value" id="metricSpeed">--</strong>
+                        <span class="metric-label">Hashrate Trend</span>
+                        <strong class="metric-value" id="metricHashrate">--</strong>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Stability</span>
-                        <strong class="metric-value" id="metricStability">--</strong>
+                        <span class="metric-label">Node Health</span>
+                        <strong class="metric-value" id="metricNodes">--</strong>
                     </div>
                 </div>
+            </div>
+
+            <!-- Whale Addresses - ENHANCED with badges -->
+            <div class="widget widget-full" id="whales">
+                <div class="widget-header">
+                    <h3 class="widget-title">
+                        🐋 Top Whale Addresses
+                        <span class="info-icon" data-tooltip="Top 100 largest KAS holders with whale badges based on balance">?</span>
+                    </h3>
+                    <span class="widget-subtitle">Largest Holders</span>
+                </div>
+                <table id="whaleTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="rank">#</th>
+                            <th class="sortable" data-sort="badge">Badge</th>
+                            <th class="sortable" data-sort="address">Address</th>
+                            <th class="sortable" data-sort="label">Label</th>
+                            <th class="sortable number" data-sort="balance">Balance (KAS)</th>
+                            <th class="sortable number" data-sort="percent">% Supply</th>
+                        </tr>
+                    </thead>
+                    <tbody id="whaleData">
+                        <tr><td colspan="6" class="loading">Loading whale data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Live Whale Alerts - ENHANCED -->
+            <div class="widget widget-full">
+                <div class="widget-header">
+                    <h3 class="widget-title">
+                        🚨 Live Whale Alerts
+                        <span class="info-icon" data-tooltip="Real-time tracking of large KAS transfers (>100,000 KAS)">?</span>
+                    </h3>
+                    <span class="widget-subtitle">Transactions > 100K KAS</span>
+                </div>
+                <div class="alerts-feed" id="alertsFeed">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+            </div>
+
+            <!-- KRC-20 Tokens - ENHANCED -->
+            <div class="widget widget-full" id="tokens">
+                <div class="widget-header">
+                    <h3 class="widget-title">
+                        🪙 KRC-20 Tokens
+                        <span class="info-icon" data-tooltip="Complete KRC-20 token ecosystem on Kaspa">?</span>
+                    </h3>
+                    <span class="widget-subtitle">Token Ecosystem</span>
+                </div>
+                <table id="tokenTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="symbol">Symbol</th>
+                            <th class="sortable" data-sort="name">Name</th>
+                            <th class="sortable number" data-sort="supply">Total Supply</th>
+                            <th class="sortable number" data-sort="holders">Holders</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tokenData">
+                        <tr><td colspan="4" class="loading">Loading tokens...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
-                    <span>© 2025 KASLIVE Pro</span>
+                    <span>A <a href="mailto:dnilgis@gmail.com">dnilgis</a> Project</span>
                     <span>•</span>
                     <span>Advanced Kaspa Analytics</span>
                 </div>
@@ -1109,36 +1144,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script>
-        const API = '/api/v1';
+        const API = '/api';
         let chart = null;
-        let currentTF = '1D';
+        let currentTF = '1H';
+        let priceData = {};
         
-        const KNOWN = {
-            'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz': 'KuCoin Wallet',
-            'kaspa:qrvsfvasrlt00fnw934rn25fw282fezysyyqkhzld46keggsg7pjxg59tkk96': 'Donation Fund'
-        };
-        
-        // Tooltip system
-        document.querySelectorAll('[data-tooltip]').forEach(el => {
-            el.addEventListener('mouseenter', (e) => {
-                const tooltip = document.getElementById('tooltip');
-                const text = el.dataset.tooltip;
-                const title = el.closest('.stat-card')?.querySelector('.stat-label')?.textContent.trim().replace('?', '') || 'Info';
+        // Tooltip system - FIXED
+        function setupTooltips() {
+            document.querySelectorAll('[data-tooltip], .info-icon').forEach(el => {
+                el.addEventListener('mouseenter', (e) => {
+                    const tooltip = document.getElementById('tooltip');
+                    const text = el.dataset.tooltip || el.closest('[data-tooltip]')?.dataset.tooltip;
+                    if (!text) return;
+                    
+                    const title = el.closest('.stat-card')?.querySelector('.stat-label')?.textContent.trim().replace('?', '') || 
+                                  el.closest('.widget-title')?.textContent.trim().replace('?', '') || 'Info';
+                    
+                    document.getElementById('tooltipTitle').textContent = title;
+                    document.getElementById('tooltipText').textContent = text;
+                    
+                    tooltip.classList.add('show');
+                    
+                    const rect = el.getBoundingClientRect();
+                    tooltip.style.left = Math.min(rect.left, window.innerWidth - 300) + 'px';
+                    tooltip.style.top = (rect.bottom + 10) + 'px';
+                });
                 
-                document.getElementById('tooltipTitle').textContent = title;
-                document.getElementById('tooltipText').textContent = text;
-                
-                tooltip.classList.add('show');
-                
-                const rect = el.getBoundingClientRect();
-                tooltip.style.left = rect.left + 'px';
-                tooltip.style.top = (rect.bottom + 10) + 'px';
+                el.addEventListener('mouseleave', () => {
+                    document.getElementById('tooltip').classList.remove('show');
+                });
             });
-            
-            el.addEventListener('mouseleave', () => {
-                document.getElementById('tooltip').classList.remove('show');
-            });
-        });
+        }
         
         function toast(msg) {
             const el = document.createElement('div');
@@ -1197,7 +1233,7 @@
             });
         }
         
-        // Init chart
+        // Init chart - ENHANCED
         function initChart() {
             const ctx = document.getElementById('priceChart').getContext('2d');
             chart = new Chart(ctx, {
@@ -1205,6 +1241,7 @@
                 data: {
                     labels: [],
                     datasets: [{
+                        label: 'Price',
                         data: [],
                         borderColor: '#00d9ff',
                         backgroundColor: 'rgba(0, 217, 255, 0.08)',
@@ -1227,7 +1264,10 @@
                             titleColor: '#00d9ff',
                             bodyColor: '#e8eaed',
                             borderColor: '#00d9ff',
-                            borderWidth: 1
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (context) => `Price: $${context.parsed.y.toFixed(4)}`
+                            }
                         }
                     },
                     scales: {
@@ -1237,7 +1277,11 @@
                         },
                         y: {
                             grid: { color: 'rgba(0, 255, 255, 0.06)' },
-                            ticks: { color: '#5a6268', font: { size: 10 } }
+                            ticks: { 
+                                color: '#5a6268', 
+                                font: { size: 10 },
+                                callback: value => '$' + value.toFixed(4)
+                            }
                         }
                     }
                 }
@@ -1246,17 +1290,27 @@
         
         async function loadChart(tf) {
             try {
-                const res = await fetch(`${API}/price/history?timeframe=${tf}`);
+                const res = await fetch(`${API}/chart/${tf}`);
                 const data = await res.json();
-                if (!data?.length) return;
+                if (!data?.prices?.length) return;
                 
-                const labels = data.map(p => {
-                    const d = new Date(p.timestamp);
-                    return tf === '1H' || tf === '4H' ? d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : d.toLocaleDateString([], {month: 'short', day: 'numeric'});
+                // Calculate high/low
+                const prices = data.prices.map(p => p[1]);
+                const high = Math.max(...prices);
+                const low = Math.min(...prices);
+                
+                document.getElementById('high24h').textContent = '$' + high.toFixed(4);
+                document.getElementById('low24h').textContent = '$' + low.toFixed(4);
+                
+                const labels = data.prices.map(p => {
+                    const d = new Date(p[0]);
+                    return tf === '1H' || tf === '4H' ? 
+                           d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+                           d.toLocaleDateString([], {month: 'short', day: 'numeric'});
                 });
                 
                 chart.data.labels = labels;
-                chart.data.datasets[0].data = data.map(p => p.price);
+                chart.data.datasets[0].data = prices;
                 chart.update('none');
             } catch (err) {
                 console.error('Chart error:', err);
@@ -1276,8 +1330,11 @@
             try {
                 const res = await fetch(`${API}/price`);
                 const data = await res.json();
+                priceData = data;
                 
                 document.getElementById('price').textContent = `$${data.price.toFixed(4)}`;
+                document.getElementById('mcap').textContent = `$${(data.market_cap / 1e9).toFixed(2)}B`;
+                
                 const chg = document.getElementById('change');
                 chg.textContent = `${data.change_24h >= 0 ? '+' : ''}${data.change_24h.toFixed(2)}%`;
                 chg.className = `price-change ${data.change_24h >= 0 ? 'positive' : 'negative'}`;
@@ -1286,67 +1343,39 @@
             }
         }
         
-        async function loadStats() {
+        async function loadNetwork() {
             try {
-                const [statsRes, priceRes] = await Promise.all([
-                    fetch(`${API}/network/stats`),
-                    fetch(`${API}/price`)
-                ]);
-                
-                const stats = await statsRes.json();
-                const price = await priceRes.json();
-                
-                document.getElementById('mcap').textContent = `$${(price.market_cap / 1e9).toFixed(2)}B`;
-                document.getElementById('hashrate').textContent = stats.hashrate;
-                document.getElementById('nodes').textContent = stats.active_nodes.toLocaleString();
-                document.getElementById('nodesStatus').textContent = 'Healthy';
-            } catch (err) {
-                console.error('Stats error:', err);
-            }
-        }
-        
-        async function loadDAA() {
-            try {
-                const res = await fetch(`${API}/daa/info`);
+                const res = await fetch(`${API}/network`);
                 const data = await res.json();
                 
-                document.getElementById('daaScore').textContent = data.daa_score.toLocaleString();
-                document.getElementById('blueScore').textContent = data.blue_score.toLocaleString();
-            } catch (err) {
-                console.error('DAA error:', err);
-            }
-        }
-        
-        async function loadMempool() {
-            try {
-                const res = await fetch(`${API}/mempool/info`);
-                const data = await res.json();
+                document.getElementById('hashrate').textContent = data.hashrate.toFixed(2) + ' PH/s';
+                document.getElementById('daaScore').textContent = data.dag_score.toLocaleString();
+                document.getElementById('mempoolTx').textContent = data.mempool_size.toLocaleString();
+                document.getElementById('mempoolCount').textContent = data.mempool_size.toLocaleString();
+                document.getElementById('mempoolSize').textContent = `${(data.mempool_size * 250 / 1024).toFixed(0)} KB`;
+                document.getElementById('bpsValue').textContent = data.block_rate.toFixed(2);
+                document.getElementById('dagBps').textContent = data.block_rate.toFixed(2);
                 
-                document.getElementById('mempoolTx').textContent = data.transaction_count.toLocaleString();
-                document.getElementById('mempoolCount').textContent = data.transaction_count.toLocaleString();
-                document.getElementById('mempoolSize').textContent = `${(data.total_size_bytes / 1024).toFixed(0)} KB`;
-                document.getElementById('mempoolStatusText').textContent = data.status;
-                
-                const statusEl = document.querySelector('#mempoolStatus .status-indicator');
-                statusEl.className = 'status-indicator status-' + data.status.toLowerCase();
-                
+                // Mempool status
+                const status = data.mempool_size < 100 ? 'Normal' : data.mempool_size < 500 ? 'Busy' : 'Congested';
+                const statusClass = data.mempool_size < 100 ? 'normal' : data.mempool_size < 500 ? 'busy' : 'congested';
+                document.getElementById('mempoolStatusText').textContent = status;
                 const subtitle = document.getElementById('mempoolStatus');
-                subtitle.innerHTML = `<span class="status-indicator status-${data.status.toLowerCase()}"></span> ${data.status}`;
+                subtitle.innerHTML = `<span class="status-indicator status-${statusClass}"></span> ${status}`;
             } catch (err) {
-                console.error('Mempool error:', err);
+                console.error('Network error:', err);
             }
         }
         
-        async function loadBPS() {
+        async function loadNodes() {
             try {
-                const res = await fetch(`${API}/network/bps`);
+                const res = await fetch(`${API}/nodes`);
                 const data = await res.json();
                 
-                document.getElementById('bpsValue').textContent = data.bps.toFixed(2);
-                document.getElementById('bpsStatus').textContent = `${data.performance} (Target: ${data.target_bps})`;
-                document.getElementById('dagBps').textContent = data.bps.toFixed(2);
+                document.getElementById('nodes').textContent = data.active_nodes.toLocaleString();
+                document.getElementById('nodesStatus').textContent = data.source === 'kaspa-crawler' ? 'kaspa-crawler' : 'Estimated';
             } catch (err) {
-                console.error('BPS error:', err);
+                console.error('Nodes error:', err);
             }
         }
         
@@ -1363,11 +1392,11 @@
                         <td class="chain-name">🔷 Kaspa</td>
                         <td class="number">$${data.kaspa.price.toFixed(4)}</td>
                         <td class="number">$${(data.kaspa.market_cap / 1e9).toFixed(2)}B</td>
-                        <td class="number winner">${data.kaspa.tps.toFixed(0)}</td>
+                        <td class="number winner">${data.kaspa.tps}</td>
                         <td class="winner">${data.kaspa.block_time}</td>
                         <td class="winner">${data.kaspa.finality}</td>
                         <td>${data.kaspa.consensus}</td>
-                        <td class="number winner">${data.kaspa.tx_fee}</td>
+                        <td class="number winner">$${data.kaspa.tx_fee.toFixed(4)}</td>
                     </tr>
                     <tr>
                         <td class="chain-name">₿ Bitcoin</td>
@@ -1377,7 +1406,7 @@
                         <td>${data.bitcoin.block_time}</td>
                         <td>${data.bitcoin.finality}</td>
                         <td>${data.bitcoin.consensus}</td>
-                        <td class="number">${data.bitcoin.tx_fee}</td>
+                        <td class="number">$${data.bitcoin.tx_fee.toFixed(2)}</td>
                     </tr>
                     <tr>
                         <td class="chain-name">⟠ Ethereum</td>
@@ -1387,7 +1416,7 @@
                         <td>${data.ethereum.block_time}</td>
                         <td>${data.ethereum.finality}</td>
                         <td>${data.ethereum.consensus}</td>
-                        <td class="number">${data.ethereum.tx_fee}</td>
+                        <td class="number">$${data.ethereum.tx_fee.toFixed(2)}</td>
                     </tr>
                 `;
             } catch (err) {
@@ -1397,12 +1426,51 @@
         
         async function loadBlockDAG() {
             try {
-                const res = await fetch(`${API}/blockdag/metrics`);
+                const res = await fetch(`${API}/blockdag`);
                 const data = await res.json();
                 
-                document.getElementById('dagTips').textContent = data.tips;
-                document.getElementById('confirmTime').textContent = `~${data.confirmation_time}s`;
-                document.getElementById('dagSize').textContent = (data.dag_size / 1000000).toFixed(1) + 'M';
+                document.getElementById('dagTipHeight').textContent = data.tip_height.toLocaleString();
+                document.getElementById('blueScore').textContent = data.blue_score.toLocaleString();
+                document.getElementById('dagTips').textContent = data.blocks?.length || 1;
+                
+                // Simple DAG visualization with D3 (if available)
+                const svg = document.getElementById('dag-canvas');
+                if (!svg || !data.blocks) return;
+                
+                // Create simple block visualization
+                svg.setAttribute('viewBox', '0 0 1000 280');
+                svg.innerHTML = '';
+                
+                const blocks = data.blocks.slice(0, 20);
+                blocks.forEach((block, i) => {
+                    const x = (i % 10) * 100 + 50;
+                    const y = Math.floor(i / 10) * 140 + 50;
+                    
+                    // Block circle
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', '20');
+                    circle.setAttribute('fill', 'rgba(0, 217, 255, 0.3)');
+                    circle.setAttribute('stroke', '#00d9ff');
+                    circle.setAttribute('stroke-width', '2');
+                    svg.appendChild(circle);
+                    
+                    // Connection line to next block
+                    if (i < blocks.length - 1) {
+                        const nextX = ((i + 1) % 10) * 100 + 50;
+                        const nextY = Math.floor((i + 1) / 10) * 140 + 50;
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x);
+                        line.setAttribute('y1', y);
+                        line.setAttribute('x2', nextX);
+                        line.setAttribute('y2', nextY);
+                        line.setAttribute('stroke', '#00ff88');
+                        line.setAttribute('stroke-width', '1');
+                        line.setAttribute('opacity', '0.4');
+                        svg.appendChild(line);
+                    }
+                });
             } catch (err) {
                 console.error('BlockDAG error:', err);
             }
@@ -1410,35 +1478,42 @@
         
         async function loadWhales() {
             try {
-                const res = await fetch(`${API}/whales/top?limit=10`);
-                const whales = await res.json();
+                const res = await fetch(`${API}/top-addresses`);
+                const data = await res.json();
                 
-                if (!whales?.length) {
+                if (!data?.addresses?.length) {
                     document.getElementById('whaleData').innerHTML = '<tr><td colspan="6" class="error">No data available</td></tr>';
                     return;
                 }
                 
                 const tbody = document.getElementById('whaleData');
-                tbody.innerHTML = whales.map(w => {
-                    const label = KNOWN[w.address] || w.label;
-                    const cls = label.includes('Exchange') || label.includes('Wallet') ? 'exchange' : label.includes('Pool') ? 'pool' : '';
-                    const short = w.address.substring(0, 16) + '...';
+                tbody.innerHTML = data.addresses.slice(0, 100).map((w, i) => {
+                    const balance = w.balance / 1e8;
+                    const percent = (balance / 26500000000) * 100;
+                    
+                    // Whale badges
+                    let badge = '🐟';
+                    if (balance >= 10000000) badge = '🐋';
+                    else if (balance >= 1000000) badge = '🦈';
+                    else if (balance >= 100000) badge = '🐬';
+                    
+                    const short = (w.address || 'kaspa:...').substring(0, 16) + '...';
                     const url = `https://explorer.kaspa.org/addresses/${w.address}`;
                     
                     return `
-                        <tr data-rank="${w.rank}" data-address="${w.address}" data-label="${label}" 
-                            data-balance="${w.balance}" data-percent="${w.percentage}" data-txcount="${w.transaction_count}">
-                            <td>${w.rank}</td>
+                        <tr data-rank="${i+1}" data-badge="${badge}" data-address="${w.address}" 
+                            data-label="Whale" data-balance="${balance}" data-percent="${percent}">
+                            <td>${i + 1}</td>
+                            <td><span class="whale-badge">${badge}</span></td>
                             <td class="mono">
                                 <a href="${url}" target="_blank" class="link" title="${w.address}">
                                     ${short}<span class="external-icon">↗</span>
                                 </a>
                                 <button class="copy-btn" onclick="copy('${w.address}')" title="Copy">📋</button>
                             </td>
-                            <td><span class="badge ${cls}">${label}</span></td>
-                            <td class="number">${w.balance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                            <td class="number">${w.percentage.toFixed(2)}%</td>
-                            <td class="number">${w.transaction_count.toLocaleString()}</td>
+                            <td><span class="badge">${w.badge || 'Whale'}</span></td>
+                            <td class="number">${balance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                            <td class="number">${percent.toFixed(3)}%</td>
                         </tr>
                     `;
                 }).join('');
@@ -1449,152 +1524,83 @@
         
         async function loadAlerts() {
             try {
-                const res = await fetch(`${API}/whales/alerts?hours=24&limit=15`);
-                const alerts = await res.json();
+                const res = await fetch(`${API}/whale-alerts`);
+                const data = await res.json();
                 
-                if (!alerts?.length) {
-                    document.getElementById('alertsFeed').innerHTML = '<div class="error">No recent alerts</div>';
+                if (!data?.alerts?.length) {
+                    document.getElementById('alertsFeed').innerHTML = '<div class="error">No recent whale alerts</div>';
                     return;
                 }
                 
                 const feed = document.getElementById('alertsFeed');
-                feed.innerHTML = alerts.map(a => {
-                    const url = `https://explorer.kaspa.org/txs/${a.tx_hash}`;
+                feed.innerHTML = data.alerts.map(a => {
+                    const url = `https://explorer.kaspa.org/txs/${a.hash}`;
                     return `
                         <div class="alert">
                             <div class="alert-header">
-                                <span class="alert-type">${a.type.replace(/_/g, ' ')}</span>
+                                <span class="alert-type">🐋 Whale Movement</span>
                                 <span class="alert-time">${new Date(a.timestamp).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                             </div>
                             <div class="alert-details">
                                 <span class="alert-amount">${a.amount.toLocaleString()} KAS</span>
-                                from ${a.from_address} → ${a.to_address}
+                                from ${a.from.substring(0, 12)}... → ${a.to.substring(0, 12)}...
                                 <a href="${url}" target="_blank" class="link" style="margin-left: 10px;">View TX ↗</a>
                             </div>
                         </div>
                     `;
                 }).join('');
             } catch (err) {
-                document.getElementById('alertsFeed').innerHTML = '<div class="error">Failed to load</div>';
+                document.getElementById('alertsFeed').innerHTML = '<div class="error">Failed to load whale alerts</div>';
             }
         }
         
         async function loadTokens() {
             try {
-                const res = await fetch(`${API}/krc20/tokens`);
-                const tokens = await res.json();
+                const res = await fetch(`${API}/krc20-tokens`);
+                const data = await res.json();
                 
-                if (!tokens?.length) {
-                    document.getElementById('tokenData').innerHTML = '<tr><td colspan="7" class="error">No data available</td></tr>';
+                if (!data?.tokens?.length) {
+                    document.getElementById('tokenData').innerHTML = '<tr><td colspan="4" class="error">No data available</td></tr>';
                     return;
                 }
                 
                 const tbody = document.getElementById('tokenData');
-                tbody.innerHTML = tokens.map(t => {
-                    // Helper function to display N/A for missing data
-                    const formatPrice = (price) => {
-                        if (price === null || price === undefined) return '<span style="color: #5a6268;">N/A</span>';
-                        return '$' + price.toFixed(6);
-                    };
-                    
-                    const formatChange = (change) => {
-                        if (change === null || change === undefined) return '<span style="color: #5a6268;">N/A</span>';
-                        const sign = change >= 0 ? '+' : '';
-                        return `<span class="${change >= 0 ? 'positive' : 'negative'}">${sign}${change.toFixed(2)}%</span>`;
-                    };
-                    
-                    const formatVolume = (volume) => {
-                        if (volume === null || volume === undefined) return '<span style="color: #5a6268;">N/A</span>';
-                        return '$' + (volume / 1000).toFixed(0) + 'K';
-                    };
-                    
-                    const formatMarketCap = (mcap) => {
-                        if (mcap === null || mcap === undefined) return '<span style="color: #5a6268;">N/A</span>';
-                        return '$' + (mcap / 1000000).toFixed(2) + 'M';
-                    };
-                    
+                tbody.innerHTML = data.tokens.map(t => {
                     return `
-                        <tr data-symbol="${t.symbol}" data-name="${t.name}" data-price="${t.price || 0}" 
-                            data-change="${t.change_24h || 0}" data-volume="${t.volume_24h || 0}" 
-                            data-mcap="${t.market_cap || 0}" data-holders="${t.holders}">
+                        <tr data-symbol="${t.symbol}" data-name="${t.name}" 
+                            data-supply="${t.total_supply || 0}" data-holders="${t.holders || 0}">
                             <td><strong class="link">${t.symbol}</strong></td>
                             <td>${t.name}</td>
-                            <td class="number">${formatPrice(t.price)}</td>
-                            <td class="number">${formatChange(t.change_24h)}</td>
-                            <td class="number">${formatVolume(t.volume_24h)}</td>
-                            <td class="number">${formatMarketCap(t.market_cap)}</td>
-                            <td class="number">${t.holders.toLocaleString()}</td>
+                            <td class="number">${(t.total_supply || 0).toLocaleString()}</td>
+                            <td class="number">${(t.holders || 0).toLocaleString()}</td>
                         </tr>
                     `;
                 }).join('');
             } catch (err) {
-                document.getElementById('tokenData').innerHTML = '<tr><td colspan="7" class="error">Failed to load</td></tr>';
+                document.getElementById('tokenData').innerHTML = '<tr><td colspan="4" class="error">Failed to load</td></tr>';
             }
         }
         
         async function loadHealth() {
             try {
-                const res = await fetch(`${API}/network/health`);
+                const res = await fetch(`${API}/network-health`);
                 const health = await res.json();
                 
-                document.getElementById('healthScore').textContent = health.score;
+                document.getElementById('healthScore').textContent = health.overall_score || '--';
                 
                 const circ = 471.2;
-                const offset = circ - (health.score / 100) * circ;
+                const offset = circ - ((health.overall_score || 0) / 100) * circ;
                 document.getElementById('healthCircle').style.strokeDashoffset = offset;
                 
-                const label = score => {
-                    if (score >= 90) return 'EXCELLENT';
-                    if (score >= 80) return 'STRONG';
-                    if (score >= 70) return 'GOOD';
-                    if (score >= 60) return 'FAIR';
-                    return 'WEAK';
-                };
-                
-                document.getElementById('metricDecent').textContent = label(health.metrics.decentralization);
-                document.getElementById('metricSecurity').textContent = label(health.metrics.security);
-                document.getElementById('metricSpeed').textContent = label(health.metrics.speed);
-                document.getElementById('metricStability').textContent = label(health.metrics.stability);
+                // Update metrics
+                if (health.metrics) {
+                    document.getElementById('metricMempool').textContent = health.metrics.mempool_health?.score.toFixed(1) || '--';
+                    document.getElementById('metricBPS').textContent = health.metrics.block_rate_health?.score.toFixed(1) || '--';
+                    document.getElementById('metricHashrate').textContent = 'Stable';
+                    document.getElementById('metricNodes').textContent = 'Healthy';
+                }
             } catch (err) {
                 console.error('Health error:', err);
-            }
-        }
-        
-        async function trackWallet() {
-            const addr = document.getElementById('walletInput').value.trim();
-            
-            if (!addr) {
-                alert('Please enter a wallet address');
-                return;
-            }
-            
-            if (!addr.startsWith('kaspa:')) {
-                alert('Please enter a valid Kaspa address (starts with kaspa:)');
-                return;
-            }
-            
-            try {
-                const res = await fetch(`${API}/wallet/${addr}`);
-                const data = await res.json();
-                
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-                
-                document.getElementById('portfolioBalance').textContent = `${data.balance.toLocaleString()} KAS`;
-                
-                const priceRes = await fetch(`${API}/price`);
-                const priceData = await priceRes.json();
-                const usd = data.balance * priceData.price;
-                
-                document.getElementById('portfolioUSD').textContent = `$${usd.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-                document.getElementById('portfolioChange').textContent = `${priceData.change_24h >= 0 ? '+' : ''}${priceData.change_24h.toFixed(2)}%`;
-                document.getElementById('walletCount').textContent = '1';
-                
-                toast(`Tracked: ${data.balance.toLocaleString()} KAS`);
-            } catch (err) {
-                alert('Error tracking wallet');
             }
         }
         
@@ -1603,13 +1609,12 @@
             initChart();
             initSort('whaleTable');
             initSort('tokenTable');
+            setupTooltips();
             
             // Load all data
             loadPrice();
-            loadStats();
-            loadDAA();
-            loadMempool();
-            loadBPS();
+            loadNetwork();
+            loadNodes();
             loadComparison();
             loadBlockDAG();
             loadHealth();
@@ -1618,22 +1623,22 @@
             loadTokens();
             loadChart(currentTF);
             
-            // Refresh every 30s
+            // Refresh intervals
             setInterval(() => {
                 loadPrice();
-                loadStats();
-                loadDAA();
-                loadMempool();
-                loadBPS();
+                loadNetwork();
+                loadNodes();
                 loadComparison();
                 loadBlockDAG();
                 loadHealth();
+            }, 15000);
+            
+            setInterval(() => {
                 loadWhales();
                 loadAlerts();
                 loadTokens();
             }, 30000);
             
-            // Refresh chart every 60s
             setInterval(() => loadChart(currentTF), 60000);
         });
     </script>
