@@ -1,48 +1,61 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import logging
+from backend.config import Config
+
+logger = logging.getLogger(__name__)
 
 class KRC20Service:
     def __init__(self):
-        self.kasplex_api = "https://api.kasplex.org/v1"
+        # Using Kasplex as the assumed KRC-20 indexer
+        self.kasplex_api = Config.KASPA_API_URL.replace('.org', 'plex.org') # Placeholder URL adjustment
+        
+        # Configure robust HTTP session
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods={"HEAD", "GET", "OPTIONS"}
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session = requests.Session()
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+        self.timeout = 10
         
     def get_token_list(self):
         """
-        Get KRC-20 tokens from Kasplex API
-        Returns None for fields that aren't available (not fake zeros)
+        Get KRC-20 tokens from Kasplex API.
+        Returns an empty list if API fails.
         """
         try:
-            response = requests.get(
-                f"{self.kasplex_api}/krc20/tokenlist",
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                print(f"Kasplex API error: {response.status_code}")
-                return []
+            url = f"{self.kasplex_api}/v1/krc20/tokenlist"
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()
             
             data = response.json()
             
             if data.get('message') != 'successful':
-                print("Kasplex API did not return successful")
+                logger.warning(f"Kasplex API did not return successful: {data.get('message')}")
                 return []
             
             result = data.get('result', [])
-            if not result:
-                return []
             
             tokens = []
-            for token in result[:10]:
+            for token in result:
                 tokens.append({
                     'symbol': token.get('tick', 'UNKNOWN'),
                     'name': token.get('tick', 'Unknown Token'),
-                    'price': None,  # Not available from Kasplex API
-                    'change_24h': None,  # Not available from Kasplex API
-                    'volume_24h': None,  # Not available from Kasplex API
-                    'market_cap': None,  # Not available from Kasplex API
-                    'holders': token.get('holderTotal', 0)
+                    'total_supply': token.get('supply', 0),
+                    'holders': token.get('holderTotal', 0),
+                    'verified': token.get('verified', False)
+                    # Note: Price, change, volume, mcap are usually from a separate DEX API,
+                    # We leave them out until that API is integrated.
                 })
             
             return tokens
             
-        except Exception as e:
-            print(f"Error fetching KRC-20 tokens: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching KRC-20 tokens: {e}")
             return []
