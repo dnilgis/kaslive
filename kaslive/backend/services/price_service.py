@@ -1,14 +1,32 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from datetime import datetime, timedelta
-import os
+import logging
+from backend.config import Config
+
+logger = logging.getLogger(__name__)
 
 class PriceService:
     def __init__(self):
-        self.coingecko_api = "https://api.coingecko.com/api/v3"
-        self.api_key = os.getenv('COINGECKO_API_KEY', '')
+        self.coingecko_api = Config.COINGECKO_API_URL
+        self.api_key = Config.COINGECKO_API_KEY # Retrieved from Config
         
+        # Configure robust HTTP session
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods={"HEAD", "GET", "OPTIONS"}
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session = requests.Session()
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+        self.timeout = 10
+
     def get_current_price(self):
-        """Get current KAS price from CoinGecko"""
+        """Get current KAS price from CoinGecko."""
         try:
             url = f"{self.coingecko_api}/simple/price"
             params = {
@@ -19,10 +37,11 @@ class PriceService:
                 'include_market_cap': 'true'
             }
             
+            # Add API key if available
             if self.api_key:
                 params['x_cg_demo_api_key'] = self.api_key
                 
-            response = requests.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             data = response.json()
             
@@ -34,32 +53,28 @@ class PriceService:
                     'market_cap': data['kaspa'].get('usd_market_cap', 0),
                     'timestamp': datetime.now().isoformat()
                 }
-        except Exception as e:
-            print(f"Error fetching price: {e}")
             
-        # Fallback to mock data if API fails
-        return {
-            'price': 0.0842,
-            'change_24h': -0.84,
-            'volume_24h': 28240000,
-            'market_cap': 1288000000,
-            'timestamp': datetime.now().isoformat()
-        }
+            logger.warning("CoinGecko price data is empty for Kaspa.")
+            return None
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching current price: {e}")
+            return None # Return None instead of mock/fallback data
     
-    def get_price_history(self, timeframe='1D'):
-        """Get historical price data"""
+    def get_price_history(self, timeframe='1D', limit=None):
+        """Get historical price data."""
         try:
-            # Map timeframes to days
+            # Map timeframes to days for CoinGecko API
             days_map = {
-                '1H': 0.042,  # 1 hour
-                '4H': 0.167,  # 4 hours
+                '1H': 0.042,  # 1 hour (less than 1 day needs special handling, using 1 day for Coingecko for safety)
+                '4H': 0.167,  
                 '1D': 1,
                 '1W': 7,
                 '1M': 30,
                 'ALL': 'max'
             }
             
-            days = days_map.get(timeframe, 1)
+            days = days_map.get(timeframe, 7)
             
             url = f"{self.coingecko_api}/coins/kaspa/market_chart"
             params = {
@@ -70,40 +85,27 @@ class PriceService:
             if self.api_key:
                 params['x_cg_demo_api_key'] = self.api_key
                 
-            response = requests.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             data = response.json()
             
             if 'prices' in data:
-                return [
+                # Format and limit the data
+                history = [
                     {
                         'timestamp': datetime.fromtimestamp(p[0]/1000).isoformat(),
                         'price': p[1]
                     }
                     for p in data['prices']
                 ]
-        except Exception as e:
-            print(f"Error fetching price history: {e}")
+                # If a limit is specified, slice the data (from most recent)
+                if limit and limit > 0:
+                    return history[-limit:]
+                return history
             
-        # Fallback to mock data
-        return self._generate_mock_history(timeframe)
-    
-    def _generate_mock_history(self, timeframe):
-        """Generate mock price history as fallback"""
-        import random
-        now = datetime.now()
-        hours_map = {'1H': 1, '4H': 4, '1D': 24, '1W': 168, '1M': 720, 'ALL': 8760}
-        hours = hours_map.get(timeframe, 24)
-        
-        base_price = 0.0842
-        data = []
-        
-        for i in range(100):
-            time = now - timedelta(hours=hours * (100-i)/100)
-            price = base_price * (1 + random.uniform(-0.05, 0.05))
-            data.append({
-                'timestamp': time.isoformat(),
-                'price': price
-            })
-            
-        return data
+            logger.warning("CoinGecko history data is empty.")
+            return []
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching price history: {e}")
+            return [] # Return empty list instead of mock/fallback data
