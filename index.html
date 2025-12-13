@@ -3,53 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE | Kaspa Ecosystem Monitor</title>
-    <meta name="description" content="Real-time Kaspa network intelligence. Whale tracking, new wallet detection, and live block feed.">
+    <title>KasLive | Kaspa Network Intelligence</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="https://kaspa.org/wp-content/uploads/2021/08/kaspa-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <header>
-        <div class="logo">KASLIVE <span class="blink">●</span></div>
-        <div class="stats">
-            <span class="stat-item">STATUS: <b id="connection-status">CONNECTING...</b></span>
-            <span class="stat-item mobile-hide">NEW WALLETS: <b id="new-count" style="color:var(--new)">0</b></span>
-        </div>
-    </header>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-network-wired"></i> KasLive
+            </div>
+            <div class="status-indicator">
+                <span class="dot pulse"></span> Live Network
+            </div>
+        </header>
 
-    <div class="grid-container">
-        
-        <div class="panel" id="panel-whales">
-            <div class="panel-head">
-                <span>🐳 Leviathans (Top 50)</span>
+        <div class="dashboard-grid">
+            
+            <div class="card">
+                <h3><i class="fa-solid fa-coins"></i> KAS Price</h3>
+                <div class="metric-value" id="price-display">Loading...</div>
+                <div class="sub-text" id="price-change">--</div>
             </div>
-            <div id="whale-list" class="scroll-list">
-                <div class="loader">Loading Ledger...</div>
+
+            <div class="card">
+                <h3><i class="fa-solid fa-microchip"></i> Network Hashrate</h3>
+                <div class="metric-value" id="hashrate-display">Loading...</div>
+                <div class="sub-text">Total Network Power</div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fa-solid fa-box-open"></i> Block Reward</h3>
+                <div class="metric-value" id="reward-display">Loading...</div>
+                <div class="sub-text">Next Halving Phase</div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fa-solid fa-globe"></i> Circulating Supply</h3>
+                <div class="metric-value" id="supply-display">Loading...</div>
+                <div class="sub-text">Total KAS Mined</div>
             </div>
         </div>
 
-        <div class="panel" id="panel-feed">
-            <div class="panel-head">
-                <span>📡 Live Intelligence</span>
-            </div>
-            <div id="sonar-feed" class="scroll-list sonar-feed">
-                </div>
-        </div>
-
-        <div class="panel" id="panel-nursery">
-            <div class="panel-head">
-                <span>🌱 The Nursery</span>
-            </div>
-            <div id="nursery-list" class="scroll-list">
-                <div class="loader">Scanning for new users...</div>
-            </div>
-        </div>
-
+        <footer>
+            <p>Data powered by Kaspa API & CoinGecko. Updates every 30s.</p>
+        </footer>
     </div>
-
-    <audio id="sound-whale" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
-    <audio id="sound-new" src="https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3"></audio>
 
     <script src="app.js"></script>
 </body>
