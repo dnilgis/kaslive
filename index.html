@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASPA // ORCA TERMINAL V2</title>
+    <title>KASPA // ORCA TERMINAL V3</title>
     <style>
         /* --- IMPORTS & VARS --- */
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&display=swap');
         
         :root {
             /* Palette */
             --hex-green: #00ff41;
+            --hex-bright: #ccffcc;
             --hex-dim: #004d1a;
             --hex-alert: #ff3333;
             --hex-warn: #ffcc00;
-            --hex-teal: #00bcd4;
-            --bg-deep: #050a0f;
-            --glass-bg: rgba(6, 15, 20, 0.65);
-            --glass-border: 1px solid rgba(0, 255, 65, 0.3);
+            --hex-cyan: #00e5ff;
+            --hex-purple: #bd00ff;
             
-            /* Sizing */
-            --radar-size: 50vh;
+            /* Backgrounds */
+            --bg-deep: #020406;
+            --panel-bg: rgba(5, 12, 16, 0.85); /* Darker for better contrast */
+            --panel-border: 1px solid rgba(0, 255, 65, 0.2);
+            
+            /* Font */
+            --font-main: 'JetBrains Mono', monospace;
         }
 
         * { box-sizing: border-box; user-select: none; }
@@ -29,7 +33,7 @@
             margin: 0;
             background-color: #000;
             color: var(--hex-green);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-main);
             height: 100vh;
             overflow: hidden;
             display: flex;
@@ -37,224 +41,225 @@
             align-items: center;
         }
 
-        /* --- CRT OVERLAY --- */
+        /* --- CRT EFFECTS (Subtle) --- */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 3px;
             pointer-events: none;
             z-index: 99;
-            opacity: 0.6;
+            opacity: 0.3; /* Reduced for clarity */
         }
         
         .vignette {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle, transparent 50%, black 100%);
+            background: radial-gradient(circle, transparent 60%, #000 100%);
             z-index: 100;
             pointer-events: none;
+            opacity: 0.8;
         }
 
-        /* --- GRID LAYOUT --- */
+        /* --- LAYOUT --- */
         .cockpit {
-            width: 95vw;
-            height: 90vh;
+            width: 98vw;
+            height: 96vh;
             display: grid;
-            grid-template-columns: 350px 1fr 300px;
-            grid-template-rows: 80px 1fr 80px;
-            gap: 15px;
+            grid-template-columns: 280px 1fr 280px;
+            grid-template-rows: 60px 1fr 60px;
+            gap: 12px;
             position: relative;
             z-index: 10;
         }
 
-        /* --- MODULES (GLASS PANELS) --- */
+        /* --- MODULES --- */
         .module {
-            background: var(--glass-bg);
-            border: var(--glass-border);
-            padding: 15px;
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            padding: 12px;
             position: relative;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        .module::before {
-            /* Tech bracket accent */
-            content: ""; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
-            border-top: 2px solid var(--hex-green); border-left: 2px solid var(--hex-green);
-        }
+        /* Corner accents */
+        .module::before { content: ""; position: absolute; top: -1px; left: -1px; width: 8px; height: 8px; border-top: 2px solid var(--hex-green); border-left: 2px solid var(--hex-green); }
+        .module::after { content: ""; position: absolute; bottom: -1px; right: -1px; width: 8px; height: 8px; border-bottom: 2px solid var(--hex-green); border-right: 2px solid var(--hex-green); }
 
         .label {
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--hex-teal);
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
-            padding-bottom: 5px;
+            letter-spacing: 1px;
+            color: var(--hex-dim);
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+            padding-bottom: 4px;
             display: flex;
             justify-content: space-between;
+            font-weight: 800;
         }
 
-        /* --- TOP BAR --- */
+        /* --- HEADER --- */
         .header {
             grid-column: 1 / -1;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--panel-bg);
             border-bottom: 1px solid var(--hex-dim);
             padding: 0 20px;
-            background: rgba(0,0,0,0.5);
         }
 
-        .brand { font-weight: 800; font-size: 1.5rem; letter-spacing: 4px; }
-        .live-indicator { 
-            display: flex; align-items: center; gap: 10px; font-size: 0.7rem; color: var(--hex-teal);
+        .brand { 
+            font-weight: 800; font-size: 1.4rem; letter-spacing: 2px; color: #fff;
+            text-shadow: 0 0 10px rgba(0,255,65,0.5);
         }
-        .live-dot { width: 8px; height: 8px; background: var(--hex-green); border-radius: 50%; animation: pulse 2s infinite; }
-
-        /* --- LEFT WING: INTELLIGENCE --- */
-        .feed-panel { grid-row: 2; overflow: hidden; }
         
+        .price-tag {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #fff;
+            margin-right: 20px;
+        }
+        .price-tag span { font-size: 1rem; color: var(--hex-green); opacity: 0.8;}
+
+        /* --- LEFT WING: FEED --- */
+        .feed-panel { grid-row: 2; overflow: hidden; }
         .tape-container {
             flex-grow: 1;
             overflow-y: hidden;
             display: flex;
-            flex-direction: column-reverse;
-            mask-image: linear-gradient(to bottom, transparent, black 20%);
+            flex-direction: column; /* Normal flow */
+            font-size: 0.7rem;
+            gap: 4px;
         }
-
         .tape-row {
-            font-size: 0.75rem;
-            padding: 6px 0;
+            padding: 4px 0;
             border-bottom: 1px dashed rgba(0, 255, 65, 0.1);
             display: flex;
-            align-items: center;
-            gap: 10px;
-            opacity: 0.7;
+            justify-content: space-between;
+            opacity: 0.8;
         }
-        .tape-row.whale { 
-            background: rgba(0, 255, 65, 0.1); 
-            border-left: 3px solid var(--hex-green);
-            padding-left: 10px;
-            opacity: 1;
-            color: #fff;
-            font-weight: bold;
-        }
+        .tape-row.whale { color: var(--hex-cyan); font-weight: bold; border-left: 2px solid var(--hex-cyan); padding-left: 5px; background: rgba(0, 229, 255, 0.1); }
         .tape-row.sell { color: var(--hex-alert); }
         .tape-row.buy { color: var(--hex-green); }
 
-        /* --- CENTER: THE SONAR --- */
-        .radar-panel {
-            grid-row: 2; 
-            background: transparent; 
-            border: none; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            position: relative;
+        /* --- CENTER: LEDGER (Top Wallets) --- */
+        .ledger-panel {
+            grid-row: 2;
+            overflow: hidden;
+            padding: 0; /* Let table fill */
         }
 
-        /* The Price HUD centered on Radar */
-        .hud-overlay {
-            position: absolute;
-            z-index: 20;
-            text-align: center;
-            pointer-events: none;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
-        .main-price { font-size: 3rem; font-weight: 800; line-height: 1; color: #fff; text-shadow: 0 0 15px var(--hex-green); }
-        .sub-price { font-size: 0.9rem; letter-spacing: 5px; opacity: 0.8; color: var(--hex-teal); margin-top: 5px; }
-
-        /* The Radar Grid */
-        .radar-grid {
-            width: var(--radar-size);
-            height: var(--radar-size);
-            border: 1px solid var(--hex-dim);
-            border-radius: 50%;
-            position: relative;
-            background: radial-gradient(circle, rgba(0,20,10,0.8) 0%, rgba(0,0,0,0) 70%);
-        }
-        /* Range Rings */
-        .ring {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border: 1px dashed var(--hex-dim);
-            border-radius: 50%;
+        .ledger-header {
+            padding: 15px;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            font-size: 0.6rem;
-            color: var(--hex-dim);
-            padding-top: 5px;
-        }
-        .ring.r1 { width: 33%; height: 33%; } /* Inner */
-        .ring.r2 { width: 66%; height: 66%; } /* Mid */
-        .ring.r3 { width: 100%; height: 100%; border-style: solid; } /* Outer */
-
-        .sweep {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 255, 65, 0.05) 180deg, rgba(0, 255, 65, 0.3) 360deg);
-            animation: radar-spin 4s linear infinite;
-            z-index: 1;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: rgba(0,20,0,0.3);
+            border-bottom: 1px solid var(--hex-dim);
         }
 
-        .blip {
-            position: absolute; width: 6px; height: 6px; border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: opacity 0.5s;
-        }
-        .blip.buy { background: var(--hex-green); box-shadow: 0 0 8px var(--hex-green); }
-        .blip.sell { background: var(--hex-alert); box-shadow: 0 0 8px var(--hex-alert); }
-        .blip.whale { 
-            width: 12px; height: 12px; 
-            border: 2px solid #fff; 
-            background: transparent;
-            box-shadow: 0 0 15px var(--hex-green); 
-            animation: ping 1s infinite;
+        .table-wrapper {
+            overflow-y: auto;
+            height: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: var(--hex-dim) black;
         }
 
-        /* --- RIGHT WING: ENGINEERING --- */
-        .sys-panel { grid-row: 2; gap: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
         
-        .gauge-box { margin-bottom: 15px; }
-        .gauge-val { font-size: 1.8rem; font-weight: bold; color: #fff; }
-        .gauge-sub { font-size: 0.7rem; color: var(--hex-dim); margin-top: -5px; }
-
-        .progress-track { width: 100%; height: 6px; background: #111; margin-top: 8px; }
-        .progress-fill { height: 100%; background: var(--hex-green); width: 50%; box-shadow: 0 0 5px var(--hex-green); transition: width 0.3s;}
-
-        /* --- FOOTER: ACTION --- */
-        .controls { 
-            grid-column: 1 / -1; grid-row: 3; 
-            display: flex; align-items: center; justify-content: space-between;
-            border-top: 1px solid var(--hex-dim);
-            padding-top: 10px;
+        thead { position: sticky; top: 0; background: #0a1410; z-index: 2; }
+        
+        th {
+            padding: 10px 15px;
+            color: var(--hex-dim);
+            font-weight: normal;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--hex-green);
         }
 
-        .status-msg { color: var(--hex-warn); font-size: 0.9rem; letter-spacing: 1px; }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.05);
+            transition: background 0.2s;
+        }
 
-        .big-button {
-            background: rgba(50, 0, 0, 0.5);
-            border: 1px solid var(--hex-alert);
-            color: var(--hex-alert);
-            padding: 10px 30px;
+        tr:hover td { background: rgba(0, 255, 65, 0.1); color: #fff; cursor: crosshair; }
+
+        .tag-pill {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 0.65rem;
+            border-radius: 2px;
+            font-weight: bold;
+            color: #000;
+        }
+        .tag-exchange { background: var(--hex-warn); }
+        .tag-whale { background: var(--hex-cyan); }
+        .tag-mining { background: var(--hex-purple); color: #fff; }
+
+        .balance-col { font-family: var(--font-main); font-weight: bold; letter-spacing: 0.5px; }
+        .percent-col { opacity: 0.7; }
+        
+        /* Animation for Value Change */
+        @keyframes flashGreen { 0% { color: #fff; text-shadow: 0 0 10px #fff; } 100% { color: inherit; } }
+        .val-update { animation: flashGreen 1s ease-out; }
+
+        /* --- RIGHT WING: METRICS --- */
+        .sys-panel { grid-row: 2; gap: 15px; }
+        
+        .metric-card {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-left: 2px solid var(--hex-dim);
+        }
+        
+        .metric-title { font-size: 0.65rem; color: var(--hex-dim); margin-bottom: 2px; }
+        .metric-value { font-size: 1.4rem; font-weight: bold; color: #fff; }
+        
+        /* Mini Sparklines */
+        .sparkline { width: 100%; height: 20px; display: flex; align-items: flex-end; gap: 1px; margin-top: 5px; opacity: 0.5; }
+        .spark-bar { width: 4px; background: var(--hex-green); }
+
+        /* --- FOOTER --- */
+        .footer {
+            grid-column: 1 / -1; grid-row: 3;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--hex-dim);
+        }
+
+        .status-text { font-size: 0.8rem; letter-spacing: 1px; animation: pulseText 2s infinite; }
+        @keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--hex-green);
+            color: var(--hex-green);
+            padding: 5px 15px;
             font-family: inherit;
-            font-size: 0.9rem;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            font-size: 0.75rem;
             transition: all 0.2s;
         }
-        .big-button:hover { background: var(--hex-alert); color: black; box-shadow: 0 0 20px var(--hex-alert); }
+        .btn:hover { background: var(--hex-green); color: black; }
+        
+        .btn-panic { border-color: var(--hex-alert); color: var(--hex-alert); }
+        .btn-panic:hover { background: var(--hex-alert); color: white; box-shadow: 0 0 15px var(--hex-alert); }
 
-        /* --- ANIMATIONS --- */
-        @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-
+        /* --- UTILS --- */
+        .mono-num { font-variant-numeric: tabular-nums; }
     </style>
 </head>
 <body>
@@ -264,191 +269,239 @@
 
     <div class="cockpit">
         
+        <!-- HEADER -->
         <header class="header">
-            <div class="brand">ORCA // KASPA</div>
-            <div class="live-indicator">
-                <div class="live-dot"></div>
-                SYSTEM ONLINE // CONNECTED TO MAINNET
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div class="brand">ORCA TERMINAL</div>
+                <div style="font-size:0.7rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 2px 5px;">v3.1.0</div>
             </div>
-            <div style="font-size: 0.8rem; opacity: 0.7;">UTC 14:02:59</div>
+            
+            <div style="display:flex; align-items:center;">
+                <div class="price-tag mono-num" id="mainPrice">$0.0462 <span id="percentChange">-0.03%</span></div>
+                <div style="text-align:right; font-size:0.7rem; opacity:0.6;">
+                    MARKET CAP<br>$1.12B
+                </div>
+            </div>
         </header>
 
+        <!-- LEFT PANEL: LIVE FEED -->
         <div class="module feed-panel">
-            <div class="label">
-                <span>Echo Sounder</span>
-                <span>[LIVE]</span>
-            </div>
-            <div class="tape-container" id="feed">
-                <div class="tape-row whale">
-                    <span>⚠️</span>
-                    <span>WHALE DETECTED: 500K KAS BUY</span>
-                </div>
-                <div class="tape-row buy">
-                    <span>+</span>
-                    <span>2,400 KAS @ 0.0462</span>
-                </div>
-                <div class="tape-row sell">
-                    <span>-</span>
-                    <span>1,100 KAS @ 0.0461</span>
-                </div>
+            <div class="label">LIVE TRANSACTIONS</div>
+            <div class="tape-container" id="tape">
+                <!-- JS Populated -->
             </div>
         </div>
 
-        <div class="radar-panel">
-            
-            <div class="hud-overlay">
-                <div class="main-price" id="price">$0.0462</div>
-                <div class="sub-price" id="pChange">-0.03%</div>
+        <!-- CENTER PANEL: LEVIATHAN LEDGER -->
+        <div class="module ledger-panel">
+            <div class="ledger-header">
+                <div>
+                    <h2 style="margin:0; font-size:1.1rem; color:#fff;">LEVIATHAN LEDGER</h2>
+                    <div style="font-size:0.7rem; color:var(--hex-green); opacity:0.7;">TRACKING TOP 100 ADDRESSES</div>
+                </div>
+                <div style="font-size:0.7rem;">TOTAL TRACKED: 14.2B KAS</div>
             </div>
 
-            <div class="radar-grid" id="radar">
-                <div class="ring r1">±0.5%</div>
-                <div class="ring r2">±1.0%</div>
-                <div class="ring r3">±2.0%</div>
-                <div class="sweep"></div>
-                </div>
-
+            <div class="table-wrapper">
+                <table id="whaleTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ADDRESS</th>
+                            <th>TAG</th>
+                            <th style="text-align:right">BALANCE (KAS)</th>
+                            <th style="text-align:right">CHANGE (24H)</th>
+                            <th style="text-align:right">% SUPPLY</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- JS Populated -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
+        <!-- RIGHT PANEL: VITALS -->
         <div class="module sys-panel">
-            <div class="label">
-                <span>Engine Room</span>
-                <span>[STABLE]</span>
+            <div class="label">NETWORK VITALS</div>
+            
+            <div class="metric-card">
+                <div class="metric-title">NETWORK HASHRATE</div>
+                <div class="metric-value mono-num">490.3 PH/s</div>
+                <div class="sparkline" id="sparkHash"></div>
             </div>
 
-            <div class="gauge-box">
-                <div style="display:flex; justify-content:space-between;">
-                    <div class="gauge-sub">NETWORK HASHRATE</div>
-                    <div class="gauge-sub">PH/s</div>
-                </div>
-                <div class="gauge-val">490.3</div>
-                <div class="progress-track"><div class="progress-fill" style="width: 85%;"></div></div>
+            <div class="metric-card">
+                <div class="metric-title">BLOCK RATE (BPS)</div>
+                <div class="metric-value mono-num" style="color:var(--hex-cyan)">1.02</div>
             </div>
 
-            <div class="gauge-box">
-                <div style="display:flex; justify-content:space-between;">
-                    <div class="gauge-sub">BLOCK VELOCITY</div>
-                    <div class="gauge-sub">BPS</div>
-                </div>
-                <div class="gauge-val" id="bps">1.02</div>
-                <div class="progress-track"><div class="progress-fill" style="width: 95%; background: var(--hex-teal); box-shadow:0 0 5px var(--hex-teal)"></div></div>
+            <div class="metric-card">
+                <div class="metric-title">NEXT HALVING</div>
+                <div class="metric-value mono-num" style="font-size:1rem; opacity:0.8;">142 DAYS</div>
             </div>
 
-            <div class="gauge-box">
-                <div class="label">DEPTH PRESSURE</div>
-                <div style="text-align: center; border: 1px solid var(--hex-dim); padding: 10px; margin-top: 5px; color: var(--hex-warn);">
-                    SUPPORT HOLDING
-                </div>
+            <div class="metric-card" style="margin-top:auto; border-left-color: var(--hex-alert);">
+                <div class="metric-title">THREAT LEVEL</div>
+                <div class="metric-value" style="color:var(--hex-alert); font-size:1rem;">MODERATE</div>
+                <div style="font-size:0.65rem; margin-top:5px; opacity:0.7;">WHALE #4 ACCUMULATING</div>
             </div>
         </div>
 
-        <div class="controls">
-            <div class="status-msg" id="statusLine">NO THREAT DETECTED. WATER IS CALM.</div>
-            
-            <div style="display:flex; gap: 20px; align-items: center;">
-                <div style="font-size: 0.7rem; color: #555;">SAFETY OFF</div>
-                <button class="big-button" onclick="triggerPanic()">DUMP AIRLOCK</button>
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="status-text" id="statusLine">SYSTEM CONNECTED // LISTENING TO MEMPOOL...</div>
+            <div class="btn-group">
+                <button class="btn">EXPLORER</button>
+                <button class="btn">CONNECT WALLET</button>
+                <button class="btn btn-panic" onclick="flashPanic()">PANIC SELL</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- SIMULATION LOGIC ---
+        /* --- CONFIG & DATA --- */
+        const TAGS = [
+            { name: 'MEXC Wallet', type: 'tag-exchange' },
+            { name: 'KuCoin', type: 'tag-exchange' },
+            { name: 'Gate.io', type: 'tag-exchange' },
+            { name: 'Unknown Whale', type: 'tag-whale' },
+            { name: 'IceRiver Mining', type: 'tag-mining' },
+            { name: 'WoolyPooly', type: 'tag-mining' },
+            { name: 'Bybit', type: 'tag-exchange' },
+        ];
+
+        // Mock Initial Data for Table
+        let whaleData = Array.from({ length: 25 }, (_, i) => {
+            const isExchange = i < 5;
+            const tag = isExchange ? TAGS[i % 3] : (Math.random() > 0.7 ? TAGS[Math.floor(Math.random()*TAGS.length)] : null);
+            
+            return {
+                rank: i + 1,
+                address: `kaspa:${Math.random().toString(36).substring(2, 10)}...${Math.random().toString(36).substring(2, 6)}`,
+                tag: tag,
+                balance: Math.floor(1200000000 / (i + 1)) + Math.floor(Math.random() * 100000),
+                change: (Math.random() - 0.45) * 100000, // Slightly skewed to buy
+                percent: (1200000000 / (i + 1) / 24000000000 * 100).toFixed(2)
+            };
+        });
+
+        const tableBody = document.getElementById('tableBody');
+        const tape = document.getElementById('tape');
+        const priceDisplay = document.getElementById('mainPrice');
+
+        /* --- RENDER FUNCTIONS --- */
         
-        const elPrice = document.getElementById('price');
-        const elFeed = document.getElementById('feed');
-        const elRadar = document.getElementById('radar');
-        const elStatus = document.getElementById('statusLine');
-        let price = 0.04624;
-
-        // 1. Generate Blips with CONTEXT
-        // We map distance from center to % away from price.
-        function spawnBlip() {
-            const blip = document.createElement('div');
-            const isBuy = Math.random() > 0.5;
-            const isWhale = Math.random() > 0.95;
-            
-            // Classes
-            blip.className = `blip ${isBuy ? 'buy' : 'sell'} ${isWhale ? 'whale' : ''}`;
-            
-            // Position Logic
-            // Angle: Random
-            const angle = Math.random() * Math.PI * 2;
-            
-            // Distance: 0 = At Price, 100% = Far OTM
-            // We bias them towards the center (current price action)
-            const spread = Math.pow(Math.random(), 2) * 45; // 0 to 45% radius
-            
-            const radius = 25; // 50% / 2 = 25% for CSS translate? No, lets use pixels relative to container
-            // Container is roughly 50vh. Let's use % for top/left
-            
-            // Convert polar to cartesian (50% is center)
-            const dist = spread; 
-            const x = 50 + (dist * Math.cos(angle));
-            const y = 50 + (dist * Math.sin(angle));
-            
-            blip.style.left = x + '%';
-            blip.style.top = y + '%';
-            
-            elRadar.appendChild(blip);
-
-            // Audio Cue for Whale
-            if(isWhale) {
-                addLog("WHALE MOVING: 250K BLOCK", "whale");
-                elStatus.innerText = "⚠️ LARGE MASS DETECTED ON SONAR";
-                elStatus.style.color = "var(--hex-alert)";
-                setTimeout(() => {
-                    elStatus.innerText = "NO THREAT DETECTED. WATER IS CALM.";
-                    elStatus.style.color = "var(--hex-warn)";
-                }, 3000);
-            }
-
-            // Cleanup
-            setTimeout(() => { blip.remove() }, 3800);
+        function formatNum(num) {
+            return new Intl.NumberFormat('en-US').format(num);
         }
 
-        // 2. Feed Logic
-        function addLog(msg, type) {
-            const row = document.createElement('div');
-            row.className = `tape-row ${type}`;
-            const symbol = type === 'buy' ? '+' : (type === 'sell' ? '-' : '⚠️');
-            row.innerHTML = `<span>${symbol}</span><span>${msg}</span>`;
-            elFeed.prepend(row);
-            if(elFeed.children.length > 12) elFeed.lastChild.remove();
+        function renderTable() {
+            tableBody.innerHTML = '';
+            whaleData.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                // Tag HTML
+                let tagHtml = `<span style="opacity:0.3">-</span>`;
+                if(row.tag) {
+                    tagHtml = `<span class="tag-pill ${row.tag.type}">${row.tag.name}</span>`;
+                }
+
+                // Change Color
+                const changeClass = row.change >= 0 ? 'color:var(--hex-green)' : 'color:var(--hex-alert)';
+                const changeSym = row.change >= 0 ? '+' : '';
+
+                tr.innerHTML = `
+                    <td style="color:var(--hex-dim)">${row.rank}</td>
+                    <td style="font-family:monospace; opacity:0.9;">${row.address}</td>
+                    <td>${tagHtml}</td>
+                    <td class="balance-col mono-num" id="bal-${row.rank}">${formatNum(row.balance)}</td>
+                    <td class="mono-num" style="text-align:right; ${changeClass}">${changeSym}${formatNum(Math.floor(row.change))}</td>
+                    <td class="percent-col mono-num" style="text-align:right">${row.percent}%</td>
+                `;
+                tableBody.appendChild(tr);
+            });
         }
 
-        // 3. Price Ticker
+        /* --- SIMULATION LOOP --- */
+        
+        // 1. Update Whales (The "Flicker" Effect)
         setInterval(() => {
-            // Price drift
-            const move = (Math.random() - 0.5) * 0.0001;
-            price += move;
-            elPrice.innerText = "$" + price.toFixed(5);
+            // Pick a random row to update
+            const idx = Math.floor(Math.random() * whaleData.length);
+            const row = whaleData[idx];
             
-            // Random Trades
-            if(Math.random() > 0.7) {
-                const isBuy = move > 0;
-                const amt = Math.floor(Math.random() * 5000) + 100;
-                addLog(`${amt} KAS @ ${price.toFixed(4)}`, isBuy ? 'buy' : 'sell');
+            // Random trade amount
+            const trade = Math.floor(Math.random() * 50000) * (Math.random() > 0.5 ? 1 : -1);
+            row.balance += trade;
+            row.change += trade;
+
+            // DOM Update specific cell for performance & visual effect
+            const cell = document.getElementById(`bal-${row.rank}`);
+            if(cell) {
+                cell.innerText = formatNum(row.balance);
+                cell.classList.remove('val-update');
+                void cell.offsetWidth; // trigger reflow
+                cell.classList.add('val-update');
             }
-        }, 500);
 
-        // Radar Loop
-        setInterval(spawnBlip, 400);
+            // Log to Tape if significant
+            if(Math.abs(trade) > 20000) {
+                const type = trade > 0 ? 'whale' : 'sell';
+                const label = trade > 0 ? 'ACCUMULATION' : 'DISTRIBUTION';
+                addToTape(`${label}: ${row.rank} MOVED ${formatNum(Math.abs(trade))} KAS`, type);
+            }
 
-        // Panic Button
-        function triggerPanic() {
-            document.body.style.animation = "shake 0.5s";
-            elStatus.innerText = "*** EMERGENCY DUMP INITIATED ***";
-            elRadar.innerHTML += '<div style="position:absolute; inset:0; background:white; opacity:0.8; border-radius:50%; transition: opacity 1s" id="flash"></div>';
-            setTimeout(() => document.getElementById('flash').style.opacity = 0, 50);
-            setTimeout(() => document.body.style.animation = "", 500);
+        }, 800);
+
+        // 2. Tape Logic
+        function addToTape(msg, type) {
+            const div = document.createElement('div');
+            div.className = `tape-row ${type}`;
+            const time = new Date().toLocaleTimeString('en-GB');
+            div.innerHTML = `<span>${time}</span> <span>${msg}</span>`;
+            tape.prepend(div);
+            if(tape.children.length > 20) tape.lastChild.remove();
+        }
+
+        // Fill initial tape
+        for(let i=0; i<10; i++) addToTape(`Block ${459990+i} Mined - 1.05s`, 'buy');
+
+        // 3. Sparklines
+        const sparkContainer = document.getElementById('sparkHash');
+        for(let i=0; i<30; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'spark-bar';
+            bar.style.height = Math.floor(Math.random() * 15 + 5) + 'px';
+            sparkContainer.appendChild(bar);
         }
         
-        // CSS Shake injection
-        const style = document.createElement('style');
-        style.innerHTML = `@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }`;
-        document.head.appendChild(style);
+        setInterval(() => {
+            // Cycle spark bars
+            const h = Math.floor(Math.random() * 15 + 5) + 'px';
+            sparkContainer.lastChild.remove();
+            const bar = document.createElement('div');
+            bar.className = 'spark-bar';
+            bar.style.height = h;
+            sparkContainer.prepend(bar);
+        }, 200);
+
+        // 4. Panic Effect
+        function flashPanic() {
+            document.body.style.filter = "invert(1)";
+            document.getElementById('statusLine').innerText = "*** EMERGENCY DUMP SEQUENCE INITIATED ***";
+            document.getElementById('statusLine').style.color = "red";
+            setTimeout(() => {
+                document.body.style.filter = "none";
+            }, 100);
+            
+            // Add massive sell wall to tape
+            addToTape("!!! PANIC SELL EXECUTED !!!", "sell");
+        }
+
+        // Init
+        renderTable();
 
     </script>
 </body>
