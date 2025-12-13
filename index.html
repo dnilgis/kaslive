@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasLive | Kaspa Network Intelligence</title>
+    <title>KasLive | Whale Watch & Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fa-solid fa-network-wired"></i> KasLive
+                <i class="fa-solid fa-network-wired"></i> KasLive <span class="badge">WHALE WATCH</span>
             </div>
             <div class="status-indicator">
                 <span class="dot pulse"></span> Live Network
@@ -21,34 +22,76 @@
         </header>
 
         <div class="dashboard-grid">
-            
             <div class="card">
                 <h3><i class="fa-solid fa-coins"></i> KAS Price</h3>
                 <div class="metric-value" id="price-display">Loading...</div>
                 <div class="sub-text" id="price-change">--</div>
             </div>
-
             <div class="card">
-                <h3><i class="fa-solid fa-microchip"></i> Network Hashrate</h3>
+                <h3><i class="fa-solid fa-layer-group"></i> Market Cap</h3>
+                <div class="metric-value" id="mcap-display">Loading...</div>
+                <div class="sub-text" id="vol-display">Vol: --</div>
+            </div>
+            <div class="card">
+                <h3><i class="fa-solid fa-microchip"></i> Hashrate</h3>
                 <div class="metric-value" id="hashrate-display">Loading...</div>
-                <div class="sub-text">Total Network Power</div>
+                <div class="sub-text">Network Power</div>
             </div>
-
             <div class="card">
-                <h3><i class="fa-solid fa-box-open"></i> Block Reward</h3>
-                <div class="metric-value" id="reward-display">Loading...</div>
-                <div class="sub-text">Next Halving Phase</div>
-            </div>
-
-            <div class="card">
-                <h3><i class="fa-solid fa-globe"></i> Circulating Supply</h3>
-                <div class="metric-value" id="supply-display">Loading...</div>
-                <div class="sub-text">Total KAS Mined</div>
+                <h3><i class="fa-solid fa-address-card"></i> Active Addr</h3>
+                <div class="metric-value" id="active-addr-display">--</div>
+                <div class="sub-text">24h Activity</div>
             </div>
         </div>
 
+        <div class="split-section whale-section">
+            
+            <div class="card sonar-card">
+                <div class="sonar-header">
+                    <h3><i class="fa-solid fa-radar"></i> Whale Sonar</h3>
+                    <div class="live-indicator">ACTIVE</div>
+                </div>
+                <div class="sonar-visual">
+                    <div class="radar-circle"></div>
+                    <div class="radar-sweep"></div>
+                    <div class="sonar-message" id="sonar-msg">Scanning for heavy blocks...</div>
+                </div>
+                <div class="whale-log" id="whale-log">
+                    </div>
+            </div>
+
+            <div class="card miner-card">
+                <h3><i class="fa-solid fa-users"></i> Top Active Addresses (Miners)</h3>
+                <div class="table-header">
+                    <span>Address (Short)</span>
+                    <span>Blocks Found</span>
+                </div>
+                <div class="miner-list" id="miner-list">
+                    <div class="list-item">Loading miner data...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <h3><i class="fa-solid fa-chart-line"></i> Market & Volatility</h3>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card feed-card">
+            <h3><i class="fa-solid fa-cube"></i> Raw Block Feed</h3>
+            <div class="table-header-feed">
+                <span>Time</span>
+                <span>TX Count</span>
+                <span>Hash</span>
+            </div>
+            <div class="scroll-feed" id="block-feed">
+                </div>
+        </div>
+
         <footer>
-            <p>Data powered by Kaspa API & CoinGecko. Updates every 30s.</p>
+            <p>KasLive Intelligence v3.0 | <a href="https://kaspa.org">Official Docs</a></p>
         </footer>
     </div>
 
