@@ -2,14 +2,21 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import logging
+import sys
+import os
+
+# --- Path fix for deployment environment ---
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# ------------------------------------------
+
 from backend.config import Config
 
 logger = logging.getLogger(__name__)
 
 class KRC20Service:
     def __init__(self):
-        # Using Kasplex as the assumed KRC-20 indexer
-        self.kasplex_api = Config.KASPA_API_URL.replace('.org', 'plex.org') # Placeholder URL adjustment
+        # Using the dedicated KRC20 URL from Config
+        self.kasplex_api = Config.KRC20_API_URL 
         
         # Configure robust HTTP session
         retry_strategy = Retry(
@@ -30,13 +37,15 @@ class KRC20Service:
         Returns an empty list if API fails.
         """
         try:
-            url = f"{self.kasplex_api}/v1/krc20/tokenlist"
+            # API endpoint is expected to be under the base URL already
+            url = f"{self.kasplex_api}/krc20/tokenlist"
             response = self.session.get(url, timeout=self.timeout)
             response.raise_for_status()
             
             data = response.json()
             
-            if data.get('message') != 'successful':
+            # Check for a specific 'successful' message or rely on status code
+            if response.status_code != 200 or data.get('message') != 'successful':
                 logger.warning(f"Kasplex API did not return successful: {data.get('message')}")
                 return []
             
@@ -50,8 +59,6 @@ class KRC20Service:
                     'total_supply': token.get('supply', 0),
                     'holders': token.get('holderTotal', 0),
                     'verified': token.get('verified', False)
-                    # Note: Price, change, volume, mcap are usually from a separate DEX API,
-                    # We leave them out until that API is integrated.
                 })
             
             return tokens
