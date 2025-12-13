@@ -1,156 +1,227 @@
-// --- API Config ---
 const API = {
-    price: 'https://api.coingecko.com/api/v3/simple/price?ids=kaspa&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true',
+    price: 'https://api.coingecko.com/api/v3/simple/price?ids=kaspa&vs_currencies=usd&include_24hr_change=true',
     history: 'https://api.coingecko.com/api/v3/coins/kaspa/market_chart?vs_currency=usd&days=7',
     hashrate: 'https://api.kaspa.org/info/hashrate',
-    activeCount: 'https://api.kaspa.org/info/blockreward', // Fallback if no active addr endpoint
-    blocks: 'https://api.kaspa.org/blocks?limit=20' // Fetch last 20 blocks
+    blocks: 'https://api.kaspa.org/blocks?limit=50' // Get 50 to have good stats
 };
 
-// Note: Official Active Address endpoint is often rate limited, so we use a placeholder or derived metric if needed.
-
+let lastBlockHash = '';
 let chartInstance = null;
-let lastBlockHash = ''; // To prevent duplicate alerts
+
+// --- 1. HEX DECODER (Fixes the "Unknown Miner" issue) ---
+function hexToText(hex) {
+    try {
+        let str = '';
+        for (let i = 0; i < hex.length; i += 2) {
+            str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        }
+        // Filter out weird characters if decode fails or yields garbage
+        return str.replace(/[^\x20-\x7E]/g, '') || 'Unknown Miner';
+    } catch (e) { return 'Unknown Miner'; }
+}
 
 async function init() {
-    await Promise.all([fetchMarket(), fetchNetwork(), fetchBlocks()]);
-    if (!chartInstance) fetchChart();
+    initParticles(); // Start the visual background
+    await updateDashboard();
+    setInterval(updateDashboard, 3000); // Fast update cycle (3s)
 }
 
-// 1. Market Data
-async function fetchMarket() {
+async function updateDashboard() {
+    // A. FETCH PRICE
     try {
-        const res = await fetch(API.price);
-        const data = await res.json();
-        const k = data.kaspa;
-
-        document.getElementById('price-display').innerText = `$${k.usd}`;
-        const changeEl = document.getElementById('price-change');
-        changeEl.innerText = `${k.usd_24h_change.toFixed(2)}% (24h)`;
-        changeEl.style.color = k.usd_24h_change >= 0 ? '#4ade80' : '#f87171';
+        const pRes = await fetch(API.price);
+        const pData = await pRes.json();
+        const price = pData.kaspa.usd;
+        document.getElementById('price-display').innerText = `$${price.toFixed(4)}`;
         
-        document.getElementById('mcap-display').innerText = `$${(k.usd_market_cap/1e9).toFixed(2)} B`;
-        document.getElementById('vol-display').innerText = `Vol: $${(k.usd_24h_vol/1e6).toFixed(1)} M`;
-    } catch (e) { console.error("Market error", e); }
-}
+        const change = pData.kaspa.usd_24h_change;
+        const cEl = document.getElementById('price-change');
+        cEl.innerText = `${change.toFixed(2)}%`;
+        cEl.style.color = change >= 0 ? '#00ff9d' : '#ff0055';
+    } catch(e) {}
 
-// 2. Network Stats & Active Addresses
-async function fetchNetwork() {
+    // B. FETCH HASHRATE
     try {
-        const res = await fetch(API.hashrate);
-        const data = await res.json();
-        document.getElementById('hashrate-display').innerText = `${(data.hashrate/1000).toFixed(2)} PH/s`;
+        const hRes = await fetch(API.hashrate);
+        const hData = await hRes.json();
+        document.getElementById('hashrate-display').innerText = `${(hData.hashrate/1000).toFixed(2)} PH/s`;
+    } catch(e) {}
 
-        // Simulate Active Addresses for Demo (Real API requires heavy backend)
-        // We calculate a "Activity Score" based on hashrate trend
-        const randomActivity = Math.floor(25000 + Math.random() * 2000); 
-        document.getElementById('active-addr-display').innerText = randomActivity.toLocaleString();
-        
-    } catch (e) { console.error("Hashrate error", e); }
-}
-
-// 3. WHALE WATCH & BLOCKS
-async function fetchBlocks() {
+    // C. FETCH BLOCKS & INTELLIGENCE
     try {
-        const res = await fetch(API.blocks);
-        const blocks = await res.json();
-        const feed = document.getElementById('block-feed');
-        const whaleLog = document.getElementById('whale-log');
-        const minerList = document.getElementById('miner-list');
+        const bRes = await fetch(API.blocks);
+        const blocks = await bRes.json();
         
-        feed.innerHTML = ''; // Clear feed
+        // 1. Check for New Block (Heartbeat)
+        const latest = blocks[0];
+        if (latest.verboseData.hash !== lastBlockHash) {
+            lastBlockHash = latest.verboseData.hash;
+            triggerHeartbeat(); // FLASH SCREEN
+            analyzeBlock(latest); // Check for whales
+        }
+
+        // 2. Calculate TPS (Transactions Per Second)
+        // Sum TXs from last 50 blocks / 50 seconds (approx)
+        let totalTx = 0;
+        let minerMap = {};
         
-        // Miner Counter
-        let minerCounts = {};
+        blocks.forEach(block => {
+            // Count TX
+            totalTx += block.transactions ? block.transactions.length : 0;
 
-        blocks.forEach((block, index) => {
-            // A. Populate Feed
-            const time = new Date(block.timestamp).toLocaleTimeString([], {hour12:false});
-            const txCount = block.transactions ? block.transactions.length : 0;
-            const shortHash = block.verboseData.hash.substring(0,8) + '...';
-            
-            const item = document.createElement('div');
-            item.className = 'feed-item';
-            item.innerHTML = `<span>${time}</span><span>${txCount} TXs</span><span>${shortHash}</span>`;
-            feed.appendChild(item);
-
-            // B. Whale Detection (Threshold: >5 TXs in one block is high for Kaspa 1bps)
-            if (txCount > 5 && block.verboseData.hash !== lastBlockHash && index === 0) {
-                lastBlockHash = block.verboseData.hash; // Avoid repeat alerts
-                const logItem = document.createElement('div');
-                logItem.className = 'whale-alert';
-                logItem.innerHTML = `<i class="fa-solid fa-eye"></i> WHALE: ${txCount} TXs in Block ${shortHash}`;
-                whaleLog.prepend(logItem);
-                
-                // Trigger Visual Sonar Text
-                document.getElementById('sonar-msg').innerText = `⚠️ WHALE DETECTED: ${txCount} TXs`;
-                document.getElementById('sonar-msg').style.color = '#c084fc';
-                setTimeout(() => {
-                    document.getElementById('sonar-msg').innerText = "Scanning for heavy blocks...";
-                    document.getElementById('sonar-msg').style.color = '#4ade80';
-                }, 4000);
+            // Parse Miner (Hex Decode)
+            // Kaspa puts miner info in 'extraData' or 'minerData' usually in Hex
+            let minerName = "Unknown Pool";
+            if (block.verboseData.isChainBlock) {
+                 // Try to decode payload if available, else use hash fragment
+                 // Note: Public API structure varies, this is a robust fallback:
+                 const rawPayload = block.verboseData.minerData || "";
+                 const decoded = hexToText(rawPayload);
+                 if (decoded.length > 2) minerName = decoded;
+                 else minerName = "Pool-" + block.verboseData.hash.substring(0, 6);
             }
-
-            // C. Track Miners (using payload field)
-            // Kaspa payload is hex; we use the first 10 chars as a "Pool ID" signature
-            const minerId = block.verboseData.minerData || block.verboseData.hash.substring(0,6); 
-            // Cleaning up the ID for display
-            const shortMiner = minerId.length > 15 ? minerId.substring(0, 15) + '...' : minerId;
-            minerCounts[shortMiner] = (minerCounts[shortMiner] || 0) + 1;
+            minerMap[minerName] = (minerMap[minerName] || 0) + 1;
         });
 
-        // Update Top Miners List
+        const tps = totalTx / blocks.length; // Avg per block (1 block = 1 sec approx)
+        document.getElementById('tps-display').innerText = tps.toFixed(2);
+
+        // 3. Update Miner List
+        const minerList = document.getElementById('miner-list');
         minerList.innerHTML = '';
-        Object.entries(minerCounts)
-            .sort((a,b) => b[1] - a[1]) // Sort by most blocks found
-            .slice(0, 5) // Top 5
-            .forEach(([miner, count]) => {
-                const row = document.createElement('div');
-                row.className = 'list-item';
-                row.innerHTML = `<span>${miner}</span><span>${count} Blocks</span>`;
-                minerList.appendChild(row);
+        Object.entries(minerMap)
+            .sort((a,b) => b[1] - a[1])
+            .slice(0, 10)
+            .forEach(([name, count]) => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `<span>${name}</span> <span>${count}</span>`;
+                minerList.appendChild(div);
             });
 
-    } catch (e) { console.error("Block error", e); }
+    } catch(e) { console.log(e); }
+
+    if(!chartInstance) loadChart();
 }
 
-// 4. Chart
-async function fetchChart() {
-    try {
-        const res = await fetch(API.history);
-        const data = await res.json();
-        const prices = data.prices.map(p => p[1]);
-        const labels = data.prices.map(p => new Date(p[0]).toLocaleDateString());
+// --- VISUAL FX ---
+function triggerHeartbeat() {
+    const flash = document.getElementById('flash-overlay');
+    flash.style.opacity = '1';
+    setTimeout(() => { flash.style.opacity = '0'; }, 300);
+}
 
+function analyzeBlock(block) {
+    const txCount = block.transactions ? block.transactions.length : 0;
+    const log = document.getElementById('whale-log');
+    
+    // Create Log Entry
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const time = new Date(block.timestamp).toLocaleTimeString([], {hour12:false});
+    
+    if (txCount > 5) { // WHALE THRESHOLD
+        entry.innerHTML = `<span class="log-alert">[ALERT]</span> ${time} :: Heavy Block Detected :: ${txCount} TXs`;
+        document.getElementById('sonar-msg').innerText = `ANOMALY: ${txCount} TXs`;
+        document.getElementById('sonar-msg').style.color = '#ff0055';
+    } else {
+        entry.innerHTML = `[INFO] ${time} :: Block Found :: ${txCount} TXs`;
+        document.getElementById('sonar-msg').innerText = "SCANNING...";
+        document.getElementById('sonar-msg').style.color = '#00ff9d';
+    }
+    
+    log.prepend(entry);
+    if(log.children.length > 20) log.lastChild.remove();
+}
+
+// --- CHART ---
+async function loadChart() {
+    try {
+        const r = await fetch(API.history);
+        const d = await r.json();
+        const prices = d.prices.map(x=>x[1]);
         const ctx = document.getElementById('priceChart').getContext('2d');
-        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(192, 132, 252, 0.4)'); // Purple for whale theme
-        gradient.addColorStop(1, 'rgba(192, 132, 252, 0.0)');
+        
+        // Cyberpunk Gradient
+        let grad = ctx.createLinearGradient(0,0,0,300);
+        grad.addColorStop(0, 'rgba(0, 255, 157, 0.5)');
+        grad.addColorStop(1, 'rgba(0, 255, 157, 0)');
 
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: prices.map(x=>''),
                 datasets: [{
-                    label: 'Price',
                     data: prices,
-                    borderColor: '#c084fc',
-                    backgroundColor: gradient,
+                    borderColor: '#00ff9d',
+                    backgroundColor: grad,
+                    borderWidth: 2,
+                    pointRadius: 0,
                     fill: true,
-                    tension: 0.4,
-                    pointRadius: 0
+                    tension: 0.4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { display: false } }
+                plugins: { legend: {display:false} },
+                scales: { x:{display:false}, y:{display:false} }
             }
         });
-    } catch (e) { console.error("Chart error", e); }
+    } catch(e){}
+}
+
+// --- PARTICLES BACKGROUND (The "Alive" Feeling) ---
+function initParticles() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let particles = [];
+    for(let i=0; i<50; i++) {
+        particles.push({
+            x: Math.random()*canvas.width,
+            y: Math.random()*canvas.height,
+            vx: (Math.random()-0.5)*1,
+            vy: (Math.random()-0.5)*1,
+            size: Math.random()*2
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#00ff9d';
+        ctx.beginPath();
+        
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0 || p.x>canvas.width) p.vx*=-1;
+            if(p.y<0 || p.y>canvas.height) p.vy*=-1;
+            
+            ctx.moveTo(p.x, p.y);
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        });
+        ctx.fill();
+        
+        // Connect lines
+        ctx.strokeStyle = 'rgba(0, 255, 157, 0.1)';
+        ctx.beginPath();
+        for(let i=0; i<particles.length; i++) {
+            for(let j=i; j<particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < 150) {
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                }
+            }
+        }
+        ctx.stroke();
+        requestAnimationFrame(animate);
+    }
+    animate();
 }
 
 init();
-setInterval(fetchMarket, 30000);
-setInterval(fetchBlocks, 3000); // Fast scan (3s)
