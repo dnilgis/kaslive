@@ -1,5 +1,5 @@
 """
-Configuration settings for KASLIVE v2.0
+Configuration settings for KASLIVE v2.1 (Cleaned and Simplified)
 """
 
 import os
@@ -14,95 +14,72 @@ class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'production')
     
     # Database
+    # NOTE: Fix for Render/Heroku PostgreSQL URL is in backend/models/init.py
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///kaslive.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     
-    # Redis
+    # Redis (For Cache and Rate Limiting)
     REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    
-    # Cache
-    CACHE_TYPE = 'redis'
     CACHE_REDIS_URL = REDIS_URL
-    CACHE_DEFAULT_TIMEOUT = 300
-    
-    # Rate Limiting
     RATELIMIT_STORAGE_URL = REDIS_URL
+    
+    # Cache & Rate Limiting Settings
+    CACHE_TYPE = 'redis'
+    CACHE_DEFAULT_TIMEOUT = 60 # Default TTL is 60 seconds (lower for real-time data)
     RATELIMIT_STRATEGY = 'fixed-window'
     
     # Kaspa API
-    KASPA_API_URL = os.getenv('KASPA_API_URL', 'https://api.kaspa.org')
-    KASPA_EXPLORER_API = os.getenv('KASPA_EXPLORER_API', 'https://explorer.kaspa.org/api')
-    KASPA_RPC_URL = os.getenv('KASPA_RPC_URL', 'http://localhost:16110')
+    KASPA_API_URL = os.getenv('KASPA_API_URL', 'https://api.kaspa.org') # For core network stats
+    KASPA_EXPLORER_API = os.getenv('KASPA_EXPLORER_API', 'https://explorer.kaspa.org/api') # For explorer data (wallets/txs/rich-list)
+    KRC20_API_URL = os.getenv('KRC20_API_URL', 'https://api.kasplex.org/v1') # KRC-20 data endpoint
     
     # Price APIs
-    COINGECKO_API_KEY = os.getenv('COINGECKO_API_KEY', '')
+    COINGECKO_API_KEY = os.getenv('COINGECKO_API_KEY', '') # Premium API key
     COINGECKO_API_URL = 'https://api.coingecko.com/api/v3'
     
-    # Exchange APIs
+    # Exchange APIs (For future multi-exchange price aggregation)
     MEXC_API_KEY = os.getenv('MEXC_API_KEY', '')
     MEXC_API_SECRET = os.getenv('MEXC_API_SECRET', '')
-    KUCOIN_API_KEY = os.getenv('KUCOIN_API_KEY', '')
-    KUCOIN_API_SECRET = os.getenv('KUCOIN_API_SECRET', '')
     
-    # Features
+    # Features & Alerting
     ENABLE_WHALE_ALERTS = os.getenv('ENABLE_WHALE_ALERTS', 'true').lower() == 'true'
     WHALE_THRESHOLD = int(os.getenv('WHALE_THRESHOLD', 1000000))  # 1M KAS
-    ENABLE_EMAIL_ALERTS = os.getenv('ENABLE_EMAIL_ALERTS', 'false').lower() == 'true'
-    ENABLE_SMS_ALERTS = os.getenv('ENABLE_SMS_ALERTS', 'false').lower() == 'true'
-    ENABLE_TELEGRAM_ALERTS = os.getenv('ENABLE_TELEGRAM_ALERTS', 'false').lower() == 'true'
+    
+    # Removed unnecessary default mining calculator values as they must be dynamic
     
     # Email (SendGrid)
     SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
     FROM_EMAIL = os.getenv('FROM_EMAIL', 'alerts@kaslive.com')
     
-    # SMS (Twilio)
-    TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
-    TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
-    TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
-    
-    # Telegram
-    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    
     # Monitoring
-    SENTRY_DSN = os.getenv('SENTRY_DSN', '')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     
     # Security
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    
-    # CORS
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')
     
-    # Update intervals (seconds)
-    PRICE_UPDATE_INTERVAL = 5
-    WHALE_CHECK_INTERVAL = 30
-    NETWORK_STATS_INTERVAL = 60
-    KRC20_UPDATE_INTERVAL = 120
+    # Update intervals (seconds) - Hints for future Celery tasks
+    PRICE_UPDATE_INTERVAL = 15
+    NETWORK_STATS_INTERVAL = 30
     
     # Pagination
     DEFAULT_PAGE_SIZE = 20
-    MAX_PAGE_SIZE = 100
-    
-    # Mining Calculator Defaults
-    DEFAULT_NETWORK_HASHRATE = 945000  # PH/s
-    DEFAULT_BLOCK_REWARD = 179  # KAS
-    BLOCKS_PER_DAY = 86400  # 1 block per second
 
 
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     TESTING = False
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False # Keep False unless debugging DB queries heavily
+    LOG_LEVEL = 'DEBUG'
 
 
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     TESTING = False
+    LOG_LEVEL = 'INFO'
 
 
 class TestingConfig(Config):
