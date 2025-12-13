@@ -2,6 +2,13 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import logging
+import sys
+import os
+
+# --- Path fix for deployment environment ---
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# ------------------------------------------
+
 from backend.config import Config
 
 logger = logging.getLogger(__name__)
@@ -29,7 +36,6 @@ class WhaleService:
     def get_top_whales(self, limit=10):
         """
         Get top whale addresses from the rich-list API.
-        The old implementation had hardcoded addresses, which is now fixed to use the API.
         """
         try:
             # Assumes the explorer API has a rich-list endpoint
@@ -47,6 +53,7 @@ class WhaleService:
                 balance_kas = balance_sompi / 100000000
                 
                 # Filter only addresses above the minimum whale threshold
+                # Note: The rich list should inherently be ordered, but we filter here for safety.
                 if balance_kas >= self.whale_threshold:
                     whales.append({
                         'rank': i,
@@ -66,7 +73,6 @@ class WhaleService:
     def get_recent_alerts(self, limit=20):
         """
         Get recent whale alerts (large transactions) by querying the transaction API.
-        The old implementation returned an empty array, now we attempt a real API call.
         """
         try:
             # Assumes an API endpoint for recent transactions
