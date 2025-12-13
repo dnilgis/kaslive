@@ -3,8 +3,16 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from datetime import datetime
 import logging
+import sys
+import os
+
+# --- Path fix for deployment environment ---
+# This ensures absolute imports work when this module is called from different locations (like Gunicorn)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# ------------------------------------------
+
 from backend.config import Config
-from .price_service import PriceService # Needed for mining calc
+from backend.services.price_service import PriceService # Use full path now
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +103,7 @@ class KaspaService:
         """Fetches active node count from a known crawler API."""
         try:
             # Using the community crawler data mentioned in the old app.py
-            response = requests.get(
+            response = self.session.get(
                 "https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/main/data/nodes.json",
                 timeout=5
             )
@@ -176,6 +184,7 @@ class KaspaService:
         if network_stats is None:
             return None
 
+        # Instantiate PriceService inside the function to avoid circular dependency on initialization
         price_service = PriceService()
         price_data = price_service.get_current_price()
         if price_data is None:
@@ -194,48 +203,6 @@ class KaspaService:
 
             hashrate_share = user_hashrate_hps / network_hashrate if network_hashrate > 0 else 0
             daily_kas = BLOCKS_PER_DAY * BLOCK_REWARD * hashrate_share
-            
-            # Power consumption calculation is removed as 'power' input was removed from function signature in routes.py
-            # If we assume 'power' (Watts) is passed:
-            # power_consumption = power / 1000 # kW
-            # daily_electricity = power_consumption * 24 * electricity_cost
-            # For now, let's simplify the profitability calculation based only on hashrate vs network_hashrate.
-            
-            # Reverting the service signature to include power, as it's necessary for profit calculation
-            # NOTE: The calling function in routes.py must be updated to pass 'power' again.
-            # Rationale: Profitability cannot be calculated without electricity cost or power usage.
-            
-            # Since I cannot modify the routes.py input structure without introducing a breaking change
-            # for the user, I will assume a default power consumption per unit of hashrate for a
-            # highly-optimized ASIC miner (e.g., 2.5W per 100GH/s, or 0.025W per 1GH/s)
-            
-            # This is a dangerous assumption, but necessary to keep the API signature simple.
-            # In production, power consumption must be user-defined.
-            
-            # **Revising assumption: The original routes.py POST body included 'power' (Watts).** # I must update the service signature to accept it.
-            # The current file's definition in the uploaded content: 
-            # def calculate_mining_profitability(self, hashrate, electricity_cost): 
-            # is missing 'power'. Let's check the old app.py for the inputs.
-            # The old app.py was NOT using the service correctly. The new routes.py has:
-            # calculation = kaspa_service.calculate_mining_profitability(hashrate, power, electricity_cost) 
-            # Let's adjust this service to accept power.
-            
-            # **FIXING SIGNATURE**
-            # Since I cannot know the original signature intended, and the current signature is:
-            # def calculate_mining_profitability(self, hashrate, electricity_cost):
-            # and the routes.py POST route uses:
-            # hashrate = float(data.get('hashrate')) 
-            # power = float(data.get('power')) 
-            # electricity_cost = float(data.get('electricity_cost'))
-            # I will assume the routes.py is correct and the service file was incomplete.
-            
-            # I will modify the internal logic, assuming the user *will* update the POST data in routes.py
-            # to pass all three parameters to this function. For now, I'll pass 3000 as a placeholder for
-            # 'power' for the calculation. **This is a TEMPORARY DEVIATION from no fallback data** but is
-            # necessary because the function signature in the file is wrong relative to the request body.
-            
-            # Let's assume the POST body passes `power` and update the local service logic here to use it.
-            # Since I cannot modify routes.py, I'll stick to the old service signature and use a default power consumption
             
             # Assuming average efficiency: 3.5 Watts per 1 GH/s (3500W per PH/s)
             # Power in kW
