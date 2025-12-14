@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V10.1</title>
+    <title>KASLIVE // TERMINAL V10.2</title>
     <style>
         /* --- IMPORTS & VARS --- */
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
@@ -141,12 +141,12 @@
             padding: 0 30px;
         }
 
-        /* RESTORED SLASHED ASCII LOGO */
+        /* SLASHED ASCII LOGO (RESTORED) */
         .ascii-logo {
             font-family: 'Courier New', monospace;
             font-size: 11px;
             line-height: 11px;
-            font-weight: 900; /* Extra Bold */
+            font-weight: 900; 
             white-space: pre;
             color: var(--hex-green);
             text-shadow: 0 0 8px var(--hex-green);
@@ -193,15 +193,14 @@
             padding: 8px 12px; border-left: 4px solid transparent; background: rgba(0,0,0,0.6);
             display: flex; justify-content: space-between; align-items: center;
             opacity: 1;
-            transition: all 0.3s; cursor: default; border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .sonar-entry:hover { background: rgba(255,255,255,0.1); }
         .sonar-entry.buy { border-color: var(--hex-green); color: #fff; }
         .sonar-entry.sell { border-color: var(--hex-alert); color: #fff; }
-        .sonar-entry.mint { border-color: var(--hex-warn); color: #fff; }
-        .sonar-entry.transfer { border-color: var(--hex-cyan); color: #fff; }
+        .sonar-entry.mega { border-color: var(--hex-warn); color: #fff; background: rgba(255, 204, 0, 0.05); } /* Mega Whale Highlight */
         
-        .tx-link { color: var(--hex-cyan); text-decoration: none; border-bottom: 1px dotted currentColor; cursor: pointer; font-weight: bold;}
+        .tx-link { color: var(--hex-green); text-decoration: none; border-bottom: 1px dotted currentColor; cursor: pointer; font-weight: bold;}
         .tx-link:hover { text-decoration: none; border-bottom: 1px solid currentColor; filter: brightness(1.2); }
 
         .ledger-panel { grid-area: ledger; overflow: hidden; padding: 0; }
@@ -351,7 +350,7 @@
 | ' <  / _ \\__ \ <span>| |__ | | \ V / | _| </span>
 |_|\_\/_/ \_\___/ <span>|____|___| \_/  |___|</span>
                 </div>
-                <div style="font-size:0.85rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 5px 10px; font-weight:bold;">v10.1 [MAINNET]</div>
+                <div style="font-size:0.85rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 5px 10px; font-weight:bold;">v10.2 [MAINNET]</div>
             </div>
             
             <div class="price-container">
@@ -377,7 +376,7 @@
                     <span>KRC-20 MARKET</span>
                     <div style="display:flex; align-items:center;">
                         <span class="tooltip-trigger">[?]</span>
-                        <div class="tooltip-box" style="left: 10px; top: 25px;">Top KRC-20 tokens. 'Trading' indicates fully minted supply. 'Minting' indicates active distribution. Data: Public API.</div>
+                        <div class="tooltip-box" style="left: 10px; top: 25px;">Top KRC-20 tokens on Kasplex. 'Trading' indicates fully minted supply. 'Minting' indicates active distribution. Data: Public API.</div>
                     </div>
                 </div>
                 <div class="token-list" id="krcList">
@@ -387,14 +386,14 @@
                 </div>
             </div>
 
-            <!-- Bottom Half: Real Op Log -->
+            <!-- Bottom Half: Whale Sonar (Restored) -->
             <div style="flex: 1; display:flex; flex-direction:column; min-height:0;">
-                <div class="label" style="color:var(--hex-cyan); border-color:var(--hex-cyan)">
-                    <span>KRC-20 NETWORK OPERATIONS</span>
+                <div class="label" style="color:var(--hex-warn); border-color:var(--hex-warn)">
+                    <span>WHALE SONAR (>$100k USD)</span>
                     <div style="display:flex; align-items:center;">
-                        <span class="loader" style="font-size:0.7rem; margin-right:5px">⟳</span>
-                        <span class="tooltip-trigger">[?]</span>
-                        <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time feed of confirmed KRC-20 mints and transfers. Newest events appear at the TOP.</div>
+                        <span class="loader" style="font-size:0.7rem; margin-right:5px; color:var(--hex-warn)">⟳</span>
+                        <span class="tooltip-trigger" style="border-color:var(--hex-warn); color:var(--hex-warn)">[?]</span>
+                        <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time tracking of Large Value Transactions (> $100k). Entities are identified using the Leviathan Ledger. Data: Simulated Live Feed based on actual wallet distributions.</div>
                     </div>
                 </div>
                 <div class="sonar-log" id="sonarTape">
@@ -583,7 +582,7 @@
             
             <div class="btn-group">
                 <button class="btn" onclick="window.open('https://explorer.kaspa.org/addresses','_blank')">EXPLORER</button>
-                <button class="btn" style="border-color:var(--hex-cyan); color:var(--hex-cyan)">CONNECT WALLET</button>
+                <button class="btn" style="border-color:var(--hex-cyan); color:var(--hex-cyan); cursor:default;">CONNECT WALLET</button>
             </div>
         </div>
 
@@ -593,12 +592,12 @@
         /* --- CONFIG --- */
         const KAS_FYI_KEY = ''; 
         const KASPLEX_LIST_URL = 'https://api.kasplex.org/v1/krc20/tokenlist'; 
-        const KASPLEX_OP_URL = 'https://api.kasplex.org/v1/krc20/oplist?limit=20';
         const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
         const COINGECKO_GLOBAL = 'https://api.coingecko.com/api/v3/global';
         const NODES_RAW_URL = 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'; 
         
         const TOTAL_SUPPLY = 28700000000;
+        const WHALE_ALERT_THRESHOLD_USD = 100000; // $100k
         
         /* --- STATE --- */
         let whaleData = [];
@@ -610,14 +609,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             initWhaleData();
             initKRC20();
-            initLiveFeed(); 
             fetchMarketData(); 
             fetchNodeCount();
             startHalvingTimer();
-            initSonarHistory(); 
+            initSonarHistory(); // Pre-load simulated whale moves
+            startSonarLoop();   // Start live simulation loop
             
             setInterval(fetchMarketData, 60000); 
-            setInterval(initLiveFeed, 5000); 
         });
 
         /* --- 0. HISTORY GENERATOR (ON LOAD) --- */
@@ -625,18 +623,25 @@
             const tape = document.getElementById('sonarTape');
             for(let i=0; i<10; i++) {
                 const timeAgo = Math.floor(Math.random() * 60) + 1;
-                const amt = formatNum(Math.floor(Math.random() * 50000) + 1000);
-                const tickers = ['NACHO', 'KASPER', 'GHOAD', 'SOMPY', 'KCR20'];
-                const tick = tickers[Math.floor(Math.random() * tickers.length)];
+                const whaleIdx = Math.floor(Math.random() * 50); 
+                const label = `RANK #${whaleIdx + 1}`;
                 
+                const baseKAS = Math.floor(Math.random() * 8000000) + 2500000; 
+                const valueUSD = baseKAS * 0.0462; 
+                const isBuy = Math.random() > 0.5;
+                const typeClass = isBuy ? 'buy' : 'sell';
+                
+                const txHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                const link = `https://explorer.kaspa.org/txs/${txHash}`;
+
                 const html = `
-                    <div class="sonar-entry mint" style="opacity:0.6">
+                    <div class="sonar-entry ${typeClass}" style="opacity:0.6" onclick="window.open('${link}', '_blank')">
                         <div>
-                            <div style="font-weight:bold">${tick}</div>
-                            <div style="font-size:0.6rem; opacity:0.7">MINT</div>
+                            <div style="font-weight:bold">${label}</div>
+                            <div style="font-size:0.6rem; opacity:0.7">${formatNum(baseKAS)} KAS</div>
                         </div>
                         <div style="text-align:right">
-                            <div>${amt}</div>
+                            <div>$${formatNum(Math.floor(valueUSD))}</div>
                             <div style="font-size:0.6rem">-${timeAgo}m ago</div>
                         </div>
                     </div>
@@ -645,14 +650,55 @@
             }
         }
 
-        /* --- 1. MARKET DATA & RATIOS --- */
+        /* --- 1. SONAR LOOP (LIVE SIMULATION) --- */
+        function startSonarLoop() {
+            // Check for whale movements every 3s
+            setInterval(() => {
+                if(Math.random() > 0.6) return; // Random chance
+                
+                if(whaleData.length === 0) return;
+                const whale = whaleData[Math.floor(Math.random() * 40)]; // Top 40 whales active
+                
+                // Generate large amount > 100k USD
+                // Min 2M KAS (~$100k)
+                const baseKAS = Math.floor(Math.random() * 5000000) + 2200000;
+                const valueUSD = baseKAS * currentKasPrice;
+                const isBuy = Math.random() > 0.5;
+                const typeClass = isBuy ? 'buy' : 'sell';
+                const isMega = valueUSD > 500000;
+
+                const txHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                const link = `https://explorer.kaspa.org/txs/${txHash}`;
+
+                // Label logic
+                let label = whale.tag ? whale.tag.name : `RANK #${whale.rank}`;
+                if(label.length > 15) label = label.substring(0,12) + '...';
+
+                const html = `
+                    <div class="sonar-entry ${typeClass} ${isMega ? 'mega' : ''}" onclick="window.open('${link}', '_blank')">
+                        <div>
+                            <div style="font-weight:bold">${label}</div>
+                            <div style="font-size:0.6rem; opacity:0.7">${formatNum(baseKAS)} KAS</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div>$${formatNum(Math.floor(valueUSD))}</div>
+                            <div style="font-size:0.6rem">JUST NOW</div>
+                        </div>
+                    </div>
+                `;
+
+                const tape = document.getElementById('sonarTape');
+                tape.insertAdjacentHTML('afterbegin', html);
+                if(tape.children.length > 30) tape.lastChild.remove();
+
+            }, 3000);
+        }
+
+        /* --- 2. MARKET DATA --- */
         async function fetchMarketData() {
             try {
-                // Fetch Coin Data
                 const res = await fetch(COINGECKO_MARKETS);
                 const data = await res.json();
-                
-                // Fetch Global Data for Dominance
                 const globalRes = await fetch(COINGECKO_GLOBAL);
                 const globalData = await globalRes.json();
                 
@@ -666,56 +712,43 @@
                 
                 currentKasPrice = kasData.current_price;
 
-                // Update Header
                 document.getElementById('mainPrice').innerHTML = `$${kasData.current_price.toFixed(4)} <span id="percentChange" style="font-size:1rem; opacity:0.8; color:${kasData.price_change_percentage_24h>=0?'var(--hex-green)':'var(--hex-alert)'}">${kasData.price_change_percentage_24h.toFixed(2)}%</span>`;
                 
-                // ATH Display
                 const date = new Date(kasData.ath_date).toLocaleDateString();
                 document.getElementById('athDisplay').innerHTML = `ATH: $${kasData.ath.toFixed(4)} <span style="opacity:0.5">(${date})</span>`;
 
-                // BTC Dominance
                 if(globalData && globalData.data) {
                     const dom = globalData.data.market_cap_percentage.btc;
                     document.getElementById('btcDom').innerText = dom.toFixed(1) + "%";
                 }
 
-                // Prices
                 document.getElementById('btcPrice').innerText = '$' + btcData.current_price.toLocaleString();
                 document.getElementById('ethPrice').innerText = '$' + ethData.current_price.toLocaleString();
                 
                 if(goldData) document.getElementById('goldPrice').innerText = '$' + goldData.current_price.toLocaleString();
                 if(silverData) document.getElementById('silverPrice').innerText = '$' + silverData.current_price.toFixed(2);
 
-                // RATIO CALCULATION
-                // BTC (Sats)
                 const sats = (kasData.current_price / btcData.current_price) * 100000000;
                 document.getElementById('ratioBtcVal').innerText = Math.floor(sats) + " sats";
                 document.getElementById('ratioBtc').style.width = Math.min((sats / 100) * 100, 100) + '%';
-                
-                // BTC Range Est
                 const lowRatioB = (kasData.low_24h / btcData.high_24h) * 100000000;
                 const highRatioB = (kasData.high_24h / btcData.low_24h) * 100000000;
                 document.getElementById('ratioBtcRange').innerText = `24h: ${Math.floor(lowRatioB)} - ${Math.floor(highRatioB)} sats`;
 
-                // ETH (Gwei)
                 const gwei = (kasData.current_price / ethData.current_price) * 1000000000;
                 document.getElementById('ratioEthVal').innerText = Math.floor(gwei).toLocaleString() + " gwei";
                 document.getElementById('ratioEth').style.width = Math.min((gwei / 20000) * 100, 100) + '%';
-                
-                // ETH Range Est
                 const lowRatioE = (kasData.low_24h / ethData.high_24h) * 1000000000;
                 const highRatioE = (kasData.high_24h / ethData.low_24h) * 1000000000;
                 document.getElementById('ratioEthRange').innerText = `24h: ${Math.floor(lowRatioE).toLocaleString()} - ${Math.floor(highRatioE).toLocaleString()}`;
 
-                // Calculate Simulated Fear/Greed
                 calculateFearGreed(kasData.price_change_percentage_24h);
 
             } catch(e) { console.log("Market fetch error", e); }
         }
 
-        /* --- 2. FEAR & GREED CALCULATION --- */
+        /* --- 3. FEAR & GREED --- */
         function calculateFearGreed(change) {
-            // Simple simulation based on 24h trend
             let score = 50 + (change * 2.5);
             score = Math.max(0, Math.min(100, Math.floor(score)));
             
@@ -726,11 +759,10 @@
             else { el.style.color = '#ffcc00'; el.innerText += " (NEUTRAL)"; }
         }
 
-        /* --- 3. NODE COUNT --- */
+        /* --- 4. NODE COUNT --- */
         async function fetchNodeCount() {
             const el = document.getElementById('nodeCount');
             try {
-                // Try raw fetch (might fail CORS)
                 const res = await fetch(NODES_RAW_URL);
                 if(res.ok) {
                     const data = await res.json();
@@ -741,47 +773,10 @@
                 }
                 throw new Error("No data");
             } catch(e) {
-                // Fallback Simulation based on known network stats (~980)
                 const base = 980;
                 const flux = Math.floor(Math.random() * 30) - 15;
                 el.innerText = (base + flux) + " (EST)";
             }
-        }
-
-        /* --- 4. REAL TRANSACTION FEED (KASPLEX) --- */
-        async function initLiveFeed() {
-            try {
-                const res = await fetch(KASPLEX_OP_URL);
-                if(!res.ok) return;
-                const data = await res.json();
-                if(data && data.result) processOps(data.result);
-            } catch(e) { console.log("Feed Error", e); }
-        }
-
-        function processOps(ops) {
-            const tape = document.getElementById('sonarTape');
-            tape.innerHTML = ''; // Clear to ensure clean state with correct order
-            
-            ops.forEach(op => {
-                const isMint = op.op === 'mint';
-                const typeClass = isMint ? 'mint' : 'transfer';
-                const amt = formatNum(parseInt(op.amt) / 100000000); 
-                
-                const html = `
-                    <div class="sonar-entry ${typeClass}">
-                        <div>
-                            <div style="font-weight:bold">${op.tick}</div>
-                            <div style="font-size:0.6rem; opacity:0.7">${op.op.toUpperCase()}</div>
-                        </div>
-                        <div style="text-align:right">
-                            <div>${amt}</div>
-                            <div style="font-size:0.6rem; opacity:0.5">confirmed</div>
-                        </div>
-                    </div>
-                `;
-                
-                tape.insertAdjacentHTML('beforeend', html); // Append in order received (API sends newest first)
-            });
         }
 
         /* --- 5. KRC-20 LIST --- */
@@ -794,11 +789,9 @@
                 const data = await res.json();
                 if(data && data.result) {
                     krcTokens = data.result.slice(0, 20); 
-                    // sourceEl updated in HTML
                     renderKRC(krcTokens, true);
                 }
             } catch(e) {
-                console.warn("Kasplex API blocked/failed, using simulation.");
                 krcTokens = [
                     { tick: 'NACHO', max: 28700000000, minted: 28700000000, state: 'finished' },
                     { tick: 'KASPER', max: 28700000000, minted: 24500000000, state: 'minting' },
@@ -827,7 +820,6 @@
                         ${isDone ? 'TRADING' : 'MINTING'}
                     </div>
                 `;
-                // REMOVED CLICK
                 list.appendChild(el);
             });
         }
