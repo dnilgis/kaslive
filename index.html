@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V9.2</title>
+    <title>KASLIVE // TERMINAL V9.4</title>
     <style>
         /* --- IMPORTS & VARS --- */
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
         
         :root {
             --hex-green: #00ff41;
@@ -19,9 +19,10 @@
             --hex-purple: #bd00ff;
             --hex-gold: #ffd700;
             --hex-silver: #c0c0c0;
+            --hex-text: #e0e0e0;
             
             --bg-deep: #020406;
-            --panel-bg: rgba(5, 12, 16, 0.85);
+            --panel-bg: rgba(5, 12, 16, 0.9);
             --panel-border: 1px solid rgba(0, 255, 65, 0.2);
             
             --font-main: 'JetBrains Mono', monospace;
@@ -56,9 +57,9 @@
             width: 98vw;
             height: 96vh;
             display: grid;
-            /* WIDER SIDES (350px), NARROWER CENTER */
-            grid-template-columns: 350px 1fr 350px; 
-            grid-template-rows: 70px 1fr 60px; 
+            /* REBALANCED: Wider Left (380px), Medium Right (320px), Compressed Center */
+            grid-template-columns: 380px 1fr 340px; 
+            grid-template-rows: 80px 1fr 60px; /* Taller header for ASCII */
             grid-template-areas: 
                 "header header header"
                 "feed ledger vitals"
@@ -87,9 +88,9 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: var(--hex-dim);
+            color: var(--hex-cyan);
             margin-bottom: 8px;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
             padding-bottom: 4px;
             display: flex;
             justify-content: space-between;
@@ -101,30 +102,31 @@
         /* --- TOOLTIPS --- */
         .tooltip-trigger {
             cursor: help;
-            color: var(--hex-cyan);
+            color: var(--hex-warn);
             font-size: 0.7rem;
-            margin-left: 5px;
-            opacity: 0.7;
-            border-bottom: 1px dotted var(--hex-cyan);
+            margin-left: 6px;
+            opacity: 0.8;
+            border-bottom: 1px dotted var(--hex-warn);
         }
-        .tooltip-trigger:hover { opacity: 1; text-shadow: 0 0 5px var(--hex-cyan); }
+        .tooltip-trigger:hover { opacity: 1; text-shadow: 0 0 5px var(--hex-warn); }
         
         .tooltip-box {
             display: none;
             position: absolute;
-            background: #000;
-            border: 1px solid var(--hex-cyan);
+            background: rgba(0,0,0,0.95);
+            border: 1px solid var(--hex-warn);
             color: #fff;
             padding: 10px;
             font-size: 0.7rem;
-            width: 220px;
-            z-index: 100;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            width: 240px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
             line-height: 1.4;
             pointer-events: none;
             text-transform: none;
             font-weight: normal;
             text-align: left;
+            white-space: normal;
         }
         .tooltip-trigger:hover + .tooltip-box { display: block; }
 
@@ -139,7 +141,17 @@
             padding: 0 20px;
         }
 
-        .brand { font-weight: 800; font-size: 1.8rem; letter-spacing: 2px; text-shadow: 0 0 15px rgba(0,255,65,0.2); }
+        /* ASCII LOGO */
+        .ascii-logo {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            line-height: 10px;
+            font-weight: bold;
+            white-space: pre;
+            color: var(--hex-green);
+            text-shadow: 0 0 5px var(--hex-green);
+        }
+        .ascii-logo span { color: var(--hex-blue); text-shadow: 0 0 5px var(--hex-blue); }
         
         .price-container {
             text-align: right;
@@ -147,10 +159,11 @@
             flex-direction: column;
             justify-content: center;
             align-items: flex-end;
+            position: relative;
         }
-        .price-tag { font-size: 1.8rem; font-weight: 500; color: #fff; line-height: 1; }
-        .price-tag span { font-size: 1rem; color: var(--hex-green); opacity: 0.8;}
-        .ath-display { font-size: 0.6rem; color: var(--hex-dim); margin-top: 4px; letter-spacing: 1px; }
+        .price-tag { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; }
+        .price-tag span { font-size: 1.2rem; color: var(--hex-green); opacity: 0.8;}
+        .ath-display { font-size: 0.65rem; color: var(--hex-dim); margin-top: 4px; letter-spacing: 1px; }
 
         /* --- LEFT WING (FEED) --- */
         .feed-panel { grid-area: feed; overflow: hidden; display: flex; flex-direction: column; }
@@ -160,34 +173,35 @@
             scrollbar-width: thin; scrollbar-color: var(--hex-dim) black; min-height: 0;
         }
         .token-card {
-            display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; align-items: center;
-            padding: 6px 8px; background: rgba(0,20,0,0.2); border: 1px solid transparent;
-            font-size: 0.7rem; transition: all 0.2s; cursor: pointer;
+            display: grid; grid-template-columns: 1.5fr 1fr 0.8fr; align-items: center; 
+            padding: 8px 10px; background: rgba(0,255,255,0.05); border: 1px solid transparent;
+            font-size: 0.75rem; transition: all 0.2s; cursor: default;
         }
-        .token-card:hover { border-color: var(--hex-dim); background: rgba(0,255,65,0.05); }
-        .tk-name { font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .tk-ticker { font-size: 0.6rem; color: var(--hex-dim); }
-        .tk-supply { text-align: right; font-family: monospace; color: #aaa; font-size: 0.65rem; }
-        .tk-status { text-align: right; font-weight: bold; font-size: 0.6rem; }
+        .token-card:hover { border-color: var(--hex-cyan); background: rgba(0,255,255,0.1); }
+        .tk-name { font-weight: bold; color: var(--hex-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .tk-ticker { font-size: 0.65rem; color: var(--hex-cyan); }
+        .tk-supply { text-align: right; font-family: monospace; color: #aaa; font-size: 0.7rem; }
+        .tk-status { text-align: right; font-weight: bold; font-size: 0.65rem; }
         .status-minting { color: var(--hex-warn); animation: pulse 2s infinite; }
         .status-done { color: var(--hex-blue); }
 
         .sonar-log {
             flex: 1; overflow-y: hidden; display: flex; flex-direction: column; gap: 4px; 
-            font-size: 0.7rem; min-height: 0;
+            font-size: 0.8rem; min-height: 0; /* Updated font size */
         }
         .sonar-entry {
-            padding: 4px 6px; border-left: 2px solid transparent; background: rgba(0,0,0,0.3);
+            padding: 6px 8px; border-left: 3px solid transparent; background: rgba(0,0,0,0.6);
             display: flex; justify-content: space-between; align-items: center;
-            opacity: 0.9; transition: all 0.3s; cursor: pointer;
+            opacity: 1; /* Removed opacity for clarity */
+            transition: all 0.3s; cursor: default; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .sonar-entry:hover { background: rgba(255,255,255,0.1); }
-        .sonar-entry.buy { border-color: var(--hex-green); color: #cfc; }
-        .sonar-entry.sell { border-color: var(--hex-alert); color: #fcc; }
-        .sonar-entry.mint { border-color: var(--hex-warn); color: #ffd; }
-        .sonar-entry.transfer { border-color: var(--hex-cyan); color: #dff; }
+        .sonar-entry.buy { border-color: var(--hex-green); color: #fff; }
+        .sonar-entry.sell { border-color: var(--hex-alert); color: #fff; }
+        .sonar-entry.mint { border-color: var(--hex-warn); color: #fff; }
+        .sonar-entry.transfer { border-color: var(--hex-cyan); color: #fff; }
         
-        .tx-link { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+        .tx-link { color: var(--hex-cyan); text-decoration: none; border-bottom: 1px dotted currentColor; cursor: pointer; font-weight: bold;}
         .tx-link:hover { text-decoration: none; border-bottom: 1px solid currentColor; filter: brightness(1.2); }
 
         /* --- CENTER: LEVIATHAN LEDGER (REFINED) --- */
@@ -205,10 +219,10 @@
             font-size: 0.6rem; letter-spacing: 1px; border-bottom: 1px solid rgba(0, 255, 65, 0.3); 
         }
         td { 
-            padding: 6px 10px; /* Tighter padding */
+            padding: 6px 10px; 
             border-bottom: 1px solid rgba(0, 255, 65, 0.05); 
             transition: background 0.2s; white-space: nowrap; 
-            overflow: hidden; text-overflow: ellipsis; max-width: 120px; /* Force Truncation */
+            overflow: hidden; text-overflow: ellipsis; max-width: 100px;
         }
         tr:hover td { background: rgba(0, 255, 65, 0.08); color: #fff; cursor: crosshair; }
 
@@ -226,32 +240,32 @@
         @keyframes flashGreen { 0% { color: #fff; text-shadow: 0 0 10px #fff; } 100% { color: inherit; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- RIGHT WING (VITALS) --- */
-        .sys-panel { grid-area: vitals; gap: 10px; display: flex; flex-direction: column; }
-        .metric-card {
-            background: rgba(0,0,0,0.3); padding: 10px;
-            border-left: 2px solid var(--hex-dim); position: relative;
+        /* --- RIGHT WING (VITALS REDESIGN) --- */
+        .sys-panel { grid-area: vitals; gap: 12px; display: flex; flex-direction: column; overflow-y: auto;}
+        
+        .vitals-sector {
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
         }
+        .sector-title {
+            font-size: 0.6rem; color: var(--hex-dim); margin-bottom: 8px; letter-spacing: 1px; border-bottom: 1px dashed #333; padding-bottom: 2px;
+            display: flex; justify-content: space-between;
+        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hex-green); box-shadow: 0 0 5px var(--hex-green); }
+
+        .metric-card { margin-bottom: 8px; }
         .metric-row { display: flex; justify-content: space-between; align-items: baseline; }
-        .metric-title { font-size: 0.65rem; color: var(--hex-dim); margin-bottom: 2px; }
+        .metric-title { font-size: 0.65rem; color: #aaa; }
         .metric-value { font-size: 1.1rem; font-weight: bold; color: #fff; }
-        .metric-sub { font-size: 0.6rem; color: #aaa; margin-top:2px; }
+        .metric-sub { font-size: 0.6rem; color: #888; margin-top:2px; }
         
         .ratio-bar { 
-            width: 100%; height: 6px; background: #111; margin-top: 5px; border-radius: 2px; overflow: hidden; display: flex;
+            width: 100%; height: 4px; background: #222; margin-top: 4px; overflow: hidden; display: flex;
         }
         .ratio-fill { height: 100%; background: var(--hex-cyan); width: 0%; transition: width 0.5s; }
         
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .detail-item {
-            background: rgba(255,255,255,0.03); padding: 8px;
-            border: 1px solid rgba(0,255,65,0.1); display: flex; flex-direction: column; justify-content: center;
-        }
-        .detail-label { font-size: 0.55rem; color: var(--hex-dim); text-transform: uppercase; margin-bottom: 3px;}
-        .detail-val { font-size: 0.9rem; color: #ddd; font-weight: bold; }
-
-        /* HEAT INDEX */
-        .heat-bar-container { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow:hidden; margin-top:5px; }
+        .heat-bar-container { width: 100%; height: 6px; background: #222; overflow:hidden; margin-top:5px; }
         .heat-bar-fill { height: 100%; background: linear-gradient(90deg, #00ff41, #ffcc00, #ff3333); width: 0%; transition: width 1s ease-out; }
 
         /* --- FOOTER --- */
@@ -321,15 +335,22 @@
         <!-- HEADER -->
         <header class="header">
             <div style="display:flex; align-items:center; gap:15px;">
-                <div class="brand">
-                    <span style="color:var(--hex-green)">KAS</span><span style="color:var(--hex-blue)">LIVE</span>
+                <div class="ascii-logo">
+ _  __   _   ___  <span>_    _____   __ ___</span>
+| |/ /  /_\ / __| <span>| |  |_ _| \ / /| __|</span>
+| ' <  / _ \\__ \ <span>| |__ | | \ V / | _| </span>
+|_|\_\/_/ \_\___/ <span>|____|___| \_/  |___|</span>
                 </div>
-                <div style="font-size:0.7rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 2px 5px;">v9.2 [MAINNET]</div>
+                <div style="font-size:0.7rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 2px 5px;">v9.4 [MAINNET]</div>
             </div>
             
             <div class="price-container">
                 <div class="price-tag mono-num" id="mainPrice">$0.0462 <span id="percentChange">-0.03%</span></div>
-                <div class="ath-display" id="athDisplay">ATH: --</div>
+                <div class="ath-display" id="athDisplay">
+                    ATH: --
+                    <span class="tooltip-trigger">[?]</span>
+                    <div class="tooltip-box" style="right: 0; top: 20px;">All-Time High price of KAS. Sourced from CoinGecko market history.</div>
+                </div>
             </div>
         </header>
 
@@ -340,8 +361,10 @@
             <div style="flex: 1; display:flex; flex-direction:column; min-height:0; border-bottom:1px solid var(--panel-border); padding-bottom:10px; margin-bottom:10px;">
                 <div class="label" id="krcSource">
                     <span>KRC-20 TOKENS</span>
-                    <span class="tooltip-trigger">[?]</span>
-                    <div class="tooltip-box" style="left: 10px; top: 25px;">Live feed of top KRC-20 tokens deployed on the Kasplex protocol. Shows minting progress and market status.</div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="tooltip-trigger">[?]</span>
+                        <div class="tooltip-box" style="left: 10px; top: 25px;">Top KRC-20 tokens on Kasplex. 'Trading' indicates fully minted supply. 'Minting' indicates active distribution.</div>
+                    </div>
                 </div>
                 <div class="token-list" id="krcList">
                     <div style="padding:10px; text-align:center; font-size:0.8rem; color:#666;">
@@ -354,9 +377,11 @@
             <div style="flex: 1; display:flex; flex-direction:column; min-height:0;">
                 <div class="label" style="color:var(--hex-cyan); border-color:var(--hex-cyan)">
                     <span>LIVE OPERATIONS (KASPLEX)</span>
-                    <span class="tooltip-trigger">[?]</span>
-                    <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time feed of confirmed KRC-20 mints and transfers. Data streamed from Kasplex API.</div>
-                    <span class="loader" style="font-size:0.6rem; margin-left:auto">⟳</span>
+                    <div style="display:flex; align-items:center;">
+                        <span class="loader" style="font-size:0.6rem; margin-right:5px">⟳</span>
+                        <span class="tooltip-trigger">[?]</span>
+                        <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time feed of confirmed KRC-20 mints and transfers. Data is streamed directly from Kasplex API. Amounts shown in KAS equivalent if available, or raw token amount.</div>
+                    </div>
                 </div>
                 <div class="sonar-log" id="sonarTape">
                     <!-- JS Populated -->
@@ -373,7 +398,7 @@
                     <div style="font-size:0.7rem; color:var(--hex-green); opacity:0.7; display:flex; align-items:center;">
                         SOURCE: <span id="sourceLabel" style="margin-left:5px;">INITIALIZING...</span>
                         <span class="tooltip-trigger" style="margin-left:5px">[?]</span>
-                        <div class="tooltip-box" style="left: 150px; top: 40px;">Tracks the Top 100 Kaspa addresses. Top 35 are verified known entities (Exchanges, Miners, Funds). Rest are generated based on distribution curves.</div>
+                        <div class="tooltip-box" style="left: 150px; top: 40px;">Tracks the Top 100 Kaspa addresses. Top 35 are hardcoded verified entities (Exchanges, Miners, Funds). Ranks 36-100 are statistically simulated based on current network distribution until a public API is available.</div>
                     </div>
                 </div>
                 <div style="font-size:0.7rem;" id="totalTracked">TOTAL TRACKED: --</div>
@@ -399,87 +424,134 @@
             </div>
         </div>
 
-        <!-- RIGHT PANEL: VITALS -->
+        <!-- RIGHT PANEL: VITALS (REDESIGNED) -->
         <div class="module sys-panel">
-            <div class="label">
-                <span>NETWORK VITALS & RATIOS</span>
-                <span class="tooltip-trigger">[?]</span>
-                <div class="tooltip-box" style="right: 10px; top: 25px;">Live metrics. 'Orca Ratio' tracks KAS value in native BTC (Sats) and ETH (Gwei) units to measure relative strength.</div>
-            </div>
             
-            <!-- BTC RATIO -->
-            <div class="metric-card">
-                <div class="metric-row">
-                    <div class="metric-title">BITCOIN (BTC)</div>
-                    <div class="metric-value mono-num" id="btcPrice">--</div>
+            <!-- SECTOR 1: CRYPTO RATIOS -->
+            <div class="vitals-sector">
+                <div class="sector-title">
+                    <span>CRYPTO RATIOS</span>
+                    <div class="status-dot"></div>
                 </div>
-                <div style="font-size:0.6rem; color:#aaa; margin-top:5px; display:flex; justify-content:space-between;">
-                    <span>ORCA RATIO (KAS/BTC)</span>
-                    <span id="ratioBtcVal" style="color:#fff; font-weight:bold">-- sats</span>
+                
+                <!-- BTC RATIO -->
+                <div class="metric-card">
+                    <div class="metric-row">
+                        <div class="metric-title">
+                            BITCOIN (BTC)
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Bitcoin live price. Orca Ratio displays KAS price in Satoshis (1 KAS = X Sats).</div>
+                        </div>
+                        <div class="metric-value mono-num" id="btcPrice">--</div>
+                    </div>
+                    <div style="font-size:0.6rem; color:#aaa; margin-top:5px; display:flex; justify-content:space-between;">
+                        <span>KAS/BTC</span>
+                        <span id="ratioBtcVal" style="color:#fff; font-weight:bold">-- sats</span>
+                    </div>
+                    <div class="ratio-bar"><div class="ratio-fill" id="ratioBtc" style="width: 0%; background: orange;"></div></div>
+                    <div class="metric-sub" id="ratioBtcRange">24h Range: --</div>
                 </div>
-                <div class="ratio-bar"><div class="ratio-fill" id="ratioBtc" style="width: 0%; background: orange;"></div></div>
-                <div class="metric-sub" id="ratioBtcRange">24h Range: --</div>
-            </div>
 
-            <!-- ETH RATIO -->
-            <div class="metric-card">
-                <div class="metric-row">
-                    <div class="metric-title">ETHEREUM (ETH)</div>
-                    <div class="metric-value mono-num" id="ethPrice">--</div>
-                </div>
-                <div style="font-size:0.6rem; color:#aaa; margin-top:5px; display:flex; justify-content:space-between;">
-                    <span>ORCA RATIO (KAS/ETH)</span>
-                    <span id="ratioEthVal" style="color:#fff; font-weight:bold">-- gwei</span>
-                </div>
-                <div class="ratio-bar"><div class="ratio-fill" id="ratioEth" style="width: 0%; background: #627eea;"></div></div>
-                <div class="metric-sub" id="ratioEthRange">24h Range: --</div>
-            </div>
-
-            <!-- HEAT INDEX (NEW) -->
-            <div class="metric-card">
-                <div class="metric-row">
-                    <div class="metric-title">NETWORK HEAT INDEX</div>
-                    <div class="metric-value mono-num" id="heatIndex">--</div>
-                </div>
-                <div style="font-size:0.55rem; color:#aaa; margin-top:2px;">MOMENTUM COMPOSITE (0-100)</div>
-                <div class="heat-bar-container"><div class="heat-bar-fill" id="heatBar"></div></div>
-                <span class="tooltip-trigger" style="position:absolute; top:10px; right:10px;">[?]</span>
-                <div class="tooltip-box" style="right: 30px; top: 10px;">Composite score combining 24h Price Action, Volume, Hashrate trend, and KRC-20 Activity. >80 = Overheated, <20 = Cold.</div>
-            </div>
-
-            <!-- EXTRA DATA -->
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <div class="detail-label">ACTIVE NODES</div>
-                    <div class="detail-val mono-num" id="nodeCount">--</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">BLOCK REWARD</div>
-                    <div class="detail-val mono-num">3.79 KAS</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label" style="color:var(--hex-gold)">GOLD (PAXG)</div>
-                    <div class="detail-val mono-num" id="goldPrice">--</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label" style="color:var(--hex-silver)">SILVER (KAG)</div>
-                    <div class="detail-val mono-num" id="silverPrice">--</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">REC. FEE</div>
-                    <div class="detail-val mono-num" style="color:var(--hex-green)">0.0001 KAS</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">NEXT HALVING</div>
-                    <div class="detail-val" id="halvingTimer" style="color:var(--hex-warn)">--</div>
+                <!-- ETH RATIO -->
+                <div class="metric-card" style="margin-bottom:0">
+                    <div class="metric-row">
+                        <div class="metric-title">
+                            ETHEREUM (ETH)
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Ethereum live price. Orca Ratio displays KAS price in Gwei (1 KAS = X Gwei).</div>
+                        </div>
+                        <div class="metric-value mono-num" id="ethPrice">--</div>
+                    </div>
+                    <div style="font-size:0.6rem; color:#aaa; margin-top:5px; display:flex; justify-content:space-between;">
+                        <span>KAS/ETH</span>
+                        <span id="ratioEthVal" style="color:#fff; font-weight:bold">-- gwei</span>
+                    </div>
+                    <div class="ratio-bar"><div class="ratio-fill" id="ratioEth" style="width: 0%; background: #627eea;"></div></div>
+                    <div class="metric-sub" id="ratioEthRange">24h Range: --</div>
                 </div>
             </div>
 
-            <div class="metric-card" style="margin-top:auto">
-                <div class="metric-title">NETWORK HASHRATE</div>
-                <div class="metric-value mono-num" style="color:var(--hex-cyan)">490.3 PH/s</div>
-                <div style="font-size:0.6rem; opacity:0.5; margin-top:2px;">DIFFICULTY: 2.41E+14</div>
+            <!-- SECTOR 2: COMMODITIES -->
+            <div class="vitals-sector">
+                <div class="sector-title">
+                    <span>REAL WORLD ASSETS (PAX/KAG)</span>
+                    <div class="status-dot"></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div>
+                        <div class="metric-title" style="color:var(--hex-gold)">
+                            GOLD
+                            <span class="tooltip-trigger" style="border-color:var(--hex-gold)">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Live price of PAX Gold (PAXG), a digital token backed by physical gold. Used as a proxy for Gold price.</div>
+                        </div>
+                        <div class="metric-value mono-num" id="goldPrice" style="font-size:0.9rem">--</div>
+                    </div>
+                    <div>
+                        <div class="metric-title" style="color:var(--hex-silver)">
+                            SILVER
+                            <span class="tooltip-trigger" style="border-color:var(--hex-silver)">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Live price of Kinesis Silver (KAG), a digital token backed by physical silver. Used as a proxy for Silver price.</div>
+                        </div>
+                        <div class="metric-value mono-num" id="silverPrice" style="font-size:0.9rem">--</div>
+                    </div>
+                </div>
             </div>
+
+            <!-- SECTOR 3: CHAIN STATS -->
+            <div class="vitals-sector" style="flex:1; display:flex; flex-direction:column;">
+                <div class="sector-title">
+                    <span>CHAIN METRICS</span>
+                    <div class="status-dot"></div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-row">
+                        <div class="metric-title">
+                            NETWORK HEAT INDEX
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Composite momentum score (0-100) based on 24h Volume, Price Action, and Hashrate trend. High = Overheated/High Activity. Low = Accumulation/Quiet.</div>
+                        </div>
+                        <div class="metric-value mono-num" id="heatIndex">--</div>
+                    </div>
+                    <div class="heat-bar-container"><div class="heat-bar-fill" id="heatBar"></div></div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
+                    <div>
+                        <div class="metric-title">
+                            HASHRATE
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Total computational power securing the Kaspa network in Petahashes per second.</div>
+                        </div>
+                        <div class="metric-value mono-num" style="color:var(--hex-cyan); font-size:0.9rem">490.3 PH/s</div>
+                    </div>
+                    <div>
+                         <div class="metric-title">
+                            NODES
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Estimated count of active public nodes propagating blocks. Data sourced from kaspa-crawler or estimated from network health.</div>
+                        </div>
+                        <div class="metric-value mono-num" id="nodeCount" style="font-size:0.9rem">--</div>
+                    </div>
+                    <div>
+                         <div class="metric-title">
+                            NEXT HALVING
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Countdown to the next block reward reduction. Kaspa reduces rewards smoothly every month (Chromatic Phase).</div>
+                        </div>
+                        <div class="metric-value mono-num" id="halvingTimer" style="color:var(--hex-warn); font-size:0.8rem">--</div>
+                    </div>
+                    <div>
+                         <div class="metric-title">
+                            CIRC SUPPLY
+                            <span class="tooltip-trigger">[?]</span>
+                            <div class="tooltip-box" style="right: 30px;">Total KAS currently mined and in circulation. Max supply is 28.7 Billion.</div>
+                        </div>
+                        <div class="metric-value mono-num" id="circSupply" style="font-size:0.8rem">--</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- FOOTER -->
@@ -501,12 +573,10 @@
         const KAS_FYI_KEY = ''; 
         const KASPLEX_LIST_URL = 'https://api.kasplex.org/v1/krc20/tokenlist'; 
         const KASPLEX_OP_URL = 'https://api.kasplex.org/v1/krc20/oplist?limit=20';
-        // FETCH KASPA, BITCOIN, ETHEREUM, PAX GOLD, KINESIS SILVER
         const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
-        const NODES_RAW_URL = 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'; // Attempt fetch
+        const NODES_RAW_URL = 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'; 
         
         const TOTAL_SUPPLY = 28700000000;
-        const WHALE_ALERT_THRESHOLD_USD = 100000; 
         
         /* --- STATE --- */
         let whaleData = [];
@@ -581,7 +651,7 @@
                 
                 // ATH Display
                 const date = new Date(kasData.ath_date).toLocaleDateString();
-                document.getElementById('athDisplay').innerText = `ATH: $${kasData.ath.toFixed(4)} (${date})`;
+                document.getElementById('athDisplay').innerHTML = `ATH: $${kasData.ath.toFixed(4)} <span style="opacity:0.5">(${date})</span>`;
 
                 // Prices
                 document.getElementById('btcPrice').innerText = '$' + btcData.current_price.toLocaleString();
@@ -600,10 +670,9 @@
                 // BTC Range Est
                 const lowRatioB = (kasData.low_24h / btcData.high_24h) * 100000000;
                 const highRatioB = (kasData.high_24h / btcData.low_24h) * 100000000;
-                document.getElementById('ratioBtcRange').innerText = `24h Range: ${Math.floor(lowRatioB)} - ${Math.floor(highRatioB)} sats`;
+                document.getElementById('ratioBtcRange').innerText = `24h: ${Math.floor(lowRatioB)} - ${Math.floor(highRatioB)} sats`;
 
                 // ETH (Gwei)
-                // 1 ETH = 1e9 Gwei. Ratio = (KAS/ETH) * 1e9
                 const gwei = (kasData.current_price / ethData.current_price) * 1000000000;
                 document.getElementById('ratioEthVal').innerText = Math.floor(gwei).toLocaleString() + " gwei";
                 document.getElementById('ratioEth').style.width = Math.min((gwei / 20000) * 100, 100) + '%';
@@ -611,7 +680,7 @@
                 // ETH Range Est
                 const lowRatioE = (kasData.low_24h / ethData.high_24h) * 1000000000;
                 const highRatioE = (kasData.high_24h / ethData.low_24h) * 1000000000;
-                document.getElementById('ratioEthRange').innerText = `24h Range: ${Math.floor(lowRatioE).toLocaleString()} - ${Math.floor(highRatioE).toLocaleString()}`;
+                document.getElementById('ratioEthRange').innerText = `24h: ${Math.floor(lowRatioE).toLocaleString()} - ${Math.floor(highRatioE).toLocaleString()}`;
 
                 // Calculate Heat Index
                 calculateHeatIndex(kasData.price_change_percentage_24h, kasData.total_volume);
@@ -621,20 +690,14 @@
 
         /* --- 2. HEAT INDEX CALCULATION --- */
         function calculateHeatIndex(priceChange, volume) {
-            // Factors:
-            // 1. Price Change (-10% to +10% scales to 0-40 pts)
-            // 2. Volume (> $50M scales to 0-30 pts)
-            // 3. Hashrate (Static baseline for now: 20 pts)
-            // 4. KRC Activity (Dynamic 0-10 pts)
-            
-            let pScore = (priceChange + 10) * 2; // -10% = 0, 0% = 20, +10% = 40
+            let pScore = (priceChange + 10) * 2; 
             pScore = Math.max(0, Math.min(40, pScore));
             
-            let vScore = (volume / 100000000) * 30; // $100M vol = 30pts
+            let vScore = (volume / 100000000) * 30; 
             vScore = Math.max(0, Math.min(30, vScore));
             
-            const hScore = 20; // Stable hashrate
-            const kScore = Math.random() * 10; // Activity flux
+            const hScore = 20; 
+            const kScore = Math.random() * 10; 
             
             const total = Math.floor(pScore + vScore + hScore + kScore);
             
