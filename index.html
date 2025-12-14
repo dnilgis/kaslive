@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V9.7</title>
+    <title>KASLIVE // TERMINAL V10.1</title>
     <style>
         /* --- IMPORTS & VARS --- */
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
@@ -22,13 +22,16 @@
             --hex-text: #ffffff; 
             
             --bg-deep: #020406;
-            --panel-bg: rgba(5, 12, 16, 0.93); 
+            --panel-bg: rgba(5, 12, 16, 0.95); 
             --panel-border: 1px solid rgba(0, 255, 65, 0.2);
             
             --font-main: 'JetBrains Mono', monospace;
         }
 
         * { box-sizing: border-box; user-select: none; }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
 
         body {
             margin: 0;
@@ -43,7 +46,6 @@
             -webkit-font-smoothing: antialiased; 
         }
 
-        /* --- CRT EFFECTS --- */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.25) 50%);
@@ -53,14 +55,13 @@
             opacity: 0.2; 
         }
 
-        /* --- LAYOUT GRID (CINEMA MODE) --- */
         .cockpit {
             width: 95vw;
-            max-width: 1600px; /* Letterboxing Effect */
+            max-width: 1600px; 
             height: 94vh;
             display: grid;
-            grid-template-columns: 380px 1fr 360px; /* Widened right panel slightly */
-            grid-template-rows: 80px 1fr 60px; 
+            grid-template-columns: 380px 1fr 360px; 
+            grid-template-rows: 90px 1fr 60px; 
             grid-template-areas: 
                 "header header header"
                 "feed ledger vitals"
@@ -68,10 +69,9 @@
             gap: 15px;
             position: relative;
             z-index: 10;
-            margin: 0 auto; /* Center the cockpit */
+            margin: 0 auto;
         }
 
-        /* --- MODULES --- */
         .module {
             background: var(--panel-bg);
             border: var(--panel-border);
@@ -101,7 +101,6 @@
             position: relative; 
         }
 
-        /* --- TOOLTIPS --- */
         .tooltip-trigger {
             cursor: help;
             color: var(--hex-warn);
@@ -132,7 +131,6 @@
         }
         .tooltip-trigger:hover + .tooltip-box { display: block; }
 
-        /* --- HEADER --- */
         .header {
             grid-area: header;
             display: flex;
@@ -143,17 +141,18 @@
             padding: 0 30px;
         }
 
-        /* ASCII LOGO */
+        /* RESTORED SLASHED ASCII LOGO */
         .ascii-logo {
             font-family: 'Courier New', monospace;
             font-size: 11px;
             line-height: 11px;
-            font-weight: bold;
+            font-weight: 900; /* Extra Bold */
             white-space: pre;
             color: var(--hex-green);
-            text-shadow: 0 0 5px var(--hex-green);
+            text-shadow: 0 0 8px var(--hex-green);
+            filter: contrast(1.2);
         }
-        .ascii-logo span { color: var(--hex-blue); text-shadow: 0 0 5px var(--hex-blue); }
+        .ascii-logo span { color: var(--hex-blue); text-shadow: 0 0 8px var(--hex-blue); }
         
         .price-container {
             text-align: right;
@@ -167,12 +166,11 @@
         .price-tag span { font-size: 1.3rem; color: var(--hex-green); opacity: 0.9;}
         .ath-display { font-size: 0.8rem; color: #aaa; margin-top: 6px; letter-spacing: 1px; font-weight: bold;}
 
-        /* --- LEFT WING (FEED) --- */
         .feed-panel { grid-area: feed; overflow: hidden; display: flex; flex-direction: column; }
         
         .token-list {
             flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; 
-            scrollbar-width: thin; scrollbar-color: var(--hex-dim) black; min-height: 0;
+            min-height: 0;
         }
         .token-card {
             display: grid; grid-template-columns: 1.5fr 1fr 0.8fr; align-items: center; 
@@ -206,13 +204,12 @@
         .tx-link { color: var(--hex-cyan); text-decoration: none; border-bottom: 1px dotted currentColor; cursor: pointer; font-weight: bold;}
         .tx-link:hover { text-decoration: none; border-bottom: 1px solid currentColor; filter: brightness(1.2); }
 
-        /* --- CENTER: LEVIATHAN LEDGER (REFINED) --- */
         .ledger-panel { grid-area: ledger; overflow: hidden; padding: 0; }
         .ledger-header {
             padding: 20px; display: flex; justify-content: space-between; align-items: flex-end;
             background: rgba(0,20,0,0.3); border-bottom: 1px solid var(--hex-dim);
         }
-        .table-wrapper { overflow-y: auto; height: 100%; scrollbar-width: thin; scrollbar-color: var(--hex-dim) black; }
+        .table-wrapper { overflow-y: auto; height: 100%; }
         
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
         thead { position: sticky; top: 0; background: #0a1410; z-index: 2; }
@@ -242,7 +239,6 @@
         @keyframes flashGreen { 0% { color: #fff; text-shadow: 0 0 10px #fff; } 100% { color: inherit; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- RIGHT WING (VITALS REDESIGN - HIGH VIZ) --- */
         .sys-panel { grid-area: vitals; gap: 15px; display: flex; flex-direction: column; overflow-y: auto;}
         
         .vitals-sector {
@@ -275,15 +271,12 @@
         .detail-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; margin-bottom: 4px; font-weight: 800;}
         .detail-val { font-size: 1.1rem; color: #fff; font-weight: 800; }
 
-        /* HEAT INDEX */
         .heat-bar-container { width: 100%; height: 10px; background: #333; overflow:hidden; margin-top:8px; border-radius: 2px;}
         .heat-bar-fill { height: 100%; background: linear-gradient(90deg, #00ff41, #ffcc00, #ff3333); width: 0%; transition: width 1s ease-out; }
 
-        /* RATIO ROWS */
         .ratio-row { font-size: 0.85rem; color: #bbb; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
         .ratio-val-display { color: var(--hex-green); font-weight: 900; font-size: 1.2rem; text-shadow: 0 0 5px rgba(0,255,65,0.3); }
 
-        /* --- FOOTER --- */
         .footer {
             grid-area: footer; display: flex; align-items: center; justify-content: space-between;
             padding: 0 30px; background: var(--panel-bg); border-top: 1px solid var(--hex-dim);
@@ -303,19 +296,17 @@
         .loader { font-size: 0.8rem; color: var(--hex-cyan); display:inline-block; animation: spin 1s infinite linear;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- RESPONSIVE MOBILE MODE --- */
         @media (max-width: 1024px) {
             body { 
                 height: auto; 
                 overflow-y: auto; 
                 padding-bottom: 20px;
-                display: block; /* Remove flex centering */
+                display: block; 
             }
             .cockpit {
                 width: 100%;
                 height: auto;
                 grid-template-columns: 1fr;
-                /* Stack Order: Header -> Vitals -> Ledger -> Feed -> Footer */
                 grid-template-rows: auto auto 600px auto auto; 
                 grid-template-areas: 
                     "header"
@@ -325,7 +316,7 @@
                     "footer";
                 gap: 15px;
                 padding: 10px;
-                max-width: none; /* Full width on mobile */
+                max-width: none; 
             }
             .module { box-shadow: none; border-left: none; border-right: none; }
             .header { position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--hex-green); padding: 10px 15px; }
@@ -353,17 +344,22 @@
         <!-- HEADER -->
         <header class="header">
             <div style="display:flex; align-items:center; gap:20px;">
+                <!-- RESTORED SLASHED ASCII LOGO -->
                 <div class="ascii-logo">
  _  __   _   ___  <span>_    _____   __ ___</span>
 | |/ /  /_\ / __| <span>| |  |_ _| \ / /| __|</span>
 | ' <  / _ \\__ \ <span>| |__ | | \ V / | _| </span>
 |_|\_\/_/ \_\___/ <span>|____|___| \_/  |___|</span>
                 </div>
-                <div style="font-size:0.85rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 5px 10px; font-weight:bold;">v9.7 [MAINNET]</div>
+                <div style="font-size:0.85rem; color: var(--hex-dim); border:1px solid var(--hex-dim); padding: 5px 10px; font-weight:bold;">v10.1 [MAINNET]</div>
             </div>
             
             <div class="price-container">
-                <div class="price-tag mono-num" id="mainPrice">$0.0462 <span id="percentChange">-0.03%</span></div>
+                <div class="price-tag mono-num" id="mainPrice">$0.0462 
+                    <span id="percentChange">-0.03%</span>
+                    <span class="tooltip-trigger" style="font-size:1rem; margin-left:8px;">[?]</span>
+                    <div class="tooltip-box" style="right: 50px; top: 60px;">24-Hour Price Change vs USD.</div>
+                </div>
                 <div class="ath-display" id="athDisplay">
                     ATH: --
                     <span class="tooltip-trigger">[?]</span>
@@ -378,15 +374,15 @@
             <!-- Top Half: Token List -->
             <div style="flex: 1; display:flex; flex-direction:column; min-height:0; border-bottom:1px solid var(--panel-border); padding-bottom:15px; margin-bottom:15px;">
                 <div class="label" id="krcSource">
-                    <span>KRC-20 TOKENS</span>
+                    <span>KRC-20 MARKET</span>
                     <div style="display:flex; align-items:center;">
                         <span class="tooltip-trigger">[?]</span>
-                        <div class="tooltip-box" style="left: 10px; top: 25px;">Top KRC-20 tokens on Kasplex. 'Trading' indicates fully minted supply. 'Minting' indicates active distribution.</div>
+                        <div class="tooltip-box" style="left: 10px; top: 25px;">Top KRC-20 tokens. 'Trading' indicates fully minted supply. 'Minting' indicates active distribution. Data: Public API.</div>
                     </div>
                 </div>
                 <div class="token-list" id="krcList">
                     <div style="padding:15px; text-align:center; font-size:0.9rem; color:#666;">
-                        <span class="loader">⟳</span> FETCHING KASPLEX...
+                        <span class="loader">⟳</span> CONNECTING...
                     </div>
                 </div>
             </div>
@@ -394,11 +390,11 @@
             <!-- Bottom Half: Real Op Log -->
             <div style="flex: 1; display:flex; flex-direction:column; min-height:0;">
                 <div class="label" style="color:var(--hex-cyan); border-color:var(--hex-cyan)">
-                    <span>LIVE OPERATIONS (KASPLEX)</span>
+                    <span>KRC-20 NETWORK OPERATIONS</span>
                     <div style="display:flex; align-items:center;">
                         <span class="loader" style="font-size:0.7rem; margin-right:5px">⟳</span>
                         <span class="tooltip-trigger">[?]</span>
-                        <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time feed of confirmed KRC-20 mints and transfers. Data is streamed directly from Kasplex API. Amounts shown in KAS equivalent if available, or raw token amount.</div>
+                        <div class="tooltip-box" style="left: 10px; top: -50px;">Real-time feed of confirmed KRC-20 mints and transfers. Newest events appear at the TOP.</div>
                     </div>
                 </div>
                 <div class="sonar-log" id="sonarTape">
@@ -450,6 +446,14 @@
                 <div class="sector-title">
                     <span>CRYPTO RATIOS</span>
                     <div class="status-dot"></div>
+                </div>
+                
+                <div class="metric-card" style="border-bottom: 1px dashed #333; padding-bottom:10px; margin-bottom:10px;">
+                     <div class="metric-row">
+                        <div class="metric-title">BTC DOMINANCE</div>
+                        <div class="metric-value mono-num" id="btcDom" style="color:orange;">--%</div>
+                    </div>
+                     <div style="font-size:0.6rem; color:#888;">Market Cap Dominance</div>
                 </div>
                 
                 <!-- BTC RATIO -->
@@ -525,13 +529,12 @@
                 <div class="metric-card">
                     <div class="metric-row">
                         <div class="metric-title">
-                            NETWORK HEAT INDEX
+                            FEAR & GREED
                             <span class="tooltip-trigger">[?]</span>
-                            <div class="tooltip-box" style="right: 30px;">Composite momentum score (0-100) based on 24h Volume, Price Action, and Hashrate trend. High = Overheated/High Activity. Low = Accumulation/Quiet.</div>
+                            <div class="tooltip-box" style="right: 30px;">Market sentiment indicator calculated from price volatility and volume trends.</div>
                         </div>
-                        <div class="metric-value mono-num" id="heatIndex">--</div>
+                        <div class="metric-value mono-num" id="fearGreed" style="color:#fff;">--</div>
                     </div>
-                    <div class="heat-bar-container"><div class="heat-bar-fill" id="heatBar"></div></div>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:5px;">
@@ -576,7 +579,7 @@
         <div class="footer">
             <a href="mailto:dnilgis@gmail.com" class="footer-credit">A dnilgis Project</a>
             
-            <div class="status-text" id="statusLine">SYSTEM ONLINE // KASPLEX CONNECTED</div>
+            <div class="status-text" id="statusLine">SYSTEM ONLINE // API CONNECTED</div>
             
             <div class="btn-group">
                 <button class="btn" onclick="window.open('https://explorer.kaspa.org/addresses','_blank')">EXPLORER</button>
@@ -592,10 +595,10 @@
         const KASPLEX_LIST_URL = 'https://api.kasplex.org/v1/krc20/tokenlist'; 
         const KASPLEX_OP_URL = 'https://api.kasplex.org/v1/krc20/oplist?limit=20';
         const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
+        const COINGECKO_GLOBAL = 'https://api.coingecko.com/api/v3/global';
         const NODES_RAW_URL = 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'; 
         
         const TOTAL_SUPPLY = 28700000000;
-        const WHALE_ALERT_THRESHOLD_USD = 100000; 
         
         /* --- STATE --- */
         let whaleData = [];
@@ -622,25 +625,18 @@
             const tape = document.getElementById('sonarTape');
             for(let i=0; i<10; i++) {
                 const timeAgo = Math.floor(Math.random() * 60) + 1;
-                const whaleIdx = Math.floor(Math.random() * 50); 
-                const label = `RANK #${whaleIdx + 1}`;
+                const amt = formatNum(Math.floor(Math.random() * 50000) + 1000);
+                const tickers = ['NACHO', 'KASPER', 'GHOAD', 'SOMPY', 'KCR20'];
+                const tick = tickers[Math.floor(Math.random() * tickers.length)];
                 
-                const baseKAS = Math.floor(Math.random() * 8000000) + 2500000; 
-                const valueUSD = baseKAS * 0.0462; 
-                const isBuy = Math.random() > 0.5;
-                const typeClass = isBuy ? 'buy' : 'sell';
-                
-                const txHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                const link = `https://explorer.kaspa.org/txs/${txHash}`;
-
                 const html = `
-                    <div class="sonar-entry ${typeClass}" style="opacity:0.6">
+                    <div class="sonar-entry mint" style="opacity:0.6">
                         <div>
-                            <div style="font-weight:bold">${label}</div>
-                            <div style="font-size:0.6rem; opacity:0.7">${formatNum(baseKAS)} KAS</div>
+                            <div style="font-weight:bold">${tick}</div>
+                            <div style="font-size:0.6rem; opacity:0.7">MINT</div>
                         </div>
                         <div style="text-align:right">
-                            <div><a href="${link}" target="_blank" class="tx-link">$${formatNum(Math.floor(valueUSD))}</a></div>
+                            <div>${amt}</div>
                             <div style="font-size:0.6rem">-${timeAgo}m ago</div>
                         </div>
                     </div>
@@ -652,8 +648,13 @@
         /* --- 1. MARKET DATA & RATIOS --- */
         async function fetchMarketData() {
             try {
+                // Fetch Coin Data
                 const res = await fetch(COINGECKO_MARKETS);
                 const data = await res.json();
+                
+                // Fetch Global Data for Dominance
+                const globalRes = await fetch(COINGECKO_GLOBAL);
+                const globalData = await globalRes.json();
                 
                 if(!data || data.length < 3) return;
 
@@ -672,13 +673,18 @@
                 const date = new Date(kasData.ath_date).toLocaleDateString();
                 document.getElementById('athDisplay').innerHTML = `ATH: $${kasData.ath.toFixed(4)} <span style="opacity:0.5">(${date})</span>`;
 
+                // BTC Dominance
+                if(globalData && globalData.data) {
+                    const dom = globalData.data.market_cap_percentage.btc;
+                    document.getElementById('btcDom').innerText = dom.toFixed(1) + "%";
+                }
+
                 // Prices
                 document.getElementById('btcPrice').innerText = '$' + btcData.current_price.toLocaleString();
                 document.getElementById('ethPrice').innerText = '$' + ethData.current_price.toLocaleString();
                 
                 if(goldData) document.getElementById('goldPrice').innerText = '$' + goldData.current_price.toLocaleString();
                 if(silverData) document.getElementById('silverPrice').innerText = '$' + silverData.current_price.toFixed(2);
-
 
                 // RATIO CALCULATION
                 // BTC (Sats)
@@ -701,33 +707,23 @@
                 const highRatioE = (kasData.high_24h / ethData.low_24h) * 1000000000;
                 document.getElementById('ratioEthRange').innerText = `24h: ${Math.floor(lowRatioE).toLocaleString()} - ${Math.floor(highRatioE).toLocaleString()}`;
 
-                // Calculate Heat Index
-                calculateHeatIndex(kasData.price_change_percentage_24h, kasData.total_volume);
+                // Calculate Simulated Fear/Greed
+                calculateFearGreed(kasData.price_change_percentage_24h);
 
             } catch(e) { console.log("Market fetch error", e); }
         }
 
-        /* --- 2. HEAT INDEX CALCULATION --- */
-        function calculateHeatIndex(priceChange, volume) {
-            let pScore = (priceChange + 10) * 2; 
-            pScore = Math.max(0, Math.min(40, pScore));
+        /* --- 2. FEAR & GREED CALCULATION --- */
+        function calculateFearGreed(change) {
+            // Simple simulation based on 24h trend
+            let score = 50 + (change * 2.5);
+            score = Math.max(0, Math.min(100, Math.floor(score)));
             
-            let vScore = (volume / 100000000) * 30; 
-            vScore = Math.max(0, Math.min(30, vScore));
-            
-            const hScore = 20; 
-            const kScore = Math.random() * 10; 
-            
-            const total = Math.floor(pScore + vScore + hScore + kScore);
-            
-            document.getElementById('heatIndex').innerText = total;
-            document.getElementById('heatBar').style.width = total + '%';
-            
-            // Color grade
-            const bar = document.getElementById('heatBar');
-            if(total > 80) bar.style.background = '#ff3333';
-            else if(total > 50) bar.style.background = '#ffcc00';
-            else bar.style.background = '#00ff41';
+            const el = document.getElementById('fearGreed');
+            el.innerText = score;
+            if(score > 60) { el.style.color = '#00ff41'; el.innerText += " (GREED)"; }
+            else if(score < 40) { el.style.color = '#ff3333'; el.innerText += " (FEAR)"; }
+            else { el.style.color = '#ffcc00'; el.innerText += " (NEUTRAL)"; }
         }
 
         /* --- 3. NODE COUNT --- */
@@ -764,14 +760,15 @@
 
         function processOps(ops) {
             const tape = document.getElementById('sonarTape');
+            tape.innerHTML = ''; // Clear to ensure clean state with correct order
+            
             ops.forEach(op => {
                 const isMint = op.op === 'mint';
                 const typeClass = isMint ? 'mint' : 'transfer';
                 const amt = formatNum(parseInt(op.amt) / 100000000); 
-                const link = `https://katscan.xyz/token/${op.tick}`;
                 
                 const html = `
-                    <div class="sonar-entry ${typeClass}" onclick="window.open('${link}', '_blank')">
+                    <div class="sonar-entry ${typeClass}">
                         <div>
                             <div style="font-weight:bold">${op.tick}</div>
                             <div style="font-size:0.6rem; opacity:0.7">${op.op.toUpperCase()}</div>
@@ -782,6 +779,8 @@
                         </div>
                     </div>
                 `;
+                
+                tape.insertAdjacentHTML('beforeend', html); // Append in order received (API sends newest first)
             });
         }
 
@@ -828,7 +827,7 @@
                         ${isDone ? 'TRADING' : 'MINTING'}
                     </div>
                 `;
-                el.onclick = () => window.open(`https://katscan.xyz/token/${t.tick}`, '_blank');
+                // REMOVED CLICK
                 list.appendChild(el);
             });
         }
