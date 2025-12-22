@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE V15.0 | Kaspa Ecosystem Monitor</title>
+    <title>KASLIVE V16.0 | Kaspa Ecosystem Monitor</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,6 +37,19 @@
             background-color: var(--bg-dark);
             color: #e0e0e0;
             font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
         }
 
         /* Typography */
@@ -57,6 +70,7 @@
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
         }
 
         /* Neon Text Effect for Headings */
@@ -187,17 +201,42 @@
             font-family: 'Rajdhani', sans-serif !important;
         }
 
+        /* Inspector Styles */
+        .inspector-input {
+            background: #000;
+            border: 1px solid #333;
+            color: var(--hex-green);
+            font-family: 'JetBrains Mono';
+            width: 100%;
+            padding: 8px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .inspector-input:focus { border-color: var(--hex-cyan); }
+        .inspector-btn {
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .inspector-btn:hover { background: var(--hex-cyan); color: #000; border-color: var(--hex-cyan); }
+
         /* Mobile Adjustments */
         @media (max-width: 768px) {
             .hide-mobile { display: none; }
             .grid-cols-2 { grid-template-columns: 1fr; }
             .grid-cols-3 { grid-template-columns: 1fr; }
             th, td { padding: 8px 4px; font-size: 0.85rem; }
-            .panel { padding: 1rem; } /* Reduce padding on mobile */
+            .panel { padding: 1rem; } 
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- CANVAS BACKGROUND -->
+    <canvas id="bgCanvas"></canvas>
 
     <!-- HEADER -->
     <header class="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50 h-auto py-3 md:py-0 md:h-20">
@@ -207,7 +246,7 @@
                 <!-- Enlarged Font Size, Responsive -->
                 <h1 class="text-4xl md:text-6xl font-bold tracking-widest neon-text leading-none mt-1">
                     <span class="text-hex-green">KAS</span><span class="text-hex-blue">LIVE</span>
-                    <span class="text-xs md:text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V15.0</span>
+                    <span class="text-xs md:text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V16.0</span>
                 </h1>
                 <!-- Translation Widget -->
                 <div id="google_translate_element" class="ml-2 opacity-80 hover:opacity-100 transition-opacity transform translate-y-1"></div>
@@ -348,6 +387,22 @@
         <!-- RIGHT COLUMN (Sidebar) -->
         <div class="lg:col-span-4 flex flex-col gap-4 md:gap-6">
             
+            <!-- WALLET INSPECTOR (NEW) -->
+            <div class="panel rounded-sm p-4 flex flex-col gap-2">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg class="w-4 h-4 text-hex-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    WALLET INSPECTOR
+                </h3>
+                <div class="flex gap-2">
+                    <input type="text" id="walletInput" placeholder="kaspa:..." class="inspector-input rounded-sm text-xs" />
+                    <button onclick="inspectWallet()" class="inspector-btn rounded-sm font-bold text-xs">GO</button>
+                </div>
+                <div id="inspectorResult" class="hidden mt-2 p-2 bg-gray-900 border border-gray-800 rounded text-xs font-mono">
+                    <div class="flex justify-between text-gray-500"><span>BALANCE:</span><span id="inspBal" class="text-white">...</span></div>
+                    <div class="flex justify-between text-gray-500"><span>VALUE:</span><span id="inspVal" class="text-hex-green">...</span></div>
+                </div>
+            </div>
+
             <!-- HEAT INDEX (Expanded Metrics with Tooltip) -->
             <div class="panel rounded-sm h-auto min-h-[400px] md:h-[500px] flex flex-col relative z-10">
                 <div class="p-4 border-b border-gray-800 bg-black/20 z-10">
@@ -375,8 +430,8 @@
                 </div>
                 
                 <div class="flex-1 flex flex-col items-center justify-center relative p-6 md:p-8">
-                    <!-- Background Texture -->
-                    <div class="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                    <!-- Background Texture (No longer needed with canvas) -->
+                    <!-- <div class="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div> -->
                     
                     <!-- Main Score -->
                     <div class="text-6xl md:text-8xl font-bold font-mono heat-text transition-all duration-500" id="heatScore" style="color: #fff;">--</div>
@@ -433,7 +488,7 @@
     <!-- FOOTER -->
     <footer class="border-t border-gray-900 bg-black py-6 text-center">
         <div class="text-xs text-gray-600 font-mono">
-            KASLIVE V15.0 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX // DECENTRALIZED MONITOR
+            KASLIVE V16.0 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX // DECENTRALIZED MONITOR
         </div>
     </footer>
 
@@ -452,7 +507,7 @@
     <!-- CORE LOGIC SCRIPT -->
     <script>
         /* ==========================================
-           KASLIVE V15.0 - CORE LOGIC
+           KASLIVE V16.0 - CORE LOGIC
            ========================================== */
 
         const API = {
@@ -522,12 +577,90 @@
             fetchMarketData();
             initKRC20();
             initHashrateChart();
-            updatePerfChart(365); // Default 1 year
+            updatePerfChart(365); 
+            initBackground();
             
             // Polling Intervals
             setInterval(fetchMarketData, 30000); 
             setInterval(scanRandomWallet, 3000); 
         });
+
+        /* --- BACKGROUND ANIMATION --- */
+        function initBackground() {
+            const canvas = document.getElementById('bgCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.size = Math.random() * 2 + 0.5;
+                    this.speedY = Math.random() * 0.5 + 0.1;
+                    this.color = Math.random() > 0.5 ? '#00ff41' : '#00f3ff';
+                }
+                update() {
+                    this.y -= this.speedY;
+                    if(this.y < 0) this.y = height;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+
+            for(let i=0; i<50; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0,0,width,height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        /* --- WALLET INSPECTOR --- */
+        async function inspectWallet() {
+            const addr = document.getElementById('walletInput').value.trim();
+            const resDiv = document.getElementById('inspectorResult');
+            const valSpan = document.getElementById('inspVal');
+            const balSpan = document.getElementById('inspBal');
+
+            if(!addr) return;
+
+            resDiv.classList.remove('hidden');
+            balSpan.innerText = 'Loading...';
+            valSpan.innerText = '...';
+
+            try {
+                const res = await fetch(API.kaspa.balance(addr));
+                const data = await res.json();
+                if(data && data.balance !== undefined) {
+                    const bal = data.balance / 1e8;
+                    const val = bal * state.currentKasPrice;
+                    balSpan.innerText = bal.toLocaleString() + ' KAS';
+                    valSpan.innerText = '$' + val.toLocaleString(undefined, {maximumFractionDigits:2});
+                } else {
+                    balSpan.innerText = 'Invalid/Empty';
+                    valSpan.innerText = '-';
+                }
+            } catch(e) {
+                balSpan.innerText = 'Error';
+            }
+        }
 
         /* --- MARKET & RATIOS --- */
         async function fetchMarketData() {
@@ -537,7 +670,7 @@
             let goldData = null;
             let silverData = null;
 
-            // 1. Try CoinGecko (Best Data)
+            // 1. Try CoinGecko
             try {
                 const ids = 'bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
                 const url = `${API.coingecko}/coins/markets?vs_currency=usd&ids=${ids}`;
@@ -554,7 +687,7 @@
             } catch (e) {
                 // console.log("CoinGecko unreachable, switching to fallbacks.");
                 
-                // 2. Fallback: Independent fetches so one failure doesn't kill all
+                // 2. Fallback: Independent fetches
                 
                 // A. KASPA (Priority)
                 try {
@@ -564,12 +697,10 @@
                         if(kJson && kJson.price) {
                             kasData = {
                                 current_price: kJson.price,
-                                price_change_percentage_24h: 0, // Not available here
+                                price_change_percentage_24h: 0, 
                                 market_cap: 0,
                                 total_volume: 0
                             };
-                            
-                            // Try to get market cap info if possible, otherwise 0
                             try {
                                 const mcRes = await fetch('https://api.kaspa.org/info/marketcap');
                                 if(mcRes.ok) {
@@ -596,7 +727,7 @@
                 } catch(ec) { console.warn("CoinCap failed", ec); }
             }
 
-            // Render logic (check if data exists before using it)
+            // Render logic
             if(kasData) {
                 state.currentKasPrice = kasData.current_price;
                 const pChange = kasData.price_change_percentage_24h || 0;
@@ -663,29 +794,21 @@
 
         /* --- HEAT INDEX --- */
         function updateHeatIndex(kas, btc) {
-            // Algorithm Components
             const pChange = kas.price_change_percentage_24h || 0;
             const bChange = btc.price_change_percentage_24h || 0;
             const relStrength = pChange - bChange;
-            
-            // New Metrics for Heat Panel
             const volume = kas.total_volume || 0;
-            
-            // Assume 24h volume change is not directly available in this endpoint, 
-            // so we show raw volume formatted
             const volDisplay = (volume / 1e6).toFixed(1) + 'M';
             
             let trend = "SIDEWAYS";
             if(pChange > 3) trend = "BULLISH";
             if(pChange < -3) trend = "BEARISH";
 
-            // Calculate Score
             const priceFactor = Math.max(Math.min(pChange * 2.5, 25), -25);
             const strengthFactor = Math.max(Math.min(relStrength * 3, 15), -15);
             let score = 50 + priceFactor + strengthFactor;
             score = Math.floor(Math.max(0, Math.min(100, score)));
 
-            // DOM Updates
             const scoreEl = document.getElementById('heatScore');
             const labelEl = document.getElementById('heatLabel');
             const barEl = document.getElementById('heatBar');
@@ -694,7 +817,6 @@
             const metricVol = document.getElementById('heatMetricVol');
             const metricDom = document.getElementById('heatMetricDom');
 
-            // Text Color Logic
             let color = '#fff';
             let label = 'NEUTRAL';
             if(score < 30) { color = '#00f3ff'; label = 'FREEZING'; }
@@ -707,13 +829,10 @@
             scoreEl.innerText = score;
             scoreEl.style.color = color;
             scoreEl.style.textShadow = `0 0 20px ${color}`;
-            
             labelEl.innerText = label;
             labelEl.style.color = color;
-
             barEl.style.width = score + '%';
 
-            // Update Sub-metrics
             const pSign = pChange >= 0 ? '+' : '';
             const pColor = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
             metricPrice.innerHTML = `<span style="color:${pColor}">${pSign}${pChange.toFixed(2)}%</span>`;
@@ -724,11 +843,9 @@
 
             metricVol.innerText = `$${volDisplay}`;
             
-            // Using "Dominance" slot for Market Trend
             const tColor = trend === "BULLISH" ? 'var(--hex-green)' : (trend === "BEARISH" ? 'var(--hex-alert)' : '#aaa');
             metricDom.innerHTML = `<span style="color:${tColor}">${trend}</span>`;
         }
-
 
         /* --- CHARTS --- */
         async function initHashrateChart() {
@@ -741,7 +858,7 @@
                     data.forEach((p, i) => {
                         if(i % 15 === 0) {
                             labels.push(new Date(p.timestamp * 1000).toISOString().split('T')[0]);
-                            values.push(p.hashrate / 1000); // PH/s
+                            values.push(p.hashrate / 1000); 
                         }
                     });
 
@@ -775,7 +892,6 @@
         }
 
         async function updatePerfChart(days) {
-            // Update buttons UI
             const btns = document.querySelectorAll('#timeframeControls button');
             btns.forEach(b => {
                 if(b.innerText.toLowerCase().includes(days === 365 ? '1y' : (days === 'max' ? 'all' : days))) {
@@ -799,8 +915,6 @@
                 const datasets = results.map((res, i) => {
                     if(!res || !res.prices || !res.prices.length) return null;
                     const start = res.prices[0][1];
-                    
-                    // Downsample based on range to keep chart fast
                     let modulo = 1;
                     if(days === 90) modulo = 2;
                     if(days === 365) modulo = 7;
@@ -816,10 +930,7 @@
                 }).filter(d=>d);
 
                 const ctxP = document.getElementById('perfChart').getContext('2d');
-                
-                if(state.perfChartInstance) {
-                    state.perfChartInstance.destroy();
-                }
+                if(state.perfChartInstance) state.perfChartInstance.destroy();
 
                 state.perfChartInstance = new Chart(ctxP, {
                     type: 'line',
@@ -841,9 +952,7 @@
         function initLedger() {
             state.whaleData = REAL_ADDRS.map((w, i) => ({ ...w, rank: i+1, balance: 0, status: '...' }));
             renderTable();
-            // Update count
             document.getElementById('totalTracked').innerText = `TRACKING ${REAL_ADDRS.length} WALLETS`;
-            // Staggered fetch
             state.whaleData.forEach((w, i) => {
                 setTimeout(() => fetchBalance(i), i * 300);
             });
@@ -880,7 +989,6 @@
                 const tr = document.createElement('tr');
                 const short = w.address.substr(0,8) + '...' + w.address.substr(-6);
                 const tag = w.tag ? `<span class="tag-pill ${w.tag.type}">${w.tag.name}</span>` : `<span style="opacity:0.2">-</span>`;
-                
                 tr.innerHTML = `
                     <td class="text-gray-500">${w.rank}</td>
                     <td style="font-family:monospace"><a href="https://explorer.kaspa.org/addresses/${w.address}" target="_blank" class="hover:text-cyan-400 transition-colors">${short}</a></td>
@@ -899,7 +1007,7 @@
                 const w = state.whaleData[i];
                 row.cells[3].innerText = w.balance.toLocaleString();
                 row.cells[3].style.color = '#fff';
-                setTimeout(()=>row.cells[3].style.color='#9ca3af', 500); // back to gray-400
+                setTimeout(()=>row.cells[3].style.color='#9ca3af', 500);
                 row.cells[5].innerText = w.percent + '%';
                 if(row.cells[4]) row.cells[4].innerText = w.status;
             }
