@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE V16.0 | Kaspa Ecosystem Monitor</title>
+    <title>KASLIVE V16.2 | Kaspa Ecosystem Monitor</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -223,6 +223,20 @@
         }
         .inspector-btn:hover { background: var(--hex-cyan); color: #000; border-color: var(--hex-cyan); }
 
+        /* Error Overlay for Charts */
+        .chart-error {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            color: #ff3333;
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
         /* Mobile Adjustments */
         @media (max-width: 768px) {
             .hide-mobile { display: none; }
@@ -243,12 +257,10 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between h-full">
             <div class="flex items-center gap-4 mb-2 md:mb-0">
                 <div class="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_10px_#00f3ff]"></div>
-                <!-- Enlarged Font Size, Responsive -->
                 <h1 class="text-4xl md:text-6xl font-bold tracking-widest neon-text leading-none mt-1">
                     <span class="text-hex-green">KAS</span><span class="text-hex-blue">LIVE</span>
-                    <span class="text-xs md:text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V16.0</span>
+                    <span class="text-xs md:text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V16.2</span>
                 </h1>
-                <!-- Translation Widget -->
                 <div id="google_translate_element" class="ml-2 opacity-80 hover:opacity-100 transition-opacity transform translate-y-1"></div>
             </div>
             
@@ -268,7 +280,6 @@
     <div class="bg-[#080808] border-b border-gray-800 text-sm font-mono py-2 overflow-hidden whitespace-nowrap">
         <div class="max-w-7xl mx-auto px-4 flex gap-8 md:gap-12 overflow-x-auto no-scrollbar">
             <span class="text-gray-500 font-bold">MARKETS:</span>
-            <!-- Prices will be populated via JS with change % -->
             <span id="btcTicker">BTC: <span class="text-gray-600">...</span></span>
             <span id="ethTicker">ETH: <span class="text-gray-600">...</span></span>
             <span id="goldTicker">GOLD: <span class="text-gray-600">...</span></span>
@@ -293,8 +304,8 @@
                             <div class="tooltip-text">
                                 <strong class="text-orange-400">KAS/BTC Ratio (24h)</strong><br/>
                                 This measures if KAS is gaining value against Bitcoin.<br/>
-                                <span class="text-green-400">Green</span> = KAS is rising faster than BTC.<br/>
-                                <span class="text-red-400">Red</span> = BTC is outperforming KAS.
+                                <span class="text-green-400">Green</span> = KAS Outperforming.<br/>
+                                <span class="text-red-400">Red</span> = BTC Outperforming.
                             </div>
                         </div>
                         <span id="ratioBtcVal" class="font-mono text-xl md:text-2xl font-bold">...</span>
@@ -313,8 +324,8 @@
                             <div class="tooltip-text">
                                 <strong class="text-blue-400">KAS/ETH Ratio (24h)</strong><br/>
                                 This measures if KAS is gaining value against Ethereum.<br/>
-                                <span class="text-green-400">Green</span> = KAS is rising faster than ETH.<br/>
-                                <span class="text-red-400">Red</span> = ETH is outperforming KAS.
+                                <span class="text-green-400">Green</span> = KAS Outperforming.<br/>
+                                <span class="text-red-400">Red</span> = ETH Outperforming.
                             </div>
                         </div>
                         <span id="ratioEthVal" class="font-mono text-xl md:text-2xl font-bold">...</span>
@@ -325,11 +336,10 @@
                 </div>
             </div>
 
-            <!-- CHARTS ROW (Swapped Positions) -->
+            <!-- CHARTS ROW -->
             <div class="grid grid-cols-1 gap-4 md:gap-6">
-                
-                <!-- Perf Chart (Now on Top) -->
-                <div class="panel p-4 md:p-6 rounded-sm h-[350px] md:h-[450px] flex flex-col">
+                <!-- Perf Chart -->
+                <div class="panel p-4 md:p-6 rounded-sm h-[350px] md:h-[450px] flex flex-col relative">
                     <div class="flex justify-between items-center mb-2 md:mb-4">
                         <h3 class="text-xs md:text-sm text-white font-bold uppercase">Relative Performance</h3>
                         <div class="flex gap-1" id="timeframeControls">
@@ -339,22 +349,23 @@
                             <button class="tf-btn" onclick="updatePerfChart('max')">ALL</button>
                         </div>
                     </div>
+                    <div id="perfError" class="chart-error hidden">DATA UNAVAILABLE</div>
                     <div class="relative flex-1 w-full">
                         <canvas id="perfChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Hashrate (Now on Bottom) -->
-                <div class="panel p-4 md:p-6 rounded-sm h-[300px] md:h-80">
+                <!-- Hashrate -->
+                <div class="panel p-4 md:p-6 rounded-sm h-[300px] md:h-80 relative">
                     <h3 class="text-xs md:text-sm text-hex-green mb-2 md:mb-4 font-bold flex items-center gap-2">
                         <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
                         NETWORK HASHRATE (ALL HISTORY)
                     </h3>
+                    <div id="hashError" class="chart-error hidden">DATA UNAVAILABLE</div>
                     <div class="relative h-52 md:h-64 w-full">
                         <canvas id="hashrateChart"></canvas>
                     </div>
                 </div>
-
             </div>
 
             <!-- RICH LIST TABLE -->
@@ -376,7 +387,6 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="font-mono text-gray-300">
-                            <!-- JS populates this -->
                             <tr><td colspan="6" class="text-center p-8 text-gray-500">Loading ledger...</td></tr>
                         </tbody>
                     </table>
@@ -387,7 +397,7 @@
         <!-- RIGHT COLUMN (Sidebar) -->
         <div class="lg:col-span-4 flex flex-col gap-4 md:gap-6">
             
-            <!-- WALLET INSPECTOR (NEW) -->
+            <!-- WALLET INSPECTOR -->
             <div class="panel rounded-sm p-4 flex flex-col gap-2">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <svg class="w-4 h-4 text-hex-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -403,7 +413,7 @@
                 </div>
             </div>
 
-            <!-- HEAT INDEX (Expanded Metrics with Tooltip) -->
+            <!-- HEAT INDEX -->
             <div class="panel rounded-sm h-auto min-h-[400px] md:h-[500px] flex flex-col relative z-10">
                 <div class="p-4 border-b border-gray-800 bg-black/20 z-10">
                     <h3 class="text-sm font-bold text-orange-500 flex items-center justify-between">
@@ -411,41 +421,30 @@
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
                             KASPA HEAT INDEX
                         </div>
-                        
-                        <!-- Tooltip Container -->
                         <div class="tooltip-container cursor-help">
                             <svg class="w-4 h-4 text-gray-500 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div class="tooltip-text font-mono">
                                 <strong class="text-orange-400 block mb-1">HEAT INDEX CALCULATION</strong>
-                                A real-time sentiment score (0-100) based on:<br/>
                                 • <span class="text-white">Price Action:</span> 24h USD change.<br/>
                                 • <span class="text-white">Relative Strength:</span> Performance vs Bitcoin.<br/>
                                 • <span class="text-white">Momentum:</span> Volume & Trend analysis.<br/>
-                                <span class="text-xs text-gray-500 mt-1 block">Updated every 30s.</span>
                             </div>
                         </div>
                     </h3>
                 </div>
                 
                 <div class="flex-1 flex flex-col items-center justify-center relative p-6 md:p-8">
-                    <!-- Background Texture (No longer needed with canvas) -->
-                    <!-- <div class="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div> -->
-                    
-                    <!-- Main Score -->
                     <div class="text-6xl md:text-8xl font-bold font-mono heat-text transition-all duration-500" id="heatScore" style="color: #fff;">--</div>
                     <div class="text-base md:text-lg font-bold tracking-[0.3em] mb-6 md:mb-8 transition-all duration-500" id="heatLabel" style="color: #555">CALCULATING</div>
 
-                    <!-- Meter Container -->
                     <div class="w-full bg-gray-900 h-6 md:h-8 rounded-full border border-gray-700 relative overflow-hidden shadow-inner mb-6 md:mb-8">
-                         <!-- Gradient Bar -->
                          <div id="heatBar" class="h-full transition-all duration-1000 ease-out" 
                               style="width: 0%; background: linear-gradient(90deg, #00f3ff, #00ff41, #ffcc00, #ff6600, #ff0000); box-shadow: 0 0 15px rgba(255,255,255,0.2);">
                          </div>
                     </div>
 
-                    <!-- Metrics Breakdown (4x Grid) -->
                     <div class="w-full grid grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm font-mono text-gray-500 relative z-10">
                         <div class="text-center p-3 md:p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
                             <div class="block text-gray-600 mb-1 tracking-wider text-[10px] md:text-xs">PRICE MOMENTUM</div>
@@ -488,7 +487,7 @@
     <!-- FOOTER -->
     <footer class="border-t border-gray-900 bg-black py-6 text-center">
         <div class="text-xs text-gray-600 font-mono">
-            KASLIVE V16.0 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX // DECENTRALIZED MONITOR
+            KASLIVE V16.2 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX, BINANCE // DECENTRALIZED MONITOR
         </div>
     </footer>
 
@@ -507,7 +506,7 @@
     <!-- CORE LOGIC SCRIPT -->
     <script>
         /* ==========================================
-           KASLIVE V16.0 - CORE LOGIC
+           KASLIVE V16.2 - CORE LOGIC
            ========================================== */
 
         const API = {
@@ -891,61 +890,116 @@
             } catch(e) { console.log("Hashrate chart unavailable", e); }
         }
 
+        async function fetchHistory(id, days) {
+            // 1. Try CoinGecko
+            try {
+                const url = `${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
+                const res = await fetch(url);
+                if(res.ok) {
+                    const data = await res.json();
+                    return data.prices; // [[time, price], ...]
+                }
+            } catch(e) { console.log(`CG history failed for ${id}`); }
+
+            // 2. Fallback to CoinCap
+            try {
+                // Map 'max' to a specific day count (e.g., 2000 days)
+                const dayCount = days === 'max' ? 2000 : days;
+                const end = Date.now();
+                const start = end - (dayCount * 24 * 60 * 60 * 1000);
+                // Interval: d1 for > 1 day
+                const url = `https://api.coincap.io/v2/assets/${id}/history?interval=d1&start=${start}&end=${end}`;
+                const res = await fetch(url);
+                if(res.ok) {
+                    const json = await res.json();
+                    // Convert CoinCap format {time: 123, priceUsd: "123"} to [[123, 123]]
+                    return json.data.map(d => [d.time, parseFloat(d.priceUsd)]);
+                }
+            } catch(e) { console.log(`CoinCap history failed for ${id}`); }
+
+            return null;
+        }
+
         async function updatePerfChart(days) {
+            // UI Update
             const btns = document.querySelectorAll('#timeframeControls button');
             btns.forEach(b => {
-                if(b.innerText.toLowerCase().includes(days === 365 ? '1y' : (days === 'max' ? 'all' : days))) {
+                const txt = b.innerText.toLowerCase();
+                const dStr = String(days);
+                if((days === 365 && txt === '1y') || (days === 'max' && txt === 'all') || txt.includes(dStr)) {
                     b.classList.add('active');
                 } else {
                     b.classList.remove('active');
                 }
             });
 
-            try {
-                const ids = ['kaspa', 'bitcoin', 'ethereum'];
-                const colors = ['#00ff41', '#f7931a', '#627eea'];
-                const labels = ['KAS', 'BTC', 'ETH'];
+            // Loading State
+            const errEl = document.getElementById('perfError');
+            if(errEl) {
+                errEl.innerText = 'LOADING DATA...';
+                errEl.classList.remove('hidden');
+                errEl.style.color = '#ccc';
+            }
+
+            const ids = ['kaspa', 'bitcoin', 'ethereum'];
+            const colors = ['#00ff41', '#f7931a', '#627eea'];
+            const labels = ['KAS', 'BTC', 'ETH'];
+
+            // Fetch Data
+            const results = await Promise.all(ids.map(id => fetchHistory(id, days)));
+
+            // Hide Loading/Error
+            if(errEl) errEl.classList.add('hidden');
+
+            const datasets = results.map((prices, i) => {
+                if(!prices || !prices.length) return null;
+                const start = prices[0][1];
                 
-                const promises = ids.map(id => 
-                    fetch(`${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=${days}`)
-                    .then(r => r.ok ? r.json() : null)
-                );
-                const results = await Promise.all(promises);
-                
-                const datasets = results.map((res, i) => {
-                    if(!res || !res.prices || !res.prices.length) return null;
-                    const start = res.prices[0][1];
-                    let modulo = 1;
-                    if(days === 90) modulo = 2;
-                    if(days === 365) modulo = 7;
-                    if(days === 'max') modulo = 14;
+                // Downsample
+                let modulo = 1;
+                if(days === 90) modulo = 2;
+                if(days === 365 || days === 'max') modulo = 5;
 
-                    return {
-                        label: labels[i],
-                        data: res.prices.filter((_,x)=>x%modulo===0).map(p => ({x: p[0], y: ((p[1]-start)/start)*100})),
-                        borderColor: colors[i], borderWidth: i===0?2:1, pointRadius:0,
-                        borderDash: i===0 ? [] : [4,4],
-                        tension: 0.1
-                    };
-                }).filter(d=>d);
+                return {
+                    label: labels[i],
+                    data: prices.filter((_,x) => x % modulo === 0).map(p => ({x: p[0], y: ((p[1]-start)/start)*100})),
+                    borderColor: colors[i], 
+                    borderWidth: i===0?2:1, 
+                    pointRadius:0,
+                    borderDash: i===0 ? [] : [4,4],
+                    tension: 0.1
+                };
+            }).filter(d => d);
 
-                const ctxP = document.getElementById('perfChart').getContext('2d');
-                if(state.perfChartInstance) state.perfChartInstance.destroy();
+            if(datasets.length === 0) {
+                if(errEl) {
+                    errEl.innerText = 'DATA UNAVAILABLE';
+                    errEl.style.color = '#ff3333';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
 
-                state.perfChartInstance = new Chart(ctxP, {
-                    type: 'line',
-                    data: { datasets },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: {labels:{color:'#888', boxWidth:10, font: {family:'Rajdhani'}}} },
-                        scales: {
-                            x: { type:'time', time:{unit: days==30?'day':'month'}, grid:{display:false}, ticks:{color:'#444', font: {size: 10}} },
-                            y: { grid:{color:'#222'}, ticks:{color:'#666', callback:v=>v+'%', font: {family:'JetBrains Mono'}} }
-                        },
-                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
-                    }
-                });
-            } catch(e) { console.log("Perf chart unavailable", e); }
+            const ctxP = document.getElementById('perfChart').getContext('2d');
+            
+            if(state.perfChartInstance) {
+                state.perfChartInstance.destroy();
+            }
+
+            state.perfChartInstance = new Chart(ctxP, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: {labels:{color:'#888', boxWidth:10, font: {family:'Rajdhani'}}} },
+                    scales: {
+                        x: { type:'time', time:{unit: days==30?'day':'month'}, grid:{display:false}, ticks:{color:'#444', font: {size: 10}} },
+                        y: { grid:{color:'#222'}, ticks:{color:'#666', callback:v=>v+'%', font: {family:'JetBrains Mono'}} }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
         }
 
         /* --- LEDGER --- */
