@@ -1,874 +1,323 @@
 /* ==========================================
-   KASLIVE - COMPLETE & OPTIMIZED
-   v2.0 - Top 100 Addresses + Enhanced APIs
+   KASLIVE V13.0 - CORE LOGIC
    ========================================== */
 
 /* --- API ENDPOINTS --- */
 const API = {
-    // Kaspa Official API
     kaspa: {
         base: 'https://api.kaspa.org',
         blocks: 'https://api.kaspa.org/blocks?limit=10&includeTransactions=false',
-        hashrate: 'https://api.kaspa.org/info/hashrate',
-        blueScore: 'https://api.kaspa.org/info/virtual-selected-parent-blue-score',
-        addressBalance: (addr) => `https://api.kaspa.org/addresses/${addr}/balance`
+        info: 'https://api.kaspa.org/info/virtual-selected-parent-blue-score',
+        hashrateHistory: 'https://api.kaspa.org/info/hashrate/history',
+        balance: (addr) => `https://api.kaspa.org/addresses/${addr}/balance`
     },
-    // CoinGecko
-    coingecko: {
-        markets: 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver',
-        global: 'https://api.coingecko.com/api/v3/global'
-    },
-    // Kasplex
-    kasplex: {
-        tokenList: 'https://api.kasplex.org/v1/krc20/tokenlist'
-    },
-    // Node count
-    nodes: 'https://raw.githubusercontent.com/tmrlvi/kaspa-crawler/master/data/nodes.json'
-};
-
-/* --- CONSTANTS --- */
-const TOTAL_SUPPLY = 28700000000;
-const POLL_INTERVALS = {
-    marketData: 20000,      // 20s - CoinGecko updates frequently
-    blocks: 10000,          // 10s - Good balance for 10 BPS
-    balanceScan: 5000,      // 5s - Check one address every 5s
-    krc20: 60000           // 60s - Token list doesn't change often
+    coingecko: 'https://api.coingecko.com/api/v3',
+    kasplex: 'https://api.kasplex.org/v1/krc20/tokenlist'
 };
 
 /* --- STATE --- */
 const state = {
     whaleData: [],
-    krcTokens: [],
-    currentKasPrice: 0.0462,
-    currentBlueScore: 95000000,
-    apiStatus: {
-        coingecko: false,
-        kaspa: false,
-        kasplex: false
-    },
+    currentKasPrice: 0,
     language: 'EN'
 };
 
-/* --- DICTIONARY --- */
-const DICT = {
-    EN: {
-        crypto: "CRYPTO RATIOS",
-        dominance: "BTC DOMINANCE",
-        relStrength: "RELATIVE STRENGTH",
-        rwa: "REAL WORLD ASSETS",
-        gold: "GOLD",
-        silver: "SILVER",
-        chain: "CHAIN METRICS",
-        netflow: "NET FLOW (24H)",
-        heat: "HEAT INDEX",
-        hash: "HASHRATE",
-        nodes: "NODES",
-        ledger: "LEVIATHAN LEDGER",
-        krc: "KRC-20 MARKET",
-        blocks: "LATEST BLOCKS"
-    },
-    ES: {
-        crypto: "RATIOS CRIPTO",
-        dominance: "DOMINIO BTC",
-        relStrength: "FUERZA RELATIVA",
-        rwa: "ACTIVOS REALES",
-        gold: "ORO",
-        silver: "PLATA",
-        chain: "METRICAS CADENA",
-        netflow: "FLUJO NETO",
-        heat: "INDICE CALOR",
-        hash: "TASA HASH",
-        nodes: "NODOS",
-        ledger: "LIBRO LEVIATAN",
-        krc: "MERCADO KRC-20",
-        blocks: "BLOQUES RECIENTES"
-    },
-    CN: {
-        crypto: "加密比率",
-        dominance: "比特币占比",
-        relStrength: "相对强度",
-        rwa: "现实资产",
-        gold: "黄金",
-        silver: "白银",
-        chain: "链上指标",
-        netflow: "净流量",
-        heat: "热度指数",
-        hash: "哈希率",
-        nodes: "节点",
-        ledger: "巨鲸账本",
-        krc: "KRC-20 市场",
-        blocks: "最新区块"
-    },
-    RU: {
-        crypto: "КРИПТО КОЭФФ.",
-        dominance: "ДОМИНИРОВАНИЕ BTC",
-        relStrength: "ОТНОС. СИЛА",
-        rwa: "РЕАЛЬНЫЕ АКТИВЫ",
-        gold: "ЗОЛОТО",
-        silver: "СЕРЕБРО",
-        chain: "МЕТРИКИ СЕТИ",
-        netflow: "ЧИСТЫЙ ПОТОК",
-        heat: "ИНДЕКС ТЕПЛА",
-        hash: "ХЕШРЕЙТ",
-        nodes: "УЗЛЫ",
-        ledger: "КНИГА КИТОВ",
-        krc: "РЫНОК KRC-20",
-        blocks: "ПОСЛЕДНИЕ БЛОКИ"
-    }
-};
-
-/* --- TOP 100 WHALE ADDRESSES (Enhanced with Auto-Tags) --- */
+/* --- TOP WALLETS (Hardcoded for stability, Balances fetched Live) --- */
 const REAL_ADDRS = [
-    { address: 'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz', balance: 1034945474, tag: {name: 'MEXC', type:'tag-exchange'} },
-    { address: 'kaspa:qpz2vgvlxhmyhmt22h538pjzmvvd52nuut80y5zulgpvyerlskvvwm7n4uk5a', balance: 746717730, tag: {name: 'Entity X', type:'tag-whale'} },
-    { address: 'kaspa:qzxrs8gxjgk2q84wlt3xfd057ntws73fptalhy84g85zqfu5lcemvpu04vj3w', balance: 544283239, tag: {name: 'Uphold', type:'tag-exchange'} },
-    { address: 'kaspa:qpxtcucks59lvjdypd6mc93f8dutrpjnhekpk9ftg4h6jte6slaxygttyflqm', balance: 392801659, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qzadxjufntvckxrvy76pyhvtkuu8lg5ryz252aglmhlyv27pxqplksshzuu9m', balance: 389000015, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qpj2x2qfmvj4g6fn0xadv6hafdaqv4fwd3t4uvyw3walwfn50rzysa4lafpma', balance: 298411310, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qrvum29vk365g0zcd5gx3c7h829etfq2ytdmscjzw4zw04fjfnprcg9c3tges', balance: 287555324, tag: {name: 'Bybit', type:'tag-exchange'} },
-    { address: 'kaspa:qpap72xed702y4ahw537l3x63788nrh3ea5a0y06we236d5rth43wptqsv0ws', balance: 245006242, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qqywx2wszmnrsu0mzgav85rdwvzangfpdj9j3ady9jpr7hu4u8c2wl9wqgd6j', balance: 212126876, tag: {name: 'Bitget', type:'tag-exchange'} },
-    { address: 'kaspa:qr8k05f9n6xtrd0eex5lr6878mc5n7dgrtn8xv3frfvuxgfchx9077jtz5tsk', balance: 204000134, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qzpt2wp67seprjndmrzu58g4sgkknxp0y5g97y5leupj7ugffqhs6xgxdjwtf', balance: 201654006, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qq2ka745yyj0760fkt3ax3t7hpyqret6pzaypag3afnd3fp8jpv4cmzpx8yrt', balance: 175227497, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qz06rpdaap56ktn3xf3w70g09s9dphrkmnks027lnshyqd6x5l8tzt8lcpp4k', balance: 172000002, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qpxg04pk29q9pf6uzakcxugdl3td6xkx875p24wkr3hjjgkh9gsp2p5m3akay', balance: 153300306, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:ppwn9mz7ht2p8w8mqtafvuw0sslqff7svk0e5j5vterutxwd3gmygnqdrppm5', balance: 139511528, tag: {name: 'Cold Storage', type: 'tag-whale'} },
-    { address: 'kaspa:qrelgny7sr3vahq69yykxx36m65gvmhryxrlwngfzgu8xkdslum2yxjp3ap8m', balance: 136787507, tag: {name: 'Gate.io', type:'tag-exchange'} },
-    { address: 'kaspa:qq2hke25nvxsnnawzlym3nf6y38clrhdefph5xckeuyyzxwh99kavfu77grmg', balance: 126549776, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qq85gcpx9zhytqamzhc0mv25fn0d40slrs4cj6hmh0lyelf67mwawuwt6c98l', balance: 123871604, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qzuuky4xcdd2ur0u24l0drn9xjyf0d95ll25hyk9ttcz4x9wxlhrcrrm8s0a5', balance: 120830406, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qr3jhs25akrdmw0uwkge2zwnez398snsyfmtj80r24mptq9pzetsy3l0jxuxt', balance: 102283941, tag: {name: 'Suspected Exchange', type: 'tag-exchange'} },
-    { address: 'kaspa:qq6kjumc6l95hq005yz2gazrqev3pyfjvqefxef93wz6u2makfhmsrct65f62', balance: 96150182, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qrtxzw8j3ydwna6spm7etj7x36dzj06h7q84hxn6ueapphfg8txazcycmnalc', balance: 86885320, tag: null },
-    { address: 'kaspa:qpky2f87j7my5ph5taucutm74tfssz8l97m770rqdtnmzmece7r9gf3l2hpze', balance: 82050351, tag: null },
-    { address: 'kaspa:qp2sp0vvrwu4s8pw0j68muu2ta5qar5mehf8ehuvljw5zsrakk5cvx4gvqz7z', balance: 80000000, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qqn98feqplp4nc92wgq7j7cy6cdnaugnzngeatps7swaxkw0s9e0c7rjjdrxf', balance: 78000100, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:pqtm55d2a456qws90g096cxnecc7msjmxr8n2ernwues8zfdamkl2kfmxr8gr', balance: 75012764, tag: {name: 'Rust Fund', type:'tag-dev'} },
-    { address: 'kaspa:qpu0zrz92y5m4s0vf8ml0tqrhc85l943t9efghexqd4rt09cfynjzw5rmfdws', balance: 75000001, tag: null },
-    { address: 'kaspa:qqfxn597v5c23td4asz99ky52sha8l2ypq8kmrsqxcu7skhdunncjgup0hdys', balance: 70799001, tag: null },
-    { address: 'kaspa:ppk66xua7nmq8elv3eglfet0xxcfuks835xdgsm5jlymjhazyu6h5ac62l4ey', balance: 70230991, tag: {name: 'DAGKnight Protocol Fund', type:'tag-dev'} },
-    { address: 'kaspa:qzganetmrpwv88ea0pkma0xvgacw034l6jv9e9kvh0mup47ahqpc24la7yfmf', balance: 69789872, tag: null },
-    { address: 'kaspa:qyp59cwe4rw8x6jkjpfd7xwrhqle36raq0tr36efeceehxsu97lf4scf72jkpdu', balance: 68917990, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qrepacgj2flpflt8f7luh3ru4sykgt8d5k7s0sh4zlflk3glqpwjvq9kx7smk', balance: 67117625, tag: null },
-    { address: 'kaspa:qrjjnrk9vd9je8wnlqq9dz7fhmhurgjjed8n2pnzh5jwgjmef5pvzd4vf0lu7', balance: 66000001, tag: null },
-    { address: 'kaspa:qzt7aclnyvdanj64kfnh9rk3dr82azrezjh5ufq69g8vv3jqt3656hzknp5ux', balance: 65035640, tag: null },
-    { address: 'kaspa:qypnwqfqltw6p8j8x7hj3w962l8a4ha5admykfs7z30fc07vydftmng942wwmmw', balance: 59444870, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qz5hppxmt8tphv0glcj93q2fshurp56alm8ue8eu8ydlpxf7n3772kpuv4fqf', balance: 58207355, tag: null },
-    { address: 'kaspa:qphvtvtxxhtc5ghpd094w384lkwptn82ge4q6rrg6meg2w5ccq7qzj9l2ex5g', balance: 57181940, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qpkf9c9t2vhu7dt037rkmutyjcgg29hlwq25xnxgln6x5uq6ajtnucslxlk9a', balance: 55000004, tag: null },
-    { address: 'kaspa:qzv6qn4uc6hsuxdkyre7gued8k76fmz8944rutv5t06zmwazk8u62d5wjau8a', balance: 55000001, tag: null },
-    { address: 'kaspa:qp4yhgqa5626tksjn0gfm6tw6mfzhr25vmxvhqepna5jsf62x7cv79xd8r5xn', balance: 55000000, tag: {name: 'Institutional', type:'tag-whale'} },
-    { address: 'kaspa:qqtzvnplnch8yxjmnag3a4u853n06cl8qgk3hkgka8ysfnapn8y6cp03rw46q', balance: 53152001, tag: null },
-    { address: 'kaspa:qyppcdqxpu3sw49k6xcj8wcqjd98lpvpc8cm30wfnj003ahlhjzkh0s67gjxuv7', balance: 52036314, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qpa5qkhcwsugxsmf95fush3rt5yn4r3xylxpzh4clkxqvtzlvwc226qs2hrxs', balance: 50796154, tag: null },
-    { address: 'kaspa:qqexfmgasw6ugpc2g83gassv3k9dsfph8eeqt3ggm7rrm72xy8vs6v6l83mun', balance: 50053231, tag: null },
-    { address: 'kaspa:qr6pqdkru9fgwlm8yyqzp7cww9vj7auuq5vratzy4ev3luzj79t5ycvp8euuf', balance: 49625350, tag: null },
-    { address: 'kaspa:qpejlu4uslvjtqj2cxt0x6ae2z8mnlh0se7zmsxgtxvx55p470zz55m7r8qw4', balance: 48059395, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qrwf3qud6cylzrqnzucsu5clxd4d5g0a0c6033mqqv9j4mtzj89mqjfmpkmsj', balance: 47832715, tag: null },
-    { address: 'kaspa:qrwk397sj0u9n9y8ggsun37gm49ncdvlxqfl8xfyu2ecxyhcljd4kyu4uqqc3', balance: 47155774, tag: null },
-    { address: 'kaspa:qr5g9z3vvg0ax3zj4z79mlljdddalec4nwu6a3cpaev6eplwvzhmjvf8s4l7e', balance: 45991073, tag: null },
-    { address: 'kaspa:qrtrd3ps6l77z4uuqsv59fx9tvtvk2dju3xgmnem0x8ve5y6gjjfslfvys5fd', balance: 45499747, tag: null },
-    { address: 'kaspa:qz0uu47j76t0640hx2am7ma3v2r4qyzhc6h3dl6vdjnqnurxsmv2y4ucv896q', balance: 45000000, tag: null },
-    { address: 'kaspa:qrqgr6vunvrn0d50uf234e3e7nkkf8nfw65n40yh7hq09n8k0y325avvf9kle', balance: 43321687, tag: null },
-    { address: 'kaspa:qqcaqqwpchf3csa88ns6rv6wmh34zyjpfe00j6cs7ghnv8js7crvzxtw62j03', balance: 43090419, tag: null },
-    { address: 'kaspa:qypjdmwr9cpz20gmcvaa3texqt7qrmf60z9fkrznydnyhk7p46c9n7gyhngnx04', balance: 42501611, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qzwrjt42he7ydcvnw20mj82z8yc5lnswf7mputuk4pe2qp6c6vp47x87kppe4', balance: 41067612, tag: null },
-    { address: 'kaspa:qqlg7nt3uwmhmn3m9jz2r4q4a3ghx4jz7g0em0dkeve7gczrf9hf5rvpzttwj', balance: 40432011, tag: null },
-    { address: 'kaspa:qpv8uvgcp3hggy265rkhacpphwwwxpw83pc499qas2z7hjlwdjw25gz2pqur3', balance: 40017498, tag: null },
-    { address: 'kaspa:qypjsjar29p43ug7nw52s3me9kz7etll90lth2l3cxlscw723qg37lsnv9h89f2', balance: 40001927, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qypu7fl2cx9v4g3vhq5h3md8nsaq2ue70nlmtvqcclt2n9dy645vvkck8lmxeav', balance: 40000804, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qzxs23g7txh3wq9d0t2z0hluhsflvzpf6d0yfum830ppumgtxa5d7zqca8r67', balance: 39936962, tag: null },
-    { address: 'kaspa:qz0v7dyxe25thheefdfspu9ermeyzrhly07ggusywv5q4q7eq9mezjxmk30ne', balance: 39921367, tag: null },
-    { address: 'kaspa:qrepakq5wxj4hgmhf4vnfl6lk749fzxgekcsjuljeduhvtqq6krysxz285zzk', balance: 39002777, tag: null },
-    { address: 'kaspa:qrwerdwcg62r2fjam89v6a2jdrhw5nlyxdqyg3w5qrxnz30894vuk24jtjeup', balance: 39000000, tag: null },
-    { address: 'kaspa:qpmc57s43sll32kexemtqnnse58mlmqyt6kwpm52xza2ku8ygzu9gyn9g2u5z', balance: 38103167, tag: null },
-    { address: 'kaspa:qqn8pfm9z4fuva00key3wd5zz5gsdkqrc4s2zjqq8p9prmuz83ac6fjhcurew', balance: 38000000, tag: null },
-    { address: 'kaspa:qzhly8advgwl69camhf985m0x5f7y4rm4ys5p2dhxayg4sl0sqrkcrqafpees', balance: 37693176, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qzv4hjkm7fqz6ncv4mr426w2rpn556zq3e6g9w4er7cne3ptyp4363lc5k8zd', balance: 37350875, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qzh3szlnsah0cvesqkwx5k8mrc22ykkv73dxtat3dmrj2jvqahlh2sx05vdsj', balance: 35573048, tag: null },
-    { address: 'kaspa:qpav9jf76ku30ea085cjed89u0qqjlrjn35qj3funrt7arh7u7unz8p22w3xh', balance: 34853908, tag: null },
-    { address: 'kaspa:qq3ru68u8f8pcfgk9s3y8ktrx8nx73mvud4phqumnjsmjuxf939zyhe6qyp6f', balance: 33879176, tag: null },
-    { address: 'kaspa:qzulsjwnfdj4hsr5muut5a0f0xse525za3qjqgmafnm0tp23jyflcf2af8yh4', balance: 32487090, tag: {name: 'High Activity', type:'tag-exchange'} },
-    { address: 'kaspa:qypd77zn4uyg5an6e2a0kgm9y3v63cvsu73t6t5l9rcmykegwuxlr7s29v6nhkz', balance: 32008552, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qypesl8re7mkxm296tzhmske5sxljz86zeklu44ahj0f2vhe683haxcl0cuk039', balance: 31075533, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qzttedhkmhnz6k0facqqtg4eshr9pwx79ry0t8ck6rglrtg0sfs55zjjy2ljq', balance: 31000000, tag: null },
-    { address: 'kaspa:qqm6qe3u6z597p96463230mfzldj8suzeguuj0zhmpha8j6kmnau2rr44eu7z', balance: 30947205, tag: null },
-    { address: 'kaspa:qr74wqkdw08q5e6xpzacaddljd3une474vyez96k7fhhz8vx8zf6ju6l9nu3h', balance: 30699863, tag: null },
-    { address: 'kaspa:qz6ak430qrwaunycy8kgelzsl7x2a6dyu4r6gl96wj2uerkf2wlhjhpz46u38', balance: 30086154, tag: null },
-    { address: 'kaspa:qyprsh6x5jknvwundj5uny7d93h5jg7rpehrd0rp3xnpupq6le4perqym353hsg', balance: 30000001, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qpflntr6mellemv4f68wqgjvz0r8n8w7sy46nrl70je25n7jjr7fjla5uvmyl', balance: 30000000, tag: null },
-    { address: 'kaspa:qz362lnlamsr6kjqa9kegwk8awvquzuur2mzfwhqsma26mj8dutzq2fw5sawe', balance: 30000000, tag: null },
-    { address: 'kaspa:qq8v26njeuxp2s6klkg4aes3h8rmq9mf4f9jerg069rm860rq8yfqkvc8j99x', balance: 29503390, tag: null },
-    { address: 'kaspa:qyp3ffdjvv6de6cg6jjgyhlg3mt3fngna2vzukdpzvwkaj5j3hctsyqecqf7dh3', balance: 29286247, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qyp8am4t3t744vxfuqsplyushgnmsu8r55wcshzj4v03g4jl2cq35lc6zm6k4xh', balance: 29015885, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qzydukwwxt4ladn8endhw8cg9farujmltxamx3y6pjlff5vlu444zn8rg5ehe', balance: 28727825, tag: null },
-    { address: 'kaspa:qztcvrxmlq3ruf9afmc44sxau52phsxclwev22nvxelmchk52nfy2uuycywq5', balance: 28584760, tag: null },
-    { address: 'kaspa:qz66a4gvv82j0pq4zygr52ule78a2qwh6kdnr8v20nm4hxmf3jcdwufky0k2e', balance: 28284886, tag: null },
-    { address: 'kaspa:qyp8h4xtzh3al7vhkm9t5cmhv4eakg52jem5kfdahaqfltrwku3dn4gsx7e8zgj', balance: 28118363, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qq3k4du6wf2g26j7ds6fqmgtgavgm3zy676wntp2e52nsuns2n4s6xkndmx0y', balance: 27552664, tag: {name: 'KuCoin', type:'tag-exchange'} },
-    { address: 'kaspa:qr2m0es0tcvcz2jcmg9cahmxmrqa3j6pfj7e355v8lkeufk89pluz7fsfqx86', balance: 27462141, tag: null },
-    { address: 'kaspa:qru7yqm55tfmdgquwaz73d3n6v263c85jrqtdeuz9v22fy9u0x2uvmat4sqqx', balance: 26963636, tag: null },
-    { address: 'kaspa:qqe6mlcgh63xpl6ltq9qk96c3sjx5d02r60nr0cmzur9r9gjexpqkhk5u3zzd', balance: 26000010, tag: null },
-    { address: 'kaspa:qzscczntpynrnz2cn4vqdp7wn6xzevv8hq8g75aw4g9qlpu6g79lg0uzklx4u', balance: 25645425, tag: null },
-    { address: 'kaspa:qzcmlfqey2x5lnqs7dn5pkl8zpz05605usxgs65atgju0kqx4ht6yxz58005k', balance: 25614504, tag: null },
-    { address: 'kaspa:qrw2n7cn340q2zg3d969yfa4ur69709sy53a4p4tetn3guhadwl8snmzy6eul', balance: 25420042, tag: null },
-    { address: 'kaspa:qqtenggfmwrrqqv6xeezadpxsteqzstzfgfkxwwkr8tljpudn3n4vlvyuwtcw', balance: 25317725, tag: null },
-    { address: 'kaspa:qyp2xeghy7kjw5yd9xp8af2u7mddkxehu4jjh9s86cr3eratq4w4e6s002yneqe', balance: 25001509, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qyp7nvwywnmp49ykj8hw87usgvka6y3gmx37mkztdyx3tfsttwe8ecggmxkx383', balance: 25000524, tag: {name: 'Suspected Miner', type: 'tag-mining'} },
-    { address: 'kaspa:qpgqw8ujcd4vwknzr5npaear3g5qvl9zl730hmlvxuplgv6ug6wsjy759p7xn', balance: 25000000, tag: null },
-    { address: 'kaspa:qrj3mxatvlemzw2lgfmyzjyuacjv59xwf86w60cvv3kh0xvxrzg2y972qq0rl', balance: 24422585, tag: null },
-    { address: 'kaspa:qqmu7j8q0ladwjq32d77nw66l8lmhwduswp4znex6z65amz997zjvk8jfgvhm', balance: 24289113, tag: null }
+    { address: 'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz', tag: {name: 'MEXC', type:'tag-exchange'} },
+    { address: 'kaspa:qpz2vgvlxhmyhmt22h538pjzmvvd52nuut80y5zulgpvyerlskvvwm7n4uk5a', tag: {name: 'Entity X', type:'tag-whale'} },
+    { address: 'kaspa:qrelgny7sr3vahq69yykxx36m65gvmhryxrlwngfzgu8xkdslum2yxjp3ap8m', tag: {name: 'Gate.io', type:'tag-exchange'} },
+    { address: 'kaspa:qrvum29vk365g0zcd5gx3c7h829etfq2ytdmscjzw4zw04fjfnprcg9c3tges', tag: {name: 'Bybit', type:'tag-exchange'} },
+    { address: 'kaspa:qqywx2wszmnrsu0mzgav85rdwvzangfpdj9j3ady9jpr7hu4u8c2wl9wqgd6j', tag: {name: 'Bitget', type:'tag-exchange'} },
+    { address: 'kaspa:qzadxjufntvckxrvy76pyhvtkuu8lg5ryz252aglmhlyv27pxqplksshzuu9m', tag: {name: 'KuCoin', type:'tag-exchange'} },
+    { address: 'kaspa:qzxrs8gxjgk2q84wlt3xfd057ntws73fptalhy84g85zqfu5lcemvpu04vj3w', tag: {name: 'Uphold', type:'tag-exchange'} },
+    { address: 'kaspa:qpj2x2qfmvj4g6fn0xadv6hafdaqv4fwd3t4uvyw3walwfn50rzysa4lafpma', tag: {name: 'Kraken', type:'tag-exchange'} },
+    { address: 'kaspa:qq2ka745yyj0760fkt3ax3t7hpyqret6pzaypag3afnd3fp8jpv4cmzpx8yrt', tag: {name: 'Whale', type:'tag-whale'} },
+    { address: 'kaspa:ppk66xua7nmq8elv3eglfet0xxcfuks835xdgsm5jlymjhazyu6h5ac62l4ey', tag: {name: 'Dev Fund', type:'tag-dev'} }
 ];
 
-/* ==========================================
-   INITIALIZATION
-   ========================================== */
-
+/* --- INITIALIZATION --- */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 KasLive Initializing...');
     
-    // Initialize all systems
+    // 1. Start Systems
     initLedger();
-    initKRC20();
     fetchMarketData();
-    fetchHashrate();
-    fetchNodeCount();
+    initKRC20();
+    initCharts();
     startLiveBlocks();
-    startLedgerScanner();
     
-    // Setup polling intervals
-    setInterval(fetchMarketData, POLL_INTERVALS.marketData);
-    setInterval(fetchHashrate, 30000); // Every 30s
-    setInterval(startLiveBlocks, POLL_INTERVALS.blocks);
-    setInterval(fetchNodeCount, 120000); // Every 2 min
-    
-    console.log('✅ KasLive Online');
+    // 2. Set Intervals
+    setInterval(fetchMarketData, 30000); // 30s Market
+    setInterval(startLiveBlocks, 5000);  // 5s Blocks
+    setInterval(scanRandomWallet, 3000); // Ledger Scanner
 });
 
 /* ==========================================
-   UTILITY FUNCTIONS
+   MARKET DATA & RATIOS
    ========================================== */
+async function fetchMarketData() {
+    try {
+        const ids = 'bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
+        const url = `${API.coingecko}/coins/markets?vs_currency=usd&ids=${ids}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (!data || data.length < 3) return;
 
-function formatNum(num) {
-    return new Intl.NumberFormat('en-US', {maximumFractionDigits: 0}).format(num);
+        const kas = data.find(c => c.id === 'kaspa');
+        const btc = data.find(c => c.id === 'bitcoin');
+        const eth = data.find(c => c.id === 'ethereum');
+        const gold = data.find(c => c.id === 'pax-gold');
+        const silver = data.find(c => c.id === 'kinesis-silver');
+
+        state.currentKasPrice = kas.current_price;
+
+        // Header Updates
+        const pChange = kas.price_change_percentage_24h;
+        const color = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
+        document.getElementById('mainPrice').innerHTML = 
+            `$${kas.current_price.toFixed(4)} <span style="font-size:1rem; color:${color}">${pChange.toFixed(2)}%</span>`;
+        
+        document.getElementById('athDisplay').innerText = `ATH: $${kas.ath.toFixed(4)}`;
+        document.getElementById('mcapChange').innerHTML = 
+            `MCAP: <span style="color:${kas.market_cap_change_percentage_24h >= 0 ? 'var(--hex-green)':'var(--hex-alert)'}">${kas.market_cap_change_percentage_24h.toFixed(2)}% (24h)</span>`;
+
+        // Update Ratios
+        updateRatios(kas, btc, eth);
+        
+        // Commodities
+        if(gold) document.getElementById('goldPrice').innerText = '$' + gold.current_price.toLocaleString();
+        if(silver) document.getElementById('silverPrice').innerText = '$' + silver.current_price.toFixed(2);
+        
+        // Base Prices
+        document.getElementById('btcPrice').innerText = '$' + btc.current_price.toLocaleString();
+        document.getElementById('ethPrice').innerText = '$' + eth.current_price.toLocaleString();
+
+    } catch (e) { console.error("Market fetch error", e); }
 }
 
-function setAPIStatus(apiName, isOnline) {
-    state.apiStatus[apiName] = isOnline;
-    console.log(`${isOnline ? '✅' : '❌'} API ${apiName}: ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
-}
+function updateRatios(kas, btc, eth) {
+    const getOldPrice = (cur, pct) => cur / (1 + (pct / 100));
+    
+    const kasOld = getOldPrice(kas.current_price, kas.price_change_percentage_24h);
+    const btcOld = getOldPrice(btc.current_price, btc.price_change_percentage_24h);
+    const ethOld = getOldPrice(eth.current_price, eth.price_change_percentage_24h);
 
-function showError(location, message) {
-    const el = document.getElementById(location);
-    if (el) {
-        el.innerHTML = `<span style="color:#ff3333">${message}</span>`;
-    }
+    // BTC Ratio
+    const curSats = (kas.current_price / btc.current_price) * 1e8;
+    const oldSats = (kasOld / btcOld) * 1e8;
+    const satsChange = ((curSats - oldSats) / oldSats) * 100;
+    
+    document.getElementById('ratioBtcVal').innerHTML = 
+        `${Math.floor(curSats)} sats <span style="font-size:0.7em; color:${satsChange>=0?'#ccff00':'#ff3333'}">(${satsChange>0?'+':''}${satsChange.toFixed(2)}%)</span>`;
+    
+    document.getElementById('ratioBtc').style.width = Math.min((curSats / 200) * 100, 100) + '%';
+    
+    // ETH Ratio
+    const curGwei = (kas.current_price / eth.current_price) * 1e9;
+    const oldGwei = (kasOld / ethOld) * 1e9;
+    const gweiChange = ((curGwei - oldGwei) / oldGwei) * 100;
+
+    document.getElementById('ratioEthVal').innerHTML = 
+        `${Math.floor(curGwei).toLocaleString()} gwei <span style="font-size:0.7em; color:${gweiChange>=0?'#ccff00':'#ff3333'}">(${gweiChange>0?'+':''}${gweiChange.toFixed(2)}%)</span>`;
+    
+    document.getElementById('ratioEth').style.width = Math.min((curGwei / 60000) * 100, 100) + '%';
 }
 
 /* ==========================================
-   LANGUAGE SYSTEM
+   CHARTS (Chart.js)
    ========================================== */
+async function initCharts() {
+    // 1. Hashrate Chart
+    try {
+        const res = await fetch(`${API.kaspa.hashrateHistory}?range=1y`);
+        const data = await res.json();
+        
+        const labels = [];
+        const values = [];
+        data.forEach((p, i) => {
+            if(i % 3 === 0) {
+                labels.push(new Date(p.timestamp * 1000).toLocaleDateString());
+                values.push(p.hashrate / 1000); // TH to PH
+            }
+        });
 
-function cycleLanguage() {
-    const langs = ['EN', 'ES', 'CN', 'RU'];
-    let idx = langs.indexOf(state.language);
-    idx = (idx + 1) % langs.length;
-    state.language = langs[idx];
-    document.getElementById('langToggle').innerText = `[${state.language}]`;
-    applyLanguage();
-}
+        const ctxH = document.getElementById('hashrateChart').getContext('2d');
+        const grad = ctxH.createLinearGradient(0,0,0,200);
+        grad.addColorStop(0, 'rgba(0,255,65,0.4)');
+        grad.addColorStop(1, 'rgba(0,255,65,0)');
 
-function applyLanguage() {
-    const d = DICT[state.language];
-    const elements = {
-        '.t-crypto': d.crypto,
-        '.t-dominance': d.dominance,
-        '.t-rel-strength': d.relStrength,
-        '.t-rwa': d.rwa,
-        '.t-gold': d.gold,
-        '.t-silver': d.silver,
-        '.t-chain': d.chain,
-        '.t-netflow': d.netflow,
-        '.t-heat': d.heat,
-        '.t-hash': d.hash,
-        '.t-nodes': d.nodes,
-        '.t-ledger': d.ledger,
-        '.t-krc': d.krc,
-        '.t-blocks': d.blocks
-    };
-    
-    Object.entries(elements).forEach(([selector, text]) => {
-        const el = document.querySelector(selector);
-        if (el) el.innerText = text;
-    });
+        new Chart(ctxH, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values, borderColor:'#00ff41', backgroundColor: grad, 
+                    fill:true, pointRadius:0, tension:0.4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: {display:false} },
+                scales: {
+                    x: { display:false },
+                    y: { grid: {color:'#111'}, ticks: {color:'#666'} }
+                }
+            }
+        });
+    } catch(e) { console.log("Hashrate chart failed"); }
+
+    // 2. Performance Chart
+    try {
+        const ids = ['kaspa', 'bitcoin', 'ethereum', 'backed-cspx-core-s-p-500'];
+        const colors = ['#00ff41', '#f7931a', '#627eea', '#fff'];
+        
+        const promises = ids.map(id => 
+            fetch(`${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=365`).then(r=>r.json())
+        );
+        const results = await Promise.all(promises);
+        
+        const datasets = results.map((res, i) => {
+            if(!res.prices || !res.prices.length) return null;
+            const start = res.prices[0][1];
+            return {
+                label: ids[i].toUpperCase(),
+                data: res.prices.filter((_,x)=>x%5===0).map(p => ({x: p[0], y: ((p[1]-start)/start)*100})),
+                borderColor: colors[i], borderWidth: i===0?2:1, pointRadius:0,
+                borderDash: i===0 ? [] : [4,4]
+            };
+        }).filter(d=>d);
+
+        const ctxP = document.getElementById('perfChart').getContext('2d');
+        new Chart(ctxP, {
+            type: 'line',
+            data: { datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: {labels:{color:'#888', boxWidth:10}} },
+                scales: {
+                    x: { type:'time', time:{unit:'month'}, grid:{display:false}, ticks:{color:'#444'} },
+                    y: { type:'logarithmic', grid:{color:'#222'}, ticks:{color:'#666', callback:v=>v+'%'} }
+                }
+            }
+        });
+    } catch(e) { console.log("Perf chart failed"); }
 }
 
 /* ==========================================
    LEDGER SYSTEM
    ========================================== */
-
 function initLedger() {
-    console.log('📊 Initializing Leviathan Ledger...');
-    state.whaleData = [];
-    
-    REAL_ADDRS.forEach((data, i) => {
-        const row = {
-            ...data,
-            rank: i + 1,
-            lastTxDate: "Loading...",
-            lastTxVal: "--",
-            percent: ((data.balance / TOTAL_SUPPLY) * 100).toFixed(4)
-        };
-        state.whaleData.push(row);
-        
-        // Fetch real balance (staggered to avoid rate limits)
-        setTimeout(() => fetchRealBalance(i, row.address), i * 500);
-    });
-    
+    state.whaleData = REAL_ADDRS.map((w, i) => ({
+        ...w, rank: i+1, balance: 0, status: '...'
+    }));
     renderTable();
-    updateTotal();
-    document.getElementById('sourceLabel').innerHTML = 
-        `<span style="color:var(--hex-green)">LIVE API</span>`;
+    
+    // Initial Fetch
+    state.whaleData.forEach((w, i) => {
+        setTimeout(() => fetchBalance(i), i * 200);
+    });
 }
 
-async function fetchRealBalance(index, address) {
+async function fetchBalance(index) {
+    const wallet = state.whaleData[index];
     try {
-        const res = await fetch(API.kaspa.addressBalance(address));
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        
+        const res = await fetch(API.kaspa.balance(wallet.address));
         const data = await res.json();
-        
-        if (data && data.balance) {
-            const realBal = Math.floor(data.balance / 100000000);
-            if (realBal > 0) {
-                state.whaleData[index].balance = realBal;
-                state.whaleData[index].lastTxDate = "Synced";
-                state.whaleData[index].percent = ((realBal / TOTAL_SUPPLY) * 100).toFixed(4);
-                updateRow(index);
-                setAPIStatus('kaspa', true);
-            }
+        if(data && data.balance) {
+            state.whaleData[index].balance = Math.floor(data.balance / 1e8);
+            state.whaleData[index].status = 'Synced';
+            state.whaleData[index].percent = ((state.whaleData[index].balance / 28700000000)*100).toFixed(4);
+            updateRow(index);
         }
-    } catch (e) {
-        console.error(`Failed to fetch balance for address ${index}:`, e.message);
-        state.whaleData[index].lastTxDate = "Offline";
-        setAPIStatus('kaspa', false);
-    }
+    } catch(e) { console.log("Bal fetch fail"); }
 }
 
-function updateRow(index) {
-    const row = document.querySelector(`#whaleTable tbody tr:nth-child(${index + 1})`);
-    if (row && state.whaleData[index]) {
-        const data = state.whaleData[index];
-        row.cells[3].innerText = formatNum(data.balance);
-        row.cells[3].classList.add('val-update');
-        row.cells[4].innerText = data.lastTxDate;
-        row.cells[4].style.color = data.lastTxDate === "Synced" ? "var(--hex-cyan)" : "#666";
-        row.cells[6].innerText = data.percent + "%";
-        
-        setTimeout(() => row.cells[3].classList.remove('val-update'), 1000);
-    }
-    updateTotal();
-}
-
-function startLedgerScanner() {
-    setInterval(() => {
-        if (state.whaleData.length === 0) return;
-        
-        const idx = Math.floor(Math.random() * state.whaleData.length);
-        const wallet = state.whaleData[idx];
-        const row = document.querySelector(`#whaleTable tbody tr:nth-child(${idx + 1})`);
-        
-        if (row) {
-            row.classList.add('scanning');
-            setTimeout(() => row.classList.remove('scanning'), 400);
-            fetchRealBalance(idx, wallet.address);
-        }
-    }, POLL_INTERVALS.balanceScan);
-}
-
-function updateTotal() {
-    const total = state.whaleData.reduce((acc, curr) => acc + curr.balance, 0);
-    const el = document.getElementById('totalTracked');
-    if (el) {
-        el.innerText = `TOTAL TRACKED: ${(total / 1000000000).toFixed(2)}B KAS`;
+function scanRandomWallet() {
+    const i = Math.floor(Math.random() * state.whaleData.length);
+    const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
+    if(row) {
+        row.classList.add('scanning');
+        setTimeout(() => row.classList.remove('scanning'), 500);
+        fetchBalance(i);
     }
 }
 
 function renderTable() {
-    const tableBody = document.getElementById('tableBody');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = '';
-    
-    state.whaleData.forEach(row => {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    state.whaleData.forEach(w => {
         const tr = document.createElement('tr');
-        
-        let tagHtml = `<span style="opacity:0.3">-</span>`;
-        if (row.tag) {
-            tagHtml = `<span class="tag-pill ${row.tag.type}">${row.tag.name}</span>`;
-        }
-        
-        const shortAddr = row.address.substring(0, 10) + '...' + 
-                         row.address.substring(row.address.length - 8);
-        const explorerLink = `https://explorer.kaspa.org/addresses/${row.address}`;
-        
+        const short = w.address.substr(0,10) + '...' + w.address.substr(-8);
         tr.innerHTML = `
-            <td style="color:var(--hex-dim)">${row.rank}</td>
-            <td style="font-family:monospace; opacity:0.9;">
-                <a href="${explorerLink}" target="_blank" class="addr-link" 
-                   title="${row.address}">${shortAddr}</a>
-            </td>
-            <td>${tagHtml}</td>
-            <td class="balance-col mono-num">${formatNum(row.balance)}</td>
-            <td class="mono-num" style="font-size:0.75rem; color:#aaa;">${row.lastTxDate}</td>
-            <td class="mono-num" style="font-size:0.75rem;">${row.lastTxVal}</td>
-            <td class="percent-col mono-num" style="text-align:right">${row.percent}%</td>
+            <td>${w.rank}</td>
+            <td style="font-family:monospace"><a href="https://explorer.kaspa.org/addresses/${w.address}" target="_blank" style="color:inherit; text-decoration:none">${short}</a></td>
+            <td><span class="tag-pill ${w.tag.type}">${w.tag.name}</span></td>
+            <td class="mono-num">${w.balance.toLocaleString()}</td>
+            <td style="color:var(--hex-cyan)">${w.status}</td>
+            <td class="mono-num" style="text-align:right">${w.percent || 0}%</td>
         `;
-        
-        tableBody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
-/* ==========================================
-   MARKET DATA
-   ========================================== */
-
-async function fetchMarketData() {
-    try {
-        const [marketsRes, globalRes] = await Promise.all([
-            fetch(API.coingecko.markets),
-            fetch(API.coingecko.global)
-        ]);
-        
-        if (!marketsRes.ok || !globalRes.ok) {
-            throw new Error('CoinGecko API failed');
-        }
-        
-        const markets = await marketsRes.json();
-        const global = await globalRes.json();
-        
-        if (!markets || markets.length < 3) {
-            throw new Error('Invalid market data');
-        }
-        
-        const btc = markets.find(c => c.id === 'bitcoin');
-        const eth = markets.find(c => c.id === 'ethereum');
-        const kas = markets.find(c => c.id === 'kaspa');
-        const gold = markets.find(c => c.id === 'pax-gold');
-        const silver = markets.find(c => c.id === 'kinesis-silver');
-        
-        if (!btc || !eth || !kas) {
-            throw new Error('Missing required coin data');
-        }
-        
-        state.currentKasPrice = kas.current_price;
-        
-        // Update price display
-        updatePriceDisplay(kas);
-        
-        // Update dominance
-        if (global && global.data) {
-            const dom = global.data.market_cap_percentage.btc;
-            const domEl = document.getElementById('btcDom');
-            if (domEl) domEl.innerText = dom.toFixed(1) + "%";
-        }
-        
-        // Update BTC/ETH prices
-        updateCryptoPrices(btc, eth);
-        
-        // Update commodities
-        updateCommodityPrices(gold, silver);
-        
-        // Update ratios
-        updateRatios(kas, btc, eth);
-        
-        // Calculate heat index
-        calculateHeatIndex(kas);
-        
-        setAPIStatus('coingecko', true);
-        
-    } catch (e) {
-        console.error('❌ Market Data Fetch Failed:', e.message);
-        setAPIStatus('coingecko', false);
-        showError('mainPrice', 'API ERROR');
-    }
-}
-
-function updatePriceDisplay(kas) {
-    const priceEl = document.getElementById('mainPrice');
-    if (!priceEl) return;
-    
-    const changeColor = kas.price_change_percentage_24h >= 0 ? 
-        'var(--hex-green)' : 'var(--hex-alert)';
-    
-    priceEl.innerHTML = `$${kas.current_price.toFixed(4)} 
-        <span id="percentChange" style="font-size:1rem; opacity:0.8; color:${changeColor}">
-            ${kas.price_change_percentage_24h.toFixed(2)}%
-        </span>`;
-    
-    const athEl = document.getElementById('athDisplay');
-    if (athEl) {
-        const date = new Date(kas.ath_date).toLocaleDateString();
-        athEl.innerHTML = `ATH: $${kas.ath.toFixed(4)} 
-            <span style="opacity:0.5">(${date})</span>`;
-    }
-}
-
-function updateCryptoPrices(btc, eth) {
-    const btcEl = document.getElementById('btcPrice');
-    const ethEl = document.getElementById('ethPrice');
-    
-    if (btcEl) btcEl.innerText = '$' + btc.current_price.toLocaleString();
-    if (ethEl) ethEl.innerText = '$' + eth.current_price.toLocaleString();
-}
-
-function updateCommodityPrices(gold, silver) {
-    const goldEl = document.getElementById('goldPrice');
-    const silverEl = document.getElementById('silverPrice');
-    
-    if (gold && goldEl) goldEl.innerText = '$' + gold.current_price.toLocaleString();
-    if (silver && silverEl) silverEl.innerText = '$' + silver.current_price.toFixed(2);
-}
-
-function updateRatios(kas, btc, eth) {
-    // BTC Ratio
-    const sats = (kas.current_price / btc.current_price) * 100000000;
-    const satEl = document.getElementById('ratioBtcVal');
-    if (satEl) satEl.innerText = Math.floor(sats) + " sats";
-    
-    const btcBar = document.getElementById('ratioBtc');
-    if (btcBar) btcBar.style.width = Math.min((sats / 100) * 100, 100) + '%';
-    
-    const lowRatioB = (kas.low_24h / btc.high_24h) * 100000000;
-    const highRatioB = (kas.high_24h / btc.low_24h) * 100000000;
-    const btcRange = document.getElementById('ratioBtcRange');
-    if (btcRange) {
-        btcRange.innerText = `24h: ${Math.floor(lowRatioB)} - ${Math.floor(highRatioB)} sats`;
-    }
-    
-    // ETH Ratio
-    const gwei = (kas.current_price / eth.current_price) * 1000000000;
-    const gweiEl = document.getElementById('ratioEthVal');
-    if (gweiEl) gweiEl.innerText = Math.floor(gwei).toLocaleString() + " gwei";
-    
-    const ethBar = document.getElementById('ratioEth');
-    if (ethBar) ethBar.style.width = Math.min((gwei / 20000) * 100, 100) + '%';
-    
-    const lowRatioE = (kas.low_24h / eth.high_24h) * 1000000000;
-    const highRatioE = (kas.high_24h / eth.low_24h) * 1000000000;
-    const ethRange = document.getElementById('ratioEthRange');
-    if (ethRange) {
-        ethRange.innerText = `24h: ${Math.floor(lowRatioE).toLocaleString()} - ${Math.floor(highRatioE).toLocaleString()}`;
-    }
-    
-    // Relative Strength
-    const rel = kas.price_change_percentage_24h - btc.price_change_percentage_24h;
-    const relEl = document.getElementById('relStrength');
-    if (relEl) {
-        relEl.innerText = (rel > 0 ? "+" : "") + rel.toFixed(2) + "%";
-        relEl.style.color = rel >= 0 ? "var(--hex-green)" : "var(--hex-alert)";
-    }
-}
-
-function calculateHeatIndex(kas) {
-    // Price component (max 40 points)
-    let pScore = (kas.price_change_percentage_24h + 10) * 2;
-    pScore = Math.max(0, Math.min(40, pScore));
-    
-    // Volume component (max 30 points)
-    let vScore = (kas.total_volume / 100000000) * 30;
-    vScore = Math.max(0, Math.min(30, vScore));
-    
-    // Market cap change component (max 20 points)
-    let mScore = 20;
-    if (kas.market_cap_change_percentage_24h) {
-        mScore = (kas.market_cap_change_percentage_24h + 5) * 2;
-        mScore = Math.max(0, Math.min(20, mScore));
-    }
-    
-    // Network activity (simulated, max 10 points)
-    const nScore = Math.random() * 10;
-    
-    const total = Math.floor(pScore + vScore + mScore + nScore);
-    
-    const heatEl = document.getElementById('heatIndex');
-    if (heatEl) heatEl.innerText = total;
-    
-    const heatBar = document.getElementById('heatBar');
-    if (heatBar) {
-        heatBar.style.width = total + '%';
-        
-        if (total > 80) heatBar.style.background = '#ff3333';
-        else if (total > 50) heatBar.style.background = '#ffcc00';
-        else heatBar.style.background = '#00ff41';
+function updateRow(i) {
+    const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
+    if(row) {
+        const w = state.whaleData[i];
+        row.cells[3].innerText = w.balance.toLocaleString();
+        row.cells[3].style.color = '#fff';
+        setTimeout(()=>row.cells[3].style.color='#ccc', 500);
+        row.cells[5].innerText = w.percent + '%';
     }
 }
 
 /* ==========================================
-   HASHRATE
+   BLOCKS & KRC20
    ========================================== */
-
-async function fetchHashrate() {
-    try {
-        const res = await fetch(API.kaspa.hashrate);
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        
-        const data = await res.json();
-        
-        if (data && data.hashrate) {
-            const phps = (data.hashrate / 1e15).toFixed(1);
-            
-            // Find hashrate display element
-            const hashEls = document.querySelectorAll('.metric-value');
-            hashEls.forEach(el => {
-                if (el.textContent.includes('PH/s')) {
-                    el.innerText = phps + ' PH/s';
-                }
-            });
-            
-            console.log(`⛏️  Hashrate: ${phps} PH/s`);
-        }
-    } catch (e) {
-        console.error('❌ Hashrate Fetch Failed:', e.message);
-        // Keep fallback value
-    }
-}
-
-/* ==========================================
-   NODE COUNT
-   ========================================== */
-
-async function fetchNodeCount() {
-    const el = document.getElementById('nodeCount');
-    if (!el) return;
-    
-    try {
-        const res = await fetch(API.nodes);
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        
-        const data = await res.json();
-        
-        if (data && Array.isArray(data)) {
-            el.innerText = data.length;
-            console.log(`🌐 Nodes: ${data.length}`);
-            return;
-        }
-        
-        throw new Error('Invalid node data');
-    } catch (e) {
-        console.error('❌ Node Count Fetch Failed:', e.message);
-        // Fallback estimate
-        const base = 980;
-        const flux = Math.floor(Math.random() * 30) - 15;
-        el.innerText = (base + flux) + " (EST)";
-    }
-}
-
-/* ==========================================
-   BLOCKS FEED
-   ========================================== */
-
 async function startLiveBlocks() {
     try {
-        // Fetch current blue score
-        const infoRes = await fetch(API.kaspa.blueScore);
-        if (infoRes.ok) {
-            const infoData = await infoRes.json();
-            if (infoData && infoData.blueScore) {
-                state.currentBlueScore = parseInt(infoData.blueScore);
-            }
-        }
-        
-        // Fetch latest blocks
-        const blocksRes = await fetch(API.kaspa.blocks);
-        
-        if (!blocksRes.ok) {
-            throw new Error(`HTTP ${blocksRes.status}`);
-        }
-        
-        const blocks = await blocksRes.json();
-        
-        if (blocks && Array.isArray(blocks) && blocks.length > 0) {
-            processBlocks(blocks);
-            setAPIStatus('kaspa', true);
-            return;
-        }
-        
-        throw new Error('Invalid blocks data');
-    } catch (e) {
-        console.error('❌ Blocks Fetch Failed:', e.message);
-        setAPIStatus('kaspa', false);
-        // Fallback: Generate estimated block
-        generateFallbackBlock();
-    }
-}
-
-function processBlocks(blocks) {
-    const tape = document.getElementById('sonarTape');
-    if (!tape) return;
-    
-    tape.innerHTML = '';
-    
-    blocks.forEach(b => {
-        const date = new Date(parseInt(b.timestamp));
-        const time = date.toLocaleTimeString();
-        const link = `https://explorer.kaspa.org/blocks/${b.hash}`;
-        
-        const html = `
-            <div class="sonar-entry block" onclick="window.open('${link}', '_blank')" 
-                 style="cursor:pointer">
-                <div>
-                    <div style="font-weight:bold; color:var(--hex-purple)">
-                        BLOCK #${b.blueScore}
+        const res = await fetch(API.kaspa.blocks);
+        const data = await res.json();
+        const tape = document.getElementById('sonarTape');
+        tape.innerHTML = '';
+        data.forEach(b => {
+            const time = new Date(parseInt(b.timestamp)).toLocaleTimeString();
+            tape.innerHTML += `
+                <div class="sonar-entry" onclick="window.open('https://explorer.kaspa.org/blocks/${b.hash}')">
+                    <div>
+                        <div style="font-weight:bold; color:var(--hex-purple)">BLOCK #${b.blueScore}</div>
+                        <div style="font-size:0.6rem; opacity:0.7">DAA: ${b.daaScore}</div>
                     </div>
-                    <div style="font-size:0.6rem; opacity:0.7">
-                        DAA: ${b.daaScore}
+                    <div style="text-align:right; font-size:0.8rem">
+                        <div>${time}</div>
+                        <div style="opacity:0.5">${b.pruningPoint?'PRUNING':'VALID'}</div>
                     </div>
-                </div>
-                <div style="text-align:right">
-                    <div>${time}</div>
-                    <div style="font-size:0.6rem; opacity:0.5">
-                        ${b.pruningPoint ? 'PRUNING' : 'VALID'}
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        tape.insertAdjacentHTML('beforeend', html);
-    });
-    
-    console.log(`🔗 Blocks updated: ${blocks.length} blocks`);
+                </div>`;
+        });
+    } catch(e) {}
 }
-
-function generateFallbackBlock() {
-    const tape = document.getElementById('sonarTape');
-    if (!tape) return;
-    
-    const now = new Date();
-    const time = now.toLocaleTimeString();
-    const daa = Math.floor(state.currentBlueScore * 0.95);
-    
-    // Increment for visual flow
-    state.currentBlueScore++;
-    
-    const html = `
-        <div class="sonar-entry block">
-            <div>
-                <div style="font-weight:bold; color:var(--hex-purple)">
-                    BLOCK #${state.currentBlueScore}
-                </div>
-                <div style="font-size:0.6rem; opacity:0.7">
-                    DAA: ${daa}
-                </div>
-            </div>
-            <div style="text-align:right">
-                <div>${time}</div>
-                <div style="font-size:0.6rem; opacity:0.5; color:var(--hex-warn)">
-                    LIVE (EST)
-                </div>
-            </div>
-        </div>
-    `;
-    
-    tape.insertAdjacentHTML('afterbegin', html);
-    
-    // Keep only 20 blocks
-    while (tape.children.length > 20) {
-        tape.lastChild.remove();
-    }
-}
-
-/* ==========================================
-   KRC-20 TOKENS
-   ========================================== */
 
 async function initKRC20() {
-    console.log('🪙 Fetching KRC-20 tokens...');
-    
     try {
-        const res = await fetch(API.kasplex.tokenList);
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        
+        const res = await fetch(API.kasplex);
         const data = await res.json();
-        
-        if (data && data.result) {
-            renderKRC(data.result.slice(0, 20));
-            setAPIStatus('kasplex', true);
-            
-            // Refresh periodically
-            setTimeout(initKRC20, POLL_INTERVALS.krc20);
-        } else {
-            throw new Error('Invalid token data');
-        }
-    } catch (e) {
-        console.error('❌ KRC-20 Fetch Failed:', e.message);
-        setAPIStatus('kasplex', false);
-        
         const list = document.getElementById('krcList');
-        if (list) {
-            list.innerHTML = `
-                <div style="padding:20px; text-align:center; color:#666">
-                    <div style="font-size:2rem; margin-bottom:10px">⚠️</div>
-                    <div>KASPLEX API OFFLINE</div>
-                    <div style="font-size:0.7rem; margin-top:5px; opacity:0.5">
-                        Retrying in ${POLL_INTERVALS.krc20/1000}s
+        list.innerHTML = '';
+        data.result.slice(0, 20).forEach(t => {
+            const pct = (t.minted / t.max * 100).toFixed(1);
+            list.innerHTML += `
+                <div class="token-card">
+                    <div style="font-weight:bold">${t.tick}</div>
+                    <div style="text-align:right; color:#aaa; font-family:monospace">${pct}%</div>
+                    <div style="text-align:right; color:${pct>=100?'var(--hex-blue)':'var(--hex-warn)'}">
+                        ${pct>=100?'TRADING':'MINTING'}
                     </div>
-                </div>
-            `;
-        }
-        
-        // Retry after interval
-        setTimeout(initKRC20, POLL_INTERVALS.krc20);
-    }
+                </div>`;
+        });
+    } catch(e) { document.getElementById('krcList').innerText = "KRC API OFFLINE"; }
 }
 
-function renderKRC(tokens) {
-    const list = document.getElementById('krcList');
-    if (!list) return;
-    
-    list.innerHTML = '';
-    
-    tokens.forEach(t => {
-        if (!t.tick) return;
-        
-        const el = document.createElement('div');
-        el.className = 'token-card';
-        
-        const max = parseInt(t.max || t.maxSupply || 1);
-        const minted = parseInt(t.minted || t.totalMinted || 0);
-        
-        const pct = (minted / max * 100).toFixed(1);
-        const isDone = pct >= 100 || t.state === 'finished';
-        
-        el.innerHTML = `
-            <div class="tk-name">${t.tick}</div>
-            <div class="tk-supply">${pct}% MINTED</div>
-            <div class="tk-status ${isDone ? 'status-done' : 'status-minting'}">
-                ${isDone ? 'TRADING' : 'MINTING'}
-            </div>
-        `;
-        
-        list.appendChild(el);
-    });
-    
-    console.log(`🪙 KRC-20: ${tokens.length} tokens loaded`);
-}
-
-/* ==========================================
-   EXPOSE TO WINDOW FOR HTML ONCLICK
-   ========================================== */
-
-window.cycleLanguage = cycleLanguage;
+/* UTILS */
+window.cycleLanguage = () => { alert("Coming in v14"); };
