@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V14.0</title>
+    <title>KASLIVE // TERMINAL V15.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Oswald:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
     <script src="app.js" defer></script>
 </head>
 <body>
@@ -36,7 +36,7 @@
             
             <div class="vitals-sector">
                 <div class="sector-title">
-                    <span>PERFORMANCE LOG (1Y)</span>
+                    <span>ASSET PERFORMANCE (1Y LOG)</span>
                     <div class="status-dot"></div>
                 </div>
                 <div class="chart-box-lg">
@@ -99,25 +99,24 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div class="module ledger-panel">
             <div class="ledger-header">
                 <div>
-                    <h2 class="t-ledger section-header">LEVIATHAN LEDGER</h2>
+                    <h2 class="section-header t-ledger">LEVIATHAN LEDGER</h2>
                     <div class="source-label">
-                        SOURCE: <span id="sourceLabel">KASPA RPC</span>
+                        SOURCE: <span id="sourceLabel">HARDCODED + LIVE RPC</span>
                     </div>
                 </div>
-                <div class="tracker-status" id="totalTracked">TRACKING WHALES...</div>
+                <div class="tracker-status" id="totalTracked">CONNECTING...</div>
             </div>
 
             <div class="table-wrapper">
                 <table id="whaleTable">
                     <thead>
                         <tr>
-                            <th style="width: 40px">#</th>
+                            <th style="width: 30px">#</th>
                             <th>ADDRESS</th>
                             <th>TAG</th>
                             <th style="text-align:right">BALANCE</th>
@@ -132,13 +131,12 @@
         </div>
 
         <div class="module feed-panel">
-            
             <div class="feed-section krc-box">
                 <div class="label">
                     <span class="t-krc">KRC-20 MARKET</span>
                 </div>
                 <div class="token-list" id="krcList">
-                    <div style="padding:15px; text-align:center; color:#666;">LOADING KASPLEX...</div>
+                    <div style="padding:20px; text-align:center; opacity:0.5">INITIALIZING...</div>
                 </div>
             </div>
 
@@ -148,11 +146,10 @@
                 </div>
                 <div class="sonar-log" id="sonarTape"></div>
             </div>
-
         </div>
 
         <div class="footer">
-            <a href="#" class="footer-credit">KASLIVE V14.0</a>
+            <a href="#" class="footer-credit">KASLIVE V15.0</a>
             <div class="status-text">SYSTEM ONLINE</div>
             <div class="btn-group">
                 <button class="btn" onclick="window.open('https://explorer.kaspa.org','_blank')">EXPLORER</button>
