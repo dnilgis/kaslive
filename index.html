@@ -3,159 +3,907 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE // TERMINAL V15.0</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <title>KASLIVE V15.0 | Kaspa Ecosystem Monitor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
-</head>
-<body>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
-    <div class="scanlines"></div>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <div class="cockpit">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --bg-panel: #0a0a0a;
+            --bg-panel-light: #111111;
+            
+            /* Hex Colors referenced in JS */
+            --hex-green: #00ff41;
+            --hex-alert: #ff3333;
+            --hex-cyan: #00f3ff;
+            --hex-purple: #bc13fe;
+            --hex-blue: #0066ff;
+            --hex-warn: #ffcc00;
+            --hex-orange: #ff6600;
+            
+            --border-color: #222;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* Typography */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .text-hex-green { color: var(--hex-green); }
+        .text-hex-cyan { color: var(--hex-cyan); }
+        .text-hex-blue { color: var(--hex-blue); }
+        .text-hex-alert { color: var(--hex-alert); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--hex-cyan); }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Neon Text Effect for Headings */
+        .neon-text {
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+        }
         
-        <header class="header">
-            <div class="brand-group">
-                <div class="logo-main">
-                    <span class="kas">KAS</span><span class="live">LIVE</span>
-                </div>
-                <div class="lang-switch" id="langToggle">[EN]</div>
+        .heat-text {
+            text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+        }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: left; 
+            color: #888; 
+            font-size: 0.85rem; 
+            font-weight: bold;
+            padding: 12px 8px; 
+            border-bottom: 1px solid var(--border-color);
+        }
+        td { 
+            padding: 12px 8px; 
+            font-size: 1rem; 
+            border-bottom: 1px solid #111;
+            transition: background 0.2s;
+        }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+        
+        /* Scanning Animation Class */
+        .scanning td {
+            background: rgba(0, 243, 255, 0.1) !important;
+            color: var(--hex-cyan) !important;
+        }
+
+        .mono-num { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
+
+        /* Tag Pills */
+        .tag-pill {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .tag-exchange { background: rgba(255, 204, 0, 0.15); color: var(--hex-warn); border: 1px solid rgba(255, 204, 0, 0.3); }
+        .tag-dev { background: rgba(188, 19, 254, 0.15); color: var(--hex-purple); border: 1px solid rgba(188, 19, 254, 0.3); }
+        .tag-mining { background: rgba(0, 243, 255, 0.15); color: var(--hex-cyan); border: 1px solid rgba(0, 243, 255, 0.3); }
+        .tag-whale { background: rgba(0, 255, 65, 0.15); color: var(--hex-green); border: 1px solid rgba(0, 255, 65, 0.3); }
+
+        /* Token Cards */
+        .token-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 0.9rem;
+            align-items: center;
+        }
+
+        /* Timeframe Buttons */
+        .tf-btn {
+            background: #111;
+            border: 1px solid #333;
+            color: #666;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tf-btn:hover { background: #222; color: #fff; }
+        .tf-btn.active {
+            background: var(--hex-green);
+            color: #000;
+            border-color: var(--hex-green);
+            font-weight: bold;
+        }
+
+        /* Custom Tooltip */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            z-index: 50;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #050505;
+            color: #ccc;
+            text-align: left;
+            border-radius: 4px;
+            padding: 12px;
+            position: absolute;
+            z-index: 100;
+            top: 100%; 
+            right: 0; 
+            margin-top: 8px;
+            border: 1px solid #333;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.9);
+            pointer-events: none;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Google Translate Reset */
+        .goog-te-gadget-simple {
+            background-color: rgba(0,0,0,0.5) !important;
+            border: 1px solid #333 !important;
+            padding: 4px !important;
+            border-radius: 4px !important;
+        }
+        .goog-te-gadget-simple span {
+            color: #ccc !important;
+            font-family: 'Rajdhani', sans-serif !important;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none; }
+            .grid-cols-2 { grid-template-columns: 1fr; }
+            .grid-cols-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_10px_#00f3ff]"></div>
+                <!-- Enlarged Font Size -->
+                <h1 class="text-6xl font-bold tracking-widest neon-text leading-none mt-2">
+                    <span class="text-hex-green">KAS</span><span class="text-hex-blue">LIVE</span>
+                    <span class="text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V15.0</span>
+                </h1>
+                <!-- Translation Widget -->
+                <div id="google_translate_element" class="ml-4 opacity-80 hover:opacity-100 transition-opacity transform translate-y-1"></div>
             </div>
             
-            <div class="price-container">
-                <div class="price-tag mono-num" id="mainPrice">LOADING...</div>
-                <div class="sub-metric" id="athDisplay">ATH: --</div>
-                <div class="sub-metric" id="mcapChange">MCAP: --</div>
-            </div>
-        </header>
-
-        <div class="module sys-panel">
-            
-            <div class="vitals-sector">
-                <div class="sector-title">
-                    <span>ASSET PERFORMANCE (1Y LOG)</span>
-                    <div class="status-dot"></div>
+            <div class="text-right">
+                <div id="mainPrice" class="text-3xl font-mono font-bold text-white tracking-tighter flex items-center gap-2 justify-end">
+                    $0.0000 <span class="text-sm text-gray-600">...</span>
                 </div>
-                <div class="chart-box-lg">
-                    <canvas id="perfChart"></canvas>
-                </div>
-                
-                <div class="sector-title" style="margin-top:20px;">
-                    <span class="t-hash">NETWORK HASHRATE</span>
-                    <div class="status-dot"></div>
-                </div>
-                <div class="chart-box-sm">
-                    <canvas id="hashrateChart"></canvas>
-                </div>
-            </div>
-
-            <div class="vitals-sector">
-                <div class="sector-title">
-                    <span class="t-crypto">CRYPTO RATIOS</span>
-                    <div class="status-dot"></div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-row">
-                        <div class="metric-title">BITCOIN (BTC)</div>
-                        <div class="metric-value mono-num" id="btcPrice">--</div>
-                    </div>
-                    <div class="ratio-row">
-                        <span>KAS/BTC</span>
-                        <span id="ratioBtcVal" class="ratio-val-display">-- sats</span>
-                    </div>
-                    <div class="ratio-bar"><div class="ratio-fill" id="ratioBtc" style="width: 0%; background: orange;"></div></div>
-                </div>
-
-                <div class="metric-card" style="margin-bottom:0">
-                    <div class="metric-row">
-                        <div class="metric-title">ETHEREUM (ETH)</div>
-                        <div class="metric-value mono-num" id="ethPrice">--</div>
-                    </div>
-                    <div class="ratio-row">
-                        <span>KAS/ETH</span>
-                        <span id="ratioEthVal" class="ratio-val-display">-- gwei</span>
-                    </div>
-                    <div class="ratio-bar"><div class="ratio-fill" id="ratioEth" style="width: 0%; background: #627eea;"></div></div>
-                </div>
-            </div>
-
-            <div class="vitals-sector">
-                <div class="sector-title">
-                    <span class="t-rwa">REAL WORLD ASSETS</span>
-                    <div class="status-dot"></div>
-                </div>
-                <div class="grid-2-col">
-                    <div>
-                        <div class="metric-title t-gold" style="color:var(--hex-gold)">GOLD</div>
-                        <div class="metric-value mono-num" id="goldPrice">--</div>
-                    </div>
-                    <div>
-                        <div class="metric-title t-silver" style="color:var(--hex-silver)">SILVER</div>
-                        <div class="metric-value mono-num" id="silverPrice">--</div>
-                    </div>
+                <div class="flex gap-4 text-sm font-mono text-gray-400">
+                    <span id="athDisplay">ATH: $...</span>
+                    <span id="mcapChange">MCAP: ...</span>
                 </div>
             </div>
         </div>
+    </header>
 
-        <div class="module ledger-panel">
-            <div class="ledger-header">
-                <div>
-                    <h2 class="section-header t-ledger">LEVIATHAN LEDGER</h2>
-                    <div class="source-label">
-                        SOURCE: <span id="sourceLabel">HARDCODED + LIVE RPC</span>
-                    </div>
-                </div>
-                <div class="tracker-status" id="totalTracked">CONNECTING...</div>
-            </div>
-
-            <div class="table-wrapper">
-                <table id="whaleTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 30px">#</th>
-                            <th>ADDRESS</th>
-                            <th>TAG</th>
-                            <th style="text-align:right">BALANCE</th>
-                            <th class="hide-mobile" style="text-align:right">STATUS</th>
-                            <th style="text-align:right">%</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        </tbody>
-                </table>
-            </div>
+    <!-- TICKER BAR -->
+    <div class="bg-[#080808] border-b border-gray-800 text-sm font-mono py-2 overflow-hidden whitespace-nowrap">
+        <div class="max-w-7xl mx-auto px-4 flex gap-12 overflow-x-auto no-scrollbar">
+            <span class="text-gray-500 font-bold">MARKETS:</span>
+            <!-- Prices will be populated via JS with change % -->
+            <span id="btcTicker">BTC: <span class="text-gray-600">...</span></span>
+            <span id="ethTicker">ETH: <span class="text-gray-600">...</span></span>
+            <span id="goldTicker">GOLD: <span class="text-gray-600">...</span></span>
+            <span id="silverTicker">SILVER: <span class="text-gray-600">...</span></span>
         </div>
-
-        <div class="module feed-panel">
-            <div class="feed-section krc-box">
-                <div class="label">
-                    <span class="t-krc">KRC-20 MARKET</span>
-                </div>
-                <div class="token-list" id="krcList">
-                    <div style="padding:20px; text-align:center; opacity:0.5">INITIALIZING...</div>
-                </div>
-            </div>
-
-            <div class="feed-section">
-                <div class="label" style="color:var(--hex-purple); border-color:var(--hex-purple)">
-                    <span class="t-blocks">LATEST BLOCKS</span>
-                </div>
-                <div class="sonar-log" id="sonarTape"></div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <a href="#" class="footer-credit">KASLIVE V15.0</a>
-            <div class="status-text">SYSTEM ONLINE</div>
-            <div class="btn-group">
-                <button class="btn" onclick="window.open('https://explorer.kaspa.org','_blank')">EXPLORER</button>
-            </div>
-        </div>
-
     </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-4 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT COLUMN (Whales & Charts) -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- RATIOS ROW -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- BTC Ratio -->
+                <div class="panel p-6 rounded-sm relative group z-20">
+                    <div class="flex justify-between items-end mb-3 relative z-10">
+                        <div class="flex items-center gap-2 cursor-help tooltip-container">
+                            <h3 class="text-sm text-gray-500 font-bold tracking-wider">PURCHASING POWER VS BTC</h3>
+                            <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div class="tooltip-text left-0">
+                                <strong class="text-orange-400">KAS/BTC Ratio (24h)</strong><br/>
+                                This measures if KAS is gaining value against Bitcoin.<br/>
+                                <span class="text-green-400">Green</span> = KAS is rising faster than BTC.<br/>
+                                <span class="text-red-400">Red</span> = BTC is outperforming KAS.
+                            </div>
+                        </div>
+                        <span id="ratioBtcVal" class="font-mono text-2xl font-bold">...</span>
+                    </div>
+                    <div class="w-full bg-gray-900 h-2 mt-2 rounded-full overflow-hidden">
+                        <div id="ratioBtc" class="h-full bg-gradient-to-r from-orange-600 to-yellow-400 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- ETH Ratio -->
+                <div class="panel p-6 rounded-sm relative group z-20">
+                    <div class="flex justify-between items-end mb-3 relative z-10">
+                        <div class="flex items-center gap-2 cursor-help tooltip-container">
+                            <h3 class="text-sm text-gray-500 font-bold tracking-wider">PURCHASING POWER VS ETH</h3>
+                            <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div class="tooltip-text left-0">
+                                <strong class="text-blue-400">KAS/ETH Ratio (24h)</strong><br/>
+                                This measures if KAS is gaining value against Ethereum.<br/>
+                                <span class="text-green-400">Green</span> = KAS is rising faster than ETH.<br/>
+                                <span class="text-red-400">Red</span> = ETH is outperforming KAS.
+                            </div>
+                        </div>
+                        <span id="ratioEthVal" class="font-mono text-2xl font-bold">...</span>
+                    </div>
+                    <div class="w-full bg-gray-900 h-2 mt-2 rounded-full overflow-hidden">
+                        <div id="ratioEth" class="h-full bg-gradient-to-r from-blue-800 to-blue-400 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHARTS ROW (Swapped Positions) -->
+            <div class="grid grid-cols-1 gap-6">
+                
+                <!-- Perf Chart (Now on Top) -->
+                <div class="panel p-6 rounded-sm h-[450px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm text-white font-bold uppercase">Relative Performance</h3>
+                        <div class="flex gap-1" id="timeframeControls">
+                            <button class="tf-btn" onclick="updatePerfChart(30)">30D</button>
+                            <button class="tf-btn" onclick="updatePerfChart(90)">90D</button>
+                            <button class="tf-btn active" onclick="updatePerfChart(365)">1Y</button>
+                            <button class="tf-btn" onclick="updatePerfChart('max')">ALL</button>
+                        </div>
+                    </div>
+                    <div class="relative flex-1 w-full">
+                        <canvas id="perfChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Hashrate (Now on Bottom) -->
+                <div class="panel p-6 rounded-sm h-80">
+                    <h3 class="text-sm text-hex-green mb-4 font-bold flex items-center gap-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                        NETWORK HASHRATE (ALL HISTORY)
+                    </h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="hashrateChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RICH LIST TABLE -->
+            <div class="panel rounded-sm flex-1 flex flex-col min-h-[600px]">
+                <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-base font-bold text-hex-cyan tracking-widest">WHALE WATCH</h2>
+                    <span id="totalTracked" class="text-sm text-gray-400 bg-gray-900 px-3 py-1 rounded border border-gray-800">INIT...</span>
+                </div>
+                <div class="overflow-x-auto flex-1">
+                    <table id="whaleTable">
+                        <thead>
+                            <tr class="bg-black/20">
+                                <th width="5%">#</th>
+                                <th width="30%">ADDRESS</th>
+                                <th width="15%">TAG</th>
+                                <th width="20%">BALANCE (KAS)</th>
+                                <th width="15%" class="hide-mobile">STATUS</th>
+                                <th width="15%" style="text-align:right">% SUPPLY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="font-mono text-gray-300">
+                            <!-- JS populates this -->
+                            <tr><td colspan="6" class="text-center p-12 text-gray-500">Loading ledger...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN (Sidebar) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- HEAT INDEX (Expanded Metrics with Tooltip) -->
+            <div class="panel rounded-sm h-[500px] flex flex-col relative z-10">
+                <div class="p-4 border-b border-gray-800 bg-black/20 z-10">
+                    <h3 class="text-sm font-bold text-orange-500 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+                            KASPA HEAT INDEX
+                        </div>
+                        
+                        <!-- Tooltip Container -->
+                        <div class="tooltip-container cursor-help">
+                            <svg class="w-4 h-4 text-gray-500 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="tooltip-text font-mono">
+                                <strong class="text-orange-400 block mb-1">HEAT INDEX CALCULATION</strong>
+                                A real-time sentiment score (0-100) based on:<br/>
+                                • <span class="text-white">Price Action:</span> 24h USD change.<br/>
+                                • <span class="text-white">Relative Strength:</span> Performance vs Bitcoin.<br/>
+                                • <span class="text-white">Momentum:</span> Volume & Trend analysis.<br/>
+                                <span class="text-xs text-gray-500 mt-1 block">Updated every 30s.</span>
+                            </div>
+                        </div>
+                    </h3>
+                </div>
+                
+                <div class="flex-1 flex flex-col items-center justify-center relative p-8">
+                    <!-- Background Texture -->
+                    <div class="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                    
+                    <!-- Main Score -->
+                    <div class="text-8xl font-bold font-mono heat-text transition-all duration-500" id="heatScore" style="color: #fff;">--</div>
+                    <div class="text-lg font-bold tracking-[0.3em] mb-8 transition-all duration-500" id="heatLabel" style="color: #555">CALCULATING</div>
+
+                    <!-- Meter Container -->
+                    <div class="w-full bg-gray-900 h-8 rounded-full border border-gray-700 relative overflow-hidden shadow-inner mb-8">
+                         <!-- Gradient Bar -->
+                         <div id="heatBar" class="h-full transition-all duration-1000 ease-out" 
+                              style="width: 0%; background: linear-gradient(90deg, #00f3ff, #00ff41, #ffcc00, #ff6600, #ff0000); box-shadow: 0 0 15px rgba(255,255,255,0.2);">
+                         </div>
+                    </div>
+
+                    <!-- Metrics Breakdown (4x Grid) -->
+                    <div class="w-full grid grid-cols-2 gap-4 text-sm font-mono text-gray-500 relative z-10">
+                        <div class="text-center p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
+                            <div class="block text-gray-600 mb-1 tracking-wider text-xs">PRICE MOMENTUM</div>
+                            <span id="heatMetricPrice" class="text-xl font-bold text-white">--</span>
+                        </div>
+                        <div class="text-center p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
+                            <div class="block text-gray-600 mb-1 tracking-wider text-xs">REL STRENGTH</div>
+                            <span id="heatMetricRel" class="text-xl font-bold text-white">--</span>
+                        </div>
+                        <div class="text-center p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
+                            <div class="block text-gray-600 mb-1 tracking-wider text-xs">24H VOL</div>
+                            <span id="heatMetricVol" class="text-xl font-bold text-white">--</span>
+                        </div>
+                        <div class="text-center p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
+                            <div class="block text-gray-600 mb-1 tracking-wider text-xs">TREND</div>
+                            <span id="heatMetricDom" class="text-xl font-bold text-white">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KRC20 MINTING -->
+            <div class="panel rounded-sm flex-1 flex flex-col">
+                <div class="p-4 border-b border-gray-800 bg-black/20">
+                    <h3 class="text-sm font-bold text-gray-400">KRC-20 MINT MONITOR</h3>
+                </div>
+                <div class="px-4 py-3 bg-gray-900/50 text-xs text-gray-500 font-mono grid grid-cols-3 font-bold">
+                    <span>TICKER</span>
+                    <span class="text-right">PROGRESS</span>
+                    <span class="text-right">STATUS</span>
+                </div>
+                <div id="krcList" class="flex-1 overflow-y-auto font-mono">
+                    <!-- JS populates this -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-900 bg-black py-6 text-center">
+        <div class="text-xs text-gray-600 font-mono">
+            KASLIVE V15.0 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX // DECENTRALIZED MONITOR
+        </div>
+    </footer>
+
+    <!-- Google Translate Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({
+              pageLanguage: 'en', 
+              layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+              autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- CORE LOGIC SCRIPT -->
+    <script>
+        /* ==========================================
+           KASLIVE V15.0 - CORE LOGIC
+           ========================================== */
+
+        const API = {
+            kaspa: {
+                base: 'https://api.kaspa.org',
+                blocks: 'https://api.kaspa.org/blocks?limit=10&includeTransactions=false',
+                hashrateHistory: 'https://api.kaspa.org/info/hashrate/history',
+                balance: (addr) => `https://api.kaspa.org/addresses/${addr}/balance`
+            },
+            coingecko: 'https://api.coingecko.com/api/v3',
+            kasplex: 'https://api.kasplex.org/v1/krc20/tokenlist'
+        };
+
+        const state = {
+            whaleData: [],
+            currentKasPrice: 0,
+            btcPrice: 0,
+            lastHeatScore: 50,
+            perfChartInstance: null
+        };
+
+        // COMPREHENSIVE HARDCODED RICH LIST
+        const REAL_ADDRS = [
+            { address: 'kaspa:precqv0krj3r6uyyfa36ga7s0u9jct0v4wg8ctsfde2gkrsgwgw8jgxfzfc98', tag: {name: 'DEV FUND', type:'tag-dev'} },
+            { address: 'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz', tag: {name: 'MEXC', type:'tag-exchange'} },
+            { address: 'kaspa:qpz2vgvlxhmyhmt22h538pjzmvvd52nuut80y5zulgpvyerlskvvwm7n4uk5a', tag: {name: 'Whale 1', type:'tag-whale'} },
+            { address: 'kaspa:qrelgny7sr3vahq69yykxx36m65gvmhryxrlwngfzgu8xkdslum2yxjp3ap8m', tag: {name: 'Gate.io', type:'tag-exchange'} },
+            { address: 'kaspa:qrvum29vk365g0zcd5gx3c7h829etfq2ytdmscjzw4zw04fjfnprcg9c3tges', tag: {name: 'Bybit', type:'tag-exchange'} },
+            { address: 'kaspa:qzadxjufntvckxrvy76pyhvtkuu8lg5ryz252aglmhlyv27pxqplksshzuu9m', tag: {name: 'KuCoin', type:'tag-exchange'} },
+            { address: 'kaspa:qzxrs8gxjgk2q84wlt3xfd057ntws73fptalhy84g85zqfu5lcemvpu04vj3w', tag: {name: 'Uphold', type:'tag-exchange'} },
+            { address: 'kaspa:qpj2x2qfmvj4g6fn0xadv6hafdaqv4fwd3t4uvyw3walwfn50rzysa4lafpma', tag: {name: 'Kraken', type:'tag-exchange'} },
+            { address: 'kaspa:qq2ka745yyj0760fkt3ax3t7hpyqret6pzaypag3afnd3fp8jpv4cmzpx8yrt', tag: {name: 'Whale 2', type:'tag-whale'} },
+            { address: 'kaspa:qqfxn597v5c23td4asz99ky52sha8l2ypq8kmrsqxcu7skhdunncjgup0hdys', tag: null },
+            { address: 'kaspa:qzpt2wp67seprjndmrzu58g4sgkknxp0y5g97y5leupj7ugffqhs6xgxdjwtf', tag: null },
+            { address: 'kaspa:qr8k05f9n6xtrd0eex5lr6878mc5n7dgrtn8xv3frfvuxgfchx9077jtz5tsk', tag: null },
+            { address: 'kaspa:qpap72xed702y4ahw537l3x63788nrh3ea5a0y06we236d5rth43wptqsv0ws', tag: null },
+            { address: 'kaspa:qz06rpdaap56ktn3xf3w70g09s9dphrkmnks027lnshyqd6x5l8tzt8lcpp4k', tag: null },
+            { address: 'kaspa:qqywx2wszmnrsu0mzgav85rdwvzangfpdj9j3ady9jpr7hu4u8c2wl9wqgd6j', tag: {name: 'Bitget', type:'tag-exchange'} },
+            { address: 'kaspa:ppwn9mz7ht2p8w8mqtafvuw0sslqff7svk0e5j5vterutxwd3gmygnqdrppm5', tag: {name: 'Ice River', type:'tag-mining'} },
+            { address: 'kaspa:qr9fqcxp9xjprsm9sv7apy6qc0ja2p676m9gf9fkcww2qmaw4npxzllh7lrw0', tag: {name: 'Kraken 2', type:'tag-exchange'} },
+            { address: 'kaspa:qq2hke25nvxsnnawzlym3nf6y38clrhdefph5xckeuyyzxwh99kavfu77grmg', tag: null },
+            { address: 'kaspa:qpky2f87j7my5ph5taucutm74tfssz8l97m770rqdtnmzmece7r9gf3l2hpze', tag: null },
+            { address: 'kaspa:qq6kjumc6l95hq005yz2gazrqev3pyfjvqefxef93wz6u2makfhmsrct65f6', tag: null },
+            { address: 'kaspa:qrtxzw8j3ydwna6spm7etj7x36dzj06h7q84hxn6ueapphfg8txazcycmnalc', tag: null },
+            { address: 'kaspa:qzew5mu908h4gfw7qgvpux7hlkfqrjz06zazag8nmrykjz59479uqlm8n9q9q', tag: null },
+            { address: 'kaspa:qqn98feqplp4nc92wgq7j7cy6cdnaugnzngeatps7swaxkw0s9e0c7rjjdrxf', tag: null },
+            { address: 'kaspa:qp2sp0vvrwu4s8pw0j68muu2ta5qar5mehf8ehuvljw5zsrakk5cvx4gvqz7z', tag: null },
+            { address: 'kaspa:qpu0zrz92y5m4s0vf8ml0tqrhc85l943t9efghexqd4rt09cfynjzw5rmfdws', tag: null },
+            { address: 'kaspa:ppk66xua7nmq8elv3eglfet0xxcfuks835xdgsm5jlymjhazyu6h5ac62l4ey', tag: {name: 'DAGKnight', type:'tag-dev'} },
+            { address: 'kaspa:qzganetmrpwv88ea0pkma0xvgacw034l6jv9e9kvh0mup47ahqpc24la7yfmf', tag: null },
+            { address: 'kaspa:pqtm55d2a456qws90g096cxnecc7msjmxr8n2ernwues8zfdamkl2kfmxr8gr', tag: {name: 'Rust Fund', type:'tag-dev'} },
+            { address: 'kaspa:qrepacgj2flpflt8f7luh3ru4sykgt8d5k7s0sh4zlflk3glqpwjvq9kx7smk', tag: null },
+            { address: 'kaspa:qpxg04pk29q9pf6uzakcxugdl3td6xkx875p24wkr3hjjgkh9gsp2p5m3akay', tag: null },
+            { address: 'kaspa:qrjjnrk9vd9je8wnlqq9dz7fhmhurgjjed8n2pnzh5jwgjmef5pvzd4vf0lu7', tag: null },
+            { address: 'kaspa:qypnwqfqltw6p8j8x7hj3w962l8a4ha5admykfs7z30fc07vydftmng942wwmmw', tag: null },
+            { address: 'kaspa:qpkf9c9t2vhu7dt037rkmutyjcgg29hlwq25xnxgln6x5uq6ajtnucslxlk9a', tag: null },
+            { address: 'kaspa:qyppcdqxpu3sw49k6xcj8wcqjd98lpvpc8cm30wfnj003ahlhjzkh0s67gjxuv', tag: null },
+            { address: 'kaspa:qyp3ffdjvv6de6cg6jjgyhlg3mt3fngna2vzukdpzvwkaj5j3hctsyqecqf7dh3', tag: {name: 'MARA Pool', type:'tag-mining'} },
+            { address: 'kaspa:qr7vrlhgekw9efxgfq09ca3wqcxlslgxndcpk77pguu2usaa9aa27lhuunewj', tag: {name: 'Uphold 2', type:'tag-exchange'} }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 KasLive Initializing...');
+            
+            // Init Systems
+            initLedger();
+            fetchMarketData();
+            initKRC20();
+            initHashrateChart();
+            updatePerfChart(365); // Default 1 year
+            
+            // Polling Intervals
+            setInterval(fetchMarketData, 30000); 
+            setInterval(scanRandomWallet, 3000); 
+        });
+
+        /* --- MARKET & RATIOS --- */
+        async function fetchMarketData() {
+            let kasData = null;
+            let btcData = null;
+            let ethData = null;
+            let goldData = null;
+            let silverData = null;
+
+            // 1. Try CoinGecko (Best Data)
+            try {
+                const ids = 'bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
+                const url = `${API.coingecko}/coins/markets?vs_currency=usd&ids=${ids}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('CG Error');
+                const data = await res.json();
+                
+                kasData = data.find(c => c.id === 'kaspa');
+                btcData = data.find(c => c.id === 'bitcoin');
+                ethData = data.find(c => c.id === 'ethereum');
+                goldData = data.find(c => c.id === 'pax-gold');
+                silverData = data.find(c => c.id === 'kinesis-silver');
+
+            } catch (e) {
+                console.log("CoinGecko unreachable, switching to fallbacks.");
+                
+                // 2. Fallback: CoinCap (Crypto) + Kaspa API (KAS)
+                try {
+                    // Get KAS Price from Kaspa API (Most reliable)
+                    const kRes = await fetch('https://api.kaspa.org/info/price');
+                    const kData = await kRes.json();
+                    if(kData && kData.price) {
+                        kasData = {
+                            current_price: kData.price,
+                            price_change_percentage_24h: 0, // Not provided by simple endpoint, assume 0 or fetch elsewhere
+                            market_cap: 0,
+                            total_volume: 0
+                        };
+                    }
+
+                    // Get BTC/ETH from CoinCap
+                    const cRes = await fetch('https://api.coincap.io/v2/assets?ids=bitcoin,ethereum');
+                    const cData = await cRes.json();
+                    if(cData && cData.data) {
+                        const btc = cData.data.find(d => d.id === 'bitcoin');
+                        const eth = cData.data.find(d => d.id === 'ethereum');
+                        if(btc) btcData = { current_price: parseFloat(btc.priceUsd), price_change_percentage_24h: parseFloat(btc.changePercent24Hr) };
+                        if(eth) ethData = { current_price: parseFloat(eth.priceUsd), price_change_percentage_24h: parseFloat(eth.changePercent24Hr) };
+                    }
+
+                } catch(e2) {
+                    console.error("All market data providers failed", e2);
+                }
+            }
+
+            // Render logic (check if data exists before using it)
+            if(kasData) {
+                state.currentKasPrice = kasData.current_price;
+                const pChange = kasData.price_change_percentage_24h || 0;
+                const color = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
+                
+                document.getElementById('mainPrice').innerHTML = 
+                    `$${kasData.current_price.toFixed(4)} <span style="font-size:0.6em; color:${color}">${pChange.toFixed(2)}%</span>`;
+                
+                const ath = kasData.ath ? `$${kasData.ath.toFixed(4)}` : 'N/A';
+                document.getElementById('athDisplay').innerText = `ATH: ${ath}`;
+                
+                // MCAP
+                const mcapChange = kasData.market_cap_change_percentage_24h || 0;
+                const mColor = mcapChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
+                document.getElementById('mcapChange').innerHTML = 
+                    `MCAP: <span style="color:${mColor}">${mcapChange.toFixed(2)}%</span>`;
+            
+                if(btcData && ethData) {
+                    state.btcPrice = btcData.current_price;
+                    updateRatios(kasData, btcData, ethData);
+                    updateHeatIndex(kasData, btcData); 
+                }
+            }
+
+            // Helper to format ticker with change
+            const updateTicker = (elId, name, asset) => {
+                if(asset) {
+                    const price = asset.current_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    const chg = asset.price_change_percentage_24h || 0;
+                    const color = chg >= 0 ? 'text-green-400' : 'text-red-400';
+                    const sign = chg >= 0 ? '+' : '';
+                    document.getElementById(elId).innerHTML = 
+                        `${name}: <span class="text-white">$${price}</span> <span class="${color} text-xs">(${sign}${chg.toFixed(1)}%)</span>`;
+                }
+            };
+
+            updateTicker('btcTicker', 'BTC', btcData);
+            updateTicker('ethTicker', 'ETH', ethData);
+            updateTicker('goldTicker', 'GOLD', goldData);
+            updateTicker('silverTicker', 'SILVER', silverData);
+        }
+
+        function updateRatios(kas, btc, eth) {
+            const getOld = (cur, pct) => cur / (1 + (pct / 100));
+            
+            // BTC Calculation
+            const curSats = (kas.current_price / btc.current_price) * 1e8;
+            const oldSats = (getOld(kas.current_price, kas.price_change_percentage_24h) / getOld(btc.current_price, btc.price_change_percentage_24h)) * 1e8;
+            const satsChange = ((curSats - oldSats) / oldSats) * 100;
+            
+            const btcEl = document.getElementById('ratioBtcVal');
+            if(btcEl) btcEl.innerHTML = `${Math.floor(curSats)} sats <span style="font-size:0.5em; vertical-align:middle; color:${satsChange>=0?'#ccff00':'#ff3333'}">(${satsChange>0?'+':''}${satsChange.toFixed(2)}%)</span>`;
+            document.getElementById('ratioBtc').style.width = Math.min((curSats / 200) * 100, 100) + '%';
+            
+            // ETH Calculation
+            const curGwei = (kas.current_price / eth.current_price) * 1e9;
+            const oldGwei = (getOld(kas.current_price, kas.price_change_percentage_24h) / getOld(eth.current_price, eth.price_change_percentage_24h)) * 1e9;
+            const gweiChange = ((curGwei - oldGwei) / oldGwei) * 100;
+
+            const ethEl = document.getElementById('ratioEthVal');
+            if(ethEl) ethEl.innerHTML = `${Math.floor(curGwei).toLocaleString()} gwei <span style="font-size:0.5em; vertical-align:middle; color:${gweiChange>=0?'#ccff00':'#ff3333'}">(${gweiChange>0?'+':''}${gweiChange.toFixed(2)}%)</span>`;
+            document.getElementById('ratioEth').style.width = Math.min((curGwei / 60000) * 100, 100) + '%';
+        }
+
+        /* --- HEAT INDEX --- */
+        function updateHeatIndex(kas, btc) {
+            // Algorithm Components
+            const pChange = kas.price_change_percentage_24h || 0;
+            const bChange = btc.price_change_percentage_24h || 0;
+            const relStrength = pChange - bChange;
+            
+            // New Metrics for Heat Panel
+            const volume = kas.total_volume || 0;
+            
+            // Assume 24h volume change is not directly available in this endpoint, 
+            // so we show raw volume formatted
+            const volDisplay = (volume / 1e6).toFixed(1) + 'M';
+            
+            let trend = "SIDEWAYS";
+            if(pChange > 3) trend = "BULLISH";
+            if(pChange < -3) trend = "BEARISH";
+
+            // Calculate Score
+            const priceFactor = Math.max(Math.min(pChange * 2.5, 25), -25);
+            const strengthFactor = Math.max(Math.min(relStrength * 3, 15), -15);
+            let score = 50 + priceFactor + strengthFactor;
+            score = Math.floor(Math.max(0, Math.min(100, score)));
+
+            // DOM Updates
+            const scoreEl = document.getElementById('heatScore');
+            const labelEl = document.getElementById('heatLabel');
+            const barEl = document.getElementById('heatBar');
+            const metricPrice = document.getElementById('heatMetricPrice');
+            const metricRel = document.getElementById('heatMetricRel');
+            const metricVol = document.getElementById('heatMetricVol');
+            const metricDom = document.getElementById('heatMetricDom');
+
+            // Text Color Logic
+            let color = '#fff';
+            let label = 'NEUTRAL';
+            if(score < 30) { color = '#00f3ff'; label = 'FREEZING'; }
+            else if(score < 45) { color = '#00ffaa'; label = 'COLD'; }
+            else if(score < 55) { color = '#ffffff'; label = 'STABLE'; }
+            else if(score < 70) { color = '#ffcc00'; label = 'WARM'; }
+            else if(score < 85) { color = '#ff6600'; label = 'HOT'; }
+            else { color = '#ff0000'; label = 'SUPERNOVA'; }
+
+            scoreEl.innerText = score;
+            scoreEl.style.color = color;
+            scoreEl.style.textShadow = `0 0 20px ${color}`;
+            
+            labelEl.innerText = label;
+            labelEl.style.color = color;
+
+            barEl.style.width = score + '%';
+
+            // Update Sub-metrics
+            const pSign = pChange >= 0 ? '+' : '';
+            const pColor = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
+            metricPrice.innerHTML = `<span style="color:${pColor}">${pSign}${pChange.toFixed(2)}%</span>`;
+
+            const rSign = relStrength >= 0 ? '+' : '';
+            const rColor = relStrength >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
+            metricRel.innerHTML = `<span style="color:${rColor}">${rSign}${relStrength.toFixed(2)}%</span>`;
+
+            metricVol.innerText = `$${volDisplay}`;
+            
+            // Using "Dominance" slot for Market Trend
+            const tColor = trend === "BULLISH" ? 'var(--hex-green)' : (trend === "BEARISH" ? 'var(--hex-alert)' : '#aaa');
+            metricDom.innerHTML = `<span style="color:${tColor}">${trend}</span>`;
+        }
+
+
+        /* --- CHARTS --- */
+        async function initHashrateChart() {
+            try {
+                const res = await fetch(`${API.kaspa.hashrateHistory}?range=all`);
+                if(res.ok) {
+                    const data = await res.json();
+                    const labels = [];
+                    const values = [];
+                    data.forEach((p, i) => {
+                        if(i % 15 === 0) {
+                            labels.push(new Date(p.timestamp * 1000).toISOString().split('T')[0]);
+                            values.push(p.hashrate / 1000); // PH/s
+                        }
+                    });
+
+                    const ctxH = document.getElementById('hashrateChart').getContext('2d');
+                    const grad = ctxH.createLinearGradient(0,0,0,200);
+                    grad.addColorStop(0, 'rgba(0,255,65,0.4)');
+                    grad.addColorStop(1, 'rgba(0,255,65,0)');
+
+                    new Chart(ctxH, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Hashrate (PH/s)',
+                                data: values, borderColor:'#00ff41', backgroundColor: grad, 
+                                fill:true, pointRadius:0, tension:0.4, borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: {display:false}, tooltip: {mode: 'index', intersect: false} },
+                            scales: {
+                                x: { display:false },
+                                y: { grid: {color:'#111'}, ticks: {color:'#444', font: {family:'JetBrains Mono'}} }
+                            },
+                            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                        }
+                    });
+                }
+            } catch(e) { console.log("Hashrate chart unavailable", e); }
+        }
+
+        async function updatePerfChart(days) {
+            // Update buttons UI
+            const btns = document.querySelectorAll('#timeframeControls button');
+            btns.forEach(b => {
+                if(b.innerText.toLowerCase().includes(days === 365 ? '1y' : (days === 'max' ? 'all' : days))) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
+
+            try {
+                const ids = ['kaspa', 'bitcoin', 'ethereum'];
+                const colors = ['#00ff41', '#f7931a', '#627eea'];
+                const labels = ['KAS', 'BTC', 'ETH'];
+                
+                const promises = ids.map(id => 
+                    fetch(`${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=${days}`)
+                    .then(r => r.ok ? r.json() : null)
+                );
+                const results = await Promise.all(promises);
+                
+                const datasets = results.map((res, i) => {
+                    if(!res || !res.prices || !res.prices.length) return null;
+                    const start = res.prices[0][1];
+                    
+                    // Downsample based on range to keep chart fast
+                    let modulo = 1;
+                    if(days === 90) modulo = 2;
+                    if(days === 365) modulo = 7;
+                    if(days === 'max') modulo = 14;
+
+                    return {
+                        label: labels[i],
+                        data: res.prices.filter((_,x)=>x%modulo===0).map(p => ({x: p[0], y: ((p[1]-start)/start)*100})),
+                        borderColor: colors[i], borderWidth: i===0?2:1, pointRadius:0,
+                        borderDash: i===0 ? [] : [4,4],
+                        tension: 0.1
+                    };
+                }).filter(d=>d);
+
+                const ctxP = document.getElementById('perfChart').getContext('2d');
+                
+                if(state.perfChartInstance) {
+                    state.perfChartInstance.destroy();
+                }
+
+                state.perfChartInstance = new Chart(ctxP, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: {labels:{color:'#888', boxWidth:10, font: {family:'Rajdhani'}}} },
+                        scales: {
+                            x: { type:'time', time:{unit: days==30?'day':'month'}, grid:{display:false}, ticks:{color:'#444', font: {size: 10}} },
+                            y: { grid:{color:'#222'}, ticks:{color:'#666', callback:v=>v+'%', font: {family:'JetBrains Mono'}} }
+                        },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                    }
+                });
+            } catch(e) { console.log("Perf chart unavailable", e); }
+        }
+
+        /* --- LEDGER --- */
+        function initLedger() {
+            state.whaleData = REAL_ADDRS.map((w, i) => ({ ...w, rank: i+1, balance: 0, status: '...' }));
+            renderTable();
+            // Update count
+            document.getElementById('totalTracked').innerText = `TRACKING ${REAL_ADDRS.length} WALLETS`;
+            // Staggered fetch
+            state.whaleData.forEach((w, i) => {
+                setTimeout(() => fetchBalance(i), i * 300);
+            });
+        }
+
+        async function fetchBalance(index) {
+            const wallet = state.whaleData[index];
+            try {
+                const res = await fetch(API.kaspa.balance(wallet.address));
+                const data = await res.json();
+                if(data && data.balance !== undefined) {
+                    state.whaleData[index].balance = Math.floor(data.balance / 1e8);
+                    state.whaleData[index].status = 'Active';
+                    state.whaleData[index].percent = ((state.whaleData[index].balance / 28700000000)*100).toFixed(4);
+                    updateRow(index);
+                }
+            } catch(e) {}
+        }
+
+        function scanRandomWallet() {
+            const i = Math.floor(Math.random() * state.whaleData.length);
+            const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
+            if(row) {
+                row.classList.add('scanning');
+                setTimeout(() => row.classList.remove('scanning'), 500);
+                fetchBalance(i);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            state.whaleData.forEach(w => {
+                const tr = document.createElement('tr');
+                const short = w.address.substr(0,8) + '...' + w.address.substr(-6);
+                const tag = w.tag ? `<span class="tag-pill ${w.tag.type}">${w.tag.name}</span>` : `<span style="opacity:0.2">-</span>`;
+                
+                tr.innerHTML = `
+                    <td class="text-gray-500">${w.rank}</td>
+                    <td style="font-family:monospace"><a href="https://explorer.kaspa.org/addresses/${w.address}" target="_blank" class="hover:text-cyan-400 transition-colors">${short}</a></td>
+                    <td>${tag}</td>
+                    <td class="mono-num text-gray-400">${w.balance.toLocaleString()}</td>
+                    <td class="hide-mobile" style="color:var(--hex-cyan); font-size:0.75rem">${w.status}</td>
+                    <td class="mono-num" style="text-align:right; color:#666">${w.percent || 0}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateRow(i) {
+            const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
+            if(row) {
+                const w = state.whaleData[i];
+                row.cells[3].innerText = w.balance.toLocaleString();
+                row.cells[3].style.color = '#fff';
+                setTimeout(()=>row.cells[3].style.color='#9ca3af', 500); // back to gray-400
+                row.cells[5].innerText = w.percent + '%';
+                if(row.cells[4]) row.cells[4].innerText = w.status;
+            }
+        }
+
+        async function initKRC20() {
+            try {
+                const res = await fetch(API.kasplex);
+                const data = await res.json();
+                const list = document.getElementById('krcList');
+                list.innerHTML = '';
+                if(data && data.result) {
+                    data.result.slice(0, 20).forEach(t => {
+                        const pct = (t.minted / t.max * 100).toFixed(1);
+                        const isDone = parseFloat(pct) >= 100;
+                        list.innerHTML += `
+                            <div class="token-card hover:bg-white/5 transition-colors cursor-default">
+                                <div class="font-bold text-gray-300">${t.tick}</div>
+                                <div style="text-align:right; color:#666; font-family:monospace">${pct}%</div>
+                                <div style="text-align:right; font-weight:bold; color:${isDone ? 'var(--hex-blue)' : 'var(--hex-warn)'}">
+                                    ${isDone ? 'DONE' : 'MINT'}
+                                </div>
+                            </div>`;
+                    });
+                }
+            } catch(e) { document.getElementById('krcList').innerHTML = "<div class='p-4 text-center text-red-500'>KRC API OFFLINE</div>"; }
+        }
+    </script>
 </body>
 </html>
