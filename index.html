@@ -1,1094 +1,816 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASLIVE V16.2 | Kaspa Ecosystem Monitor</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KASLIVE | MACRO INTELLIGENCE TERMINAL</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#030304;--sf:#080809;--el:#0c0d0f;--hv:#141518;
+--bd:#18191e;--bb:#22232a;
+--t1:#eaeaef;--t2:#7c7d95;--t3:#44455a;
+--grn:#00ff6a;--cyn:#49EACB;--red:#ff2a2a;--org:#ff8800;
+--prp:#a855f7;--yel:#fbbf24;--blu:#3b82f6;--gld:#FFD700;--btc:#f7931a;
+--M:'JetBrains Mono',monospace;--S:'Outfit',sans-serif;
+}
+html{height:100%;overflow:auto}body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:var(--S);min-height:800px}
+.grid-bg{position:fixed;inset:0;pointer-events:none;background-image:
+linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);background-size:48px 48px}
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+/* ═══ APP SHELL ═══ */
+.app{position:relative;z-index:1;display:grid;grid-template-rows:32px 1fr auto 24px;height:100vh}
 
-    <style>
-        :root {
-            --bg-dark: #050505;
-            --bg-panel: #0a0a0a;
-            --bg-panel-light: #111111;
-            
-            /* Hex Colors referenced in JS */
-            --hex-green: #00ff41;
-            --hex-alert: #ff3333;
-            --hex-cyan: #00f3ff;
-            --hex-purple: #bc13fe;
-            --hex-blue: #0066ff;
-            --hex-warn: #ffcc00;
-            --hex-orange: #ff6600;
-            
-            --border-color: #222;
-        }
+/* ═══ HEADER ═══ */
+.hdr{display:flex;align-items:center;gap:10px;padding:0 10px;background:rgba(3,3,4,.96);border-bottom:1px solid var(--bd);backdrop-filter:blur(12px);font-family:var(--M);overflow:hidden}
+.brand{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.bdot{width:6px;height:6px;background:var(--red);box-shadow:0 0 12px var(--red);animation:glow 2s ease infinite}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.3}}
+.bname{font-size:.85rem;font-weight:800;letter-spacing:3px;white-space:nowrap}.bname .w{color:#fff}.bname .r{color:var(--red)}
+.bver{font-size:.35rem;color:var(--t3);vertical-align:super;margin-left:1px}
+.hp{display:flex;align-items:baseline;gap:5px;flex-shrink:0}.hp .pv{font-size:.9rem;font-weight:700;color:#fff}.hp .pc{font-size:.6rem}
+.hm{display:flex;gap:10px;font-size:.5rem;color:var(--t3);flex:1;justify-content:center;overflow:hidden}
+.hdc{font-size:.5rem;font-weight:700;letter-spacing:1.5px;padding:2px 7px;border:1px solid var(--bd);border-radius:2px;flex-shrink:0;white-space:nowrap}
+.sbtn{font-size:.4rem;color:var(--t3);cursor:pointer;padding:2px 5px;border:1px solid var(--bd);border-radius:2px;background:transparent;letter-spacing:1px;flex-shrink:0;font-family:var(--M)}
+.sbtn:hover{border-color:var(--t2)}.sbtn.on{color:var(--cyn);border-color:var(--cyn)}
 
-        body {
-            background-color: var(--bg-dark);
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif;
-            overflow-x: hidden;
-        }
+/* ═══ DASHBOARD ═══ */
+.dash{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:30fr 18fr 52fr;gap:2px;padding:2px;min-height:0;overflow:hidden}
 
-        /* Animated Background */
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.15;
-            pointer-events: none;
-        }
+/* ═══ PANEL ═══ */
+.p{background:var(--sf);border:1px solid var(--bd);border-radius:2px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:2px 6px;border-bottom:1px solid var(--bd);background:var(--el);flex-shrink:0}
+.pt{font-size:.38rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);display:flex;align-items:center;gap:3px}
+.pt .d{width:3px;height:3px;border-radius:1px}
+.pb{padding:5px 6px;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden}
+.ps{font-family:var(--M);font-size:.38rem;color:var(--t3);letter-spacing:1px}
 
-        /* Typography */
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .text-hex-green { color: var(--hex-green); }
-        .text-hex-cyan { color: var(--hex-cyan); }
-        .text-hex-blue { color: var(--hex-blue); }
-        .text-hex-alert { color: var(--hex-alert); }
+/* ═══ METRIC ROWS ═══ */
+.mr{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.015)}.mr:last-child{border:none}
+.ml{font-size:.4rem;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+.mv{font-family:var(--M);font-size:.6rem;font-weight:600;color:#fff}
+.mu{font-size:.35rem;color:var(--t3);margin-left:1px}
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--hex-cyan); }
+/* ═══ NOVEL METRIC HERO CARDS ═══ */
+.hero{position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.hero-val{font-family:var(--M);font-size:1.6rem;font-weight:700;color:#fff;line-height:1;text-align:center;margin:2px 0}
+.hero-unit{font-family:var(--M);font-size:.4rem;color:var(--t3);text-align:center;letter-spacing:1.5px;text-transform:uppercase}
+.hero-sub{font-family:var(--M);font-size:.4rem;color:var(--t3);text-align:center;margin-top:3px}
+.h-cyan .hero-val{color:var(--cyn)}.h-cyan::before{background:var(--cyn)}
+.h-grn .hero-val{color:var(--grn)}.h-grn::before{background:var(--grn)}
+.h-gld .hero-val{color:var(--gld)}.h-gld::before{background:var(--gld)}
+.h-prp .hero-val{color:var(--prp)}.h-prp::before{background:var(--prp)}
+.h-org .hero-val{color:var(--org)}.h-org::before{background:var(--org)}
+.h-red .hero-val{color:var(--red)}.h-red::before{background:var(--red)}
 
-        /* Panels */
-        .panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
+/* ═══ DEFCON ═══ */
+.dc-wrap{position:relative}
+.dc-scan{position:absolute;top:0;left:0;width:100%;height:2px;background:rgba(255,42,42,.3);box-shadow:0 0 8px var(--red);animation:scan 5s linear infinite;opacity:.15;pointer-events:none}
+@keyframes scan{0%{top:0}100%{top:100%}}
+.dc-num{font-family:var(--M);font-size:3.2rem;font-weight:700;line-height:1;text-align:center;transition:.5s}
+.dc-num.live{animation:dcPulse 3s ease-in-out infinite}
+@keyframes dcPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.85;transform:scale(1.02)}}
+.dc-lbl{font-size:.65rem;font-weight:800;letter-spacing:5px;text-transform:uppercase;text-align:center;margin:1px 0 6px;transition:.5s}
+.dc-bar{width:100%;height:5px;background:var(--hv);border-radius:1px;overflow:hidden;margin-bottom:6px}
+.dc-bar-f{height:100%;background:linear-gradient(90deg,#3b82f6,#49EACB,#00ff6a,#fbbf24,#ff8800,#ff2a2a);transition:width 1s}
+.dc-fg{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.dc-f{background:var(--el);border:1px solid var(--bd);border-radius:2px;padding:3px 5px}
+.dc-fl{display:flex;justify-content:space-between;font-size:.33rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3)}
+.dc-fv{font-family:var(--M);font-size:.6rem;font-weight:600;color:#fff;margin-top:1px}
+.dc-fb{width:100%;height:2px;background:var(--hv);border-radius:1px;overflow:hidden;margin-top:2px}
+.dc-fb-f{height:100%;transition:width .8s,background .5s}
 
-        /* Neon Text Effect for Headings */
-        .neon-text {
-            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
-        }
-        
-        .heat-text {
-            text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
-        }
+/* ═══ BARS ═══ */
+.bar{width:100%;height:3px;background:var(--hv);border-radius:1px;overflow:hidden;margin-top:2px}.bar-f{height:100%;transition:width 1s}
+.sup-bar{width:100%;height:8px;background:var(--hv);border-radius:1px;overflow:hidden;border:1px solid var(--bd);position:relative;margin:3px 0}
+.sup-fill{height:100%;background:linear-gradient(90deg,var(--cyn),var(--grn));transition:width 1.5s}
+.sup-lbl{position:absolute;right:3px;top:50%;transform:translateY(-50%);font-family:var(--M);font-size:.35rem;font-weight:700;color:#000}
 
-        /* Table Styling */
-        table { width: 100%; border-collapse: collapse; }
-        th { 
-            text-align: left; 
-            color: #888; 
-            font-size: 0.85rem; 
-            font-weight: bold;
-            padding: 12px 8px; 
-            border-bottom: 1px solid var(--border-color);
-        }
-        td { 
-            padding: 12px 8px; 
-            font-size: 1rem; 
-            border-bottom: 1px solid #111;
-            transition: background 0.2s;
-        }
-        tr:hover td { background: rgba(255,255,255,0.03); }
-        
-        /* Scanning Animation Class */
-        .scanning td {
-            background: rgba(0, 243, 255, 0.1) !important;
-            color: var(--hex-cyan) !important;
-        }
+/* ═══ HARD MONEY ═══ */
+.hmr{display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.02)}.hmr:last-child{border:none}
+.hmi{font-size:.7rem;width:14px;text-align:center;flex-shrink:0}
+.hmn{font-size:.35rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.hmp{font-family:var(--M);font-size:.55rem;font-weight:600;color:#fff}
+.hmrt{text-align:right;flex-shrink:0;margin-left:auto}
+.hmc{font-family:var(--M);font-size:.55rem;font-weight:700}
+.hms{font-family:var(--M);font-size:.38rem;color:var(--t3)}
+.dec-badge{font-size:.3rem;background:var(--grn);color:#000;padding:1px 3px;border-radius:1px;font-weight:800;letter-spacing:.5px;display:none;animation:decGlow 1.5s ease-in-out infinite}
+@keyframes decGlow{0%,100%{box-shadow:0 0 4px rgba(0,255,106,.3)}50%{box-shadow:0 0 12px rgba(0,255,106,.6)}}
 
-        .mono-num { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
+/* ═══ CHART ═══ */
+.chart-box{position:relative;width:100%;flex:1;min-height:0}
+.chart-box canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+.tf-btns{display:flex;gap:1px}
+.tf-b{font-family:var(--M);font-size:.38rem;background:transparent;border:1px solid var(--bd);color:var(--t3);padding:1px 4px;border-radius:1px;cursor:pointer}
+.tf-b:hover{color:var(--t1)}.tf-b.act{background:var(--red);color:#000;border-color:var(--red);font-weight:600}
 
-        /* Tag Pills */
-        .tag-pill {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .tag-exchange { background: rgba(255, 204, 0, 0.15); color: var(--hex-warn); border: 1px solid rgba(255, 204, 0, 0.3); }
-        .tag-dev { background: rgba(188, 19, 254, 0.15); color: var(--hex-purple); border: 1px solid rgba(188, 19, 254, 0.3); }
-        .tag-mining { background: rgba(0, 243, 255, 0.15); color: var(--hex-cyan); border: 1px solid rgba(0, 243, 255, 0.3); }
-        .tag-whale { background: rgba(0, 255, 65, 0.15); color: var(--hex-green); border: 1px solid rgba(0, 255, 65, 0.3); }
+/* ═══ WHALE TABLE ═══ */
+.wt{width:100%;border-collapse:collapse}
+.wt th{text-align:left;padding:1px 3px;font-size:.32rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--t3);background:var(--el);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:1}
+.wt td{padding:1px 3px;border-bottom:1px solid rgba(255,255,255,.01);font-family:var(--M);color:var(--t2);font-size:.45rem}
+.wt tr:hover td{background:rgba(255,255,255,.01);color:var(--t1)}
+.wt a{color:inherit;text-decoration:none}.wt a:hover{color:var(--cyn)}
+.tag{display:inline-block;padding:0 2px;border-radius:1px;font-size:.3rem;font-weight:700;letter-spacing:.2px;text-transform:uppercase;font-family:var(--S)}
+.tag-exchange{background:rgba(251,191,36,.06);color:var(--yel)}.tag-dev{background:rgba(168,85,247,.06);color:var(--prp)}
+.tag-mining{background:rgba(73,234,203,.06);color:var(--cyn)}.tag-whale{background:rgba(0,255,106,.06);color:var(--grn)}
+.scanning td{background:rgba(73,234,203,.03)!important}
 
-        /* Token Cards */
-        .token-card {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            padding: 10px;
-            border-bottom: 1px solid #1a1a1a;
-            font-size: 0.9rem;
-            align-items: center;
-        }
+/* ═══ CALC ═══ */
+.cr{display:flex;gap:2px;margin-bottom:2px}
+.ci{flex:1;background:var(--bg);border:1px solid var(--bd);color:var(--grn);font-family:var(--M);font-size:.5rem;padding:2px 4px;border-radius:2px;outline:none}.ci:focus{border-color:var(--cyn)}
+.cs{background:var(--bg);border:1px solid var(--bd);color:var(--t1);font-family:var(--M);font-size:.38rem;padding:2px;border-radius:2px;cursor:pointer;outline:none}
+.simr{display:flex;justify-content:space-between;font-size:.33rem;color:var(--t3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:1px}.simv{color:var(--cyn);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--red);height:2px;cursor:pointer;margin-bottom:2px}
+.cres{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.cbox{background:var(--el);border:1px solid var(--bd);border-radius:2px;padding:2px;text-align:center}
+.cbox-v{font-family:var(--M);font-size:.55rem;font-weight:700;color:var(--grn)}
+.cbox-l{font-size:.3rem;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
 
-        /* Timeframe Buttons */
-        .tf-btn {
-            background: #111;
-            border: 1px solid #333;
-            color: #666;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tf-btn:hover { background: #222; color: #fff; }
-        .tf-btn.active {
-            background: var(--hex-green);
-            color: #000;
-            border-color: var(--hex-green);
-            font-weight: bold;
-        }
+/* ═══ BLOCKS ═══ */
+.blk{display:flex;justify-content:space-between;padding:1px 4px;border-bottom:1px solid rgba(255,255,255,.01);font-family:var(--M);font-size:.42rem;cursor:pointer}
+.blk:hover{background:rgba(255,255,255,.01)}.blk-id{color:var(--prp);font-weight:600}.blk-t{color:var(--t3)}
 
-        /* Custom Tooltip */
-        .tooltip-container {
-            position: relative;
-            display: inline-block;
-            z-index: 50;
-        }
-        .tooltip-text {
-            visibility: hidden;
-            width: 250px;
-            background-color: #050505;
-            color: #ccc;
-            text-align: left;
-            border-radius: 4px;
-            padding: 12px;
-            position: absolute;
-            z-index: 100;
-            top: 100%; 
-            right: 0; 
-            margin-top: 8px;
-            border: 1px solid #333;
-            font-size: 0.75rem;
-            line-height: 1.4;
-            opacity: 0;
-            transition: opacity 0.2s;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.9);
-            pointer-events: none;
-        }
-        .tooltip-container:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        /* Mobile Tooltip Adjustment */
-        @media (max-width: 768px) {
-            .tooltip-text {
-                right: auto;
-                left: 0;
-                width: 200px;
-            }
-        }
+/* ═══ SCROLL ═══ */
+.sy{overflow-y:auto;flex:1;min-height:0}.sy::-webkit-scrollbar{width:2px}.sy::-webkit-scrollbar-thumb{background:#151515}
 
-        /* Google Translate Reset */
-        .goog-te-gadget-simple {
-            background-color: rgba(0,0,0,0.5) !important;
-            border: 1px solid #333 !important;
-            padding: 4px !important;
-            border-radius: 4px !important;
-        }
-        .goog-te-gadget-simple span {
-            color: #ccc !important;
-            font-family: 'Rajdhani', sans-serif !important;
-        }
+/* ═══ TICKER ═══ */
+.ticker{background:var(--bg);border-top:1px solid var(--red);overflow:hidden;display:flex;align-items:center;padding:0 8px}
+.ticker-track{display:inline-flex;gap:32px;animation:scroll 80s linear infinite;white-space:nowrap}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{font-family:var(--M);font-size:.42rem;color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:4px}.ti:hover{color:var(--cyn)}
+.td{width:3px;height:3px;background:var(--red);border-radius:1px;flex-shrink:0}
 
-        /* Inspector Styles */
-        .inspector-input {
-            background: #000;
-            border: 1px solid #333;
-            color: var(--hex-green);
-            font-family: 'JetBrains Mono';
-            width: 100%;
-            padding: 8px;
-            outline: none;
-            transition: border 0.3s;
-        }
-        .inspector-input:focus { border-color: var(--hex-cyan); }
-        .inspector-btn {
-            background: #111;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .inspector-btn:hover { background: var(--hex-cyan); color: #000; border-color: var(--hex-cyan); }
+/* ═══ UTILS ═══ */
+.green{color:var(--grn)}.red{color:var(--red)}.cyan{color:var(--cyn)}.gold{color:var(--gld)}
 
-        /* Error Overlay for Charts */
-        .chart-error {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.7);
-            color: #ff3333;
-            font-family: 'JetBrains Mono';
-            font-size: 0.8rem;
-            z-index: 10;
-        }
+/* ═══ 1. SKELETON LOADING ═══ */
+.skel{color:transparent!important;background:linear-gradient(90deg,var(--bd) 25%,var(--hv) 50%,var(--bd) 75%);background-size:200% 100%;animation:shimmer 1.5s ease infinite;border-radius:2px;display:inline-block;min-width:40px;min-height:.8em}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.hero-val.skel{min-width:60px;min-height:1.4em}
+.dc-num.skel{min-width:50px;min-height:2.4em;margin:0 auto}
 
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            .hide-mobile { display: none; }
-            .grid-cols-2 { grid-template-columns: 1fr; }
-            .grid-cols-3 { grid-template-columns: 1fr; }
-            th, td { padding: 8px 4px; font-size: 0.85rem; }
-            .panel { padding: 1rem; } 
-        }
-    </style>
+/* ═══ 2. INTEL TOOLTIPS ═══ */
+.tip-wrap{position:relative;display:inline-flex;align-items:center;gap:4px;width:100%}
+.tip-q{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:1px;border:1px solid var(--bd);font-family:var(--M);font-size:.35rem;color:var(--t3);cursor:help;flex-shrink:0;transition:.15s;position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.tip-q:hover{color:var(--cyn);border-color:var(--cyn)}
+.tip-q:hover .tip-box{display:block}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;padding:6px 8px;background:rgba(8,8,12,.95);border:1px solid var(--cyn);border-radius:2px;font-family:var(--S);font-size:.42rem;color:var(--t2);line-height:1.4;letter-spacing:.2px;z-index:100;backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.tip-box::after{content:'';position:absolute;top:100%;right:8px;border:4px solid transparent;border-top-color:var(--cyn)}
+.tip-box strong{color:var(--cyn);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;font-size:.38rem}
+
+/* ═══ 3. VALUE FLASH ═══ */
+@keyframes flashUp{0%{color:var(--grn);text-shadow:0 0 8px rgba(0,255,106,.4)}100%{color:#fff;text-shadow:none}}
+@keyframes flashDown{0%{color:var(--red);text-shadow:0 0 8px rgba(255,42,42,.4)}100%{color:#fff;text-shadow:none}}
+@keyframes flashNeutral{0%{color:var(--cyn);text-shadow:0 0 8px rgba(73,234,203,.3)}100%{color:#fff;text-shadow:none}}
+.flash-up{animation:flashUp .6s ease}
+.flash-down{animation:flashDown .6s ease}
+.flash-neutral{animation:flashNeutral .6s ease}
+
+/* ═══ 4. SIGNAL LOST ═══ */
+.sig-err{font-family:var(--M);font-size:.4rem;color:var(--red);letter-spacing:1px;display:inline-flex;align-items:center;gap:3px}
+.sig-err::before{content:'';display:inline-block;width:4px;height:4px;background:var(--red);border-radius:50%;animation:glow 1s infinite}
+
+/* ═══ 5. WAR ROOM ═══ */
+.wr-btn{font-size:.42rem;color:var(--t3);cursor:pointer;padding:2px 6px;border:1px solid var(--bd);border-radius:2px;background:transparent;letter-spacing:.8px;transition:.15s;flex-shrink:0;font-family:var(--M)}
+.wr-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ═══ 6. IDLE COMMANDER ═══ */
+.idle-dim{opacity:.15!important;transition:opacity 1.5s ease}
+.idle-highlight{transition:opacity 1.5s ease}
+body.idle-mode .grid-bg{opacity:.03}
+
+/* ═══ 7. CLICK-TO-COPY ═══ */
+.copy-flash td{background:rgba(73,234,203,.08)!important;transition:background .3s}
+.copied-badge{font-family:var(--M);font-size:.4rem;color:var(--cyn);font-weight:700;letter-spacing:1px;animation:flashNeutral .6s ease}
+
+/* ═══ 8. SONAR PING ═══ */
+.sonar-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.sonar-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 4px var(--grn);transition:background .3s,box-shadow .3s}
+.sonar-dot.warn{background:var(--yel);box-shadow:0 0 4px var(--yel)}
+.sonar-dot.crit{background:var(--red);box-shadow:0 0 4px var(--red)}
+.sonar-ms{font-family:var(--M);font-size:.4rem;color:var(--t3);letter-spacing:.5px}
+
+/* ═══ 9. KONAMI / MATRIX MODE ═══ */
+body.matrix-mode{--grn:#00ff41;--cyn:#00ff41;--red:#00ff41;--org:#00ff41;--prp:#00ff41;--yel:#00ff41;--gld:#00ff41;--btc:#00ff41;--blu:#00ff41}
+body.matrix-mode .grid-bg{background-image:linear-gradient(rgba(0,255,65,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.03) 1px,transparent 1px)}
+body.matrix-mode .bdot{background:#00ff41;box-shadow:0 0 10px #00ff41}
+body.matrix-mode .bname .r{color:#00ff41}
+body.matrix-mode .dc-scan{background:rgba(0,255,65,.4);box-shadow:0 0 8px #00ff41}
+body.matrix-mode .ticker{border-top-color:#00ff41}
+body.matrix-mode .td{background:#00ff41}
+.ghost-panel{display:none;background:rgba(0,255,65,.03);border:1px solid rgba(0,255,65,.15);border-radius:2px;padding:6px 8px;margin:0 3px;font-family:var(--M);font-size:.4rem;color:#00ff41;letter-spacing:.5px;line-height:1.6}
+body.matrix-mode .ghost-panel{display:block}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1200px){.dash{grid-template-columns:repeat(3,1fr);grid-template-rows:auto}.app{overflow-y:auto}body{overflow-y:auto}
+[style*="grid-column:span 2"]{grid-column:span 1}.hm{display:none}}
+@media(max-width:768px){.dash{grid-template-columns:1fr 1fr}.hm{display:none}}
+</style>
 </head>
-<body class="min-h-screen flex flex-col overflow-x-hidden">
-
-    <!-- CANVAS BACKGROUND -->
-    <canvas id="bgCanvas"></canvas>
-
-    <!-- HEADER -->
-    <header class="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50 h-auto py-3 md:py-0 md:h-20">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between h-full">
-            <div class="flex items-center gap-4 mb-2 md:mb-0">
-                <div class="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_10px_#00f3ff]"></div>
-                <h1 class="text-4xl md:text-6xl font-bold tracking-widest neon-text leading-none mt-1">
-                    <span class="text-hex-green">KAS</span><span class="text-hex-blue">LIVE</span>
-                    <span class="text-xs md:text-sm align-top text-gray-500 ml-1 tracking-normal font-mono">V16.2</span>
-                </h1>
-                <div id="google_translate_element" class="ml-2 opacity-80 hover:opacity-100 transition-opacity transform translate-y-1"></div>
-            </div>
-            
-            <div class="text-center md:text-right w-full md:w-auto">
-                <div id="mainPrice" class="text-2xl md:text-3xl font-mono font-bold text-white tracking-tighter flex items-center gap-2 justify-center md:justify-end">
-                    $0.0000 <span class="text-sm text-gray-600">...</span>
-                </div>
-                <div class="flex gap-4 text-xs md:text-sm font-mono text-gray-400 justify-center md:justify-end">
-                    <span id="athDisplay">ATH: $...</span>
-                    <span id="mcapChange">MCAP: ...</span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- TICKER BAR -->
-    <div class="bg-[#080808] border-b border-gray-800 text-sm font-mono py-2 overflow-hidden whitespace-nowrap">
-        <div class="max-w-7xl mx-auto px-4 flex gap-8 md:gap-12 overflow-x-auto no-scrollbar">
-            <span class="text-gray-500 font-bold">MARKETS:</span>
-            <span id="btcTicker">BTC: <span class="text-gray-600">...</span></span>
-            <span id="ethTicker">ETH: <span class="text-gray-600">...</span></span>
-            <span id="goldTicker">GOLD: <span class="text-gray-600">...</span></span>
-            <span id="silverTicker">SILVER: <span class="text-gray-600">...</span></span>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 p-2 md:p-4 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-        
-        <!-- LEFT COLUMN (Whales & Charts) -->
-        <div class="lg:col-span-8 flex flex-col gap-4 md:gap-6">
-            
-            <!-- RATIOS ROW -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <!-- BTC Ratio -->
-                <div class="panel p-4 md:p-6 rounded-sm relative group z-20">
-                    <div class="flex justify-between items-end mb-3 relative z-10">
-                        <div class="flex items-center gap-2 cursor-help tooltip-container">
-                            <h3 class="text-xs md:text-sm text-gray-500 font-bold tracking-wider">PURCHASING POWER VS BTC</h3>
-                            <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <div class="tooltip-text">
-                                <strong class="text-orange-400">KAS/BTC Ratio (24h)</strong><br/>
-                                This measures if KAS is gaining value against Bitcoin.<br/>
-                                <span class="text-green-400">Green</span> = KAS Outperforming.<br/>
-                                <span class="text-red-400">Red</span> = BTC Outperforming.
-                            </div>
-                        </div>
-                        <span id="ratioBtcVal" class="font-mono text-xl md:text-2xl font-bold">...</span>
-                    </div>
-                    <div class="w-full bg-gray-900 h-2 mt-2 rounded-full overflow-hidden">
-                        <div id="ratioBtc" class="h-full bg-gradient-to-r from-orange-600 to-yellow-400 transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- ETH Ratio -->
-                <div class="panel p-4 md:p-6 rounded-sm relative group z-20">
-                    <div class="flex justify-between items-end mb-3 relative z-10">
-                        <div class="flex items-center gap-2 cursor-help tooltip-container">
-                            <h3 class="text-xs md:text-sm text-gray-500 font-bold tracking-wider">PURCHASING POWER VS ETH</h3>
-                            <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <div class="tooltip-text">
-                                <strong class="text-blue-400">KAS/ETH Ratio (24h)</strong><br/>
-                                This measures if KAS is gaining value against Ethereum.<br/>
-                                <span class="text-green-400">Green</span> = KAS Outperforming.<br/>
-                                <span class="text-red-400">Red</span> = ETH Outperforming.
-                            </div>
-                        </div>
-                        <span id="ratioEthVal" class="font-mono text-xl md:text-2xl font-bold">...</span>
-                    </div>
-                    <div class="w-full bg-gray-900 h-2 mt-2 rounded-full overflow-hidden">
-                        <div id="ratioEth" class="h-full bg-gradient-to-r from-blue-800 to-blue-400 transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHARTS ROW -->
-            <div class="grid grid-cols-1 gap-4 md:gap-6">
-                <!-- Perf Chart -->
-                <div class="panel p-4 md:p-6 rounded-sm h-[350px] md:h-[450px] flex flex-col relative">
-                    <div class="flex justify-between items-center mb-2 md:mb-4">
-                        <h3 class="text-xs md:text-sm text-white font-bold uppercase">Relative Performance</h3>
-                        <div class="flex gap-1" id="timeframeControls">
-                            <button class="tf-btn" onclick="updatePerfChart(30)">30D</button>
-                            <button class="tf-btn" onclick="updatePerfChart(90)">90D</button>
-                            <button class="tf-btn active" onclick="updatePerfChart(365)">1Y</button>
-                            <button class="tf-btn" onclick="updatePerfChart('max')">ALL</button>
-                        </div>
-                    </div>
-                    <div id="perfError" class="chart-error hidden">DATA UNAVAILABLE</div>
-                    <div class="relative flex-1 w-full">
-                        <canvas id="perfChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Hashrate -->
-                <div class="panel p-4 md:p-6 rounded-sm h-[300px] md:h-80 relative">
-                    <h3 class="text-xs md:text-sm text-hex-green mb-2 md:mb-4 font-bold flex items-center gap-2">
-                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                        NETWORK HASHRATE (ALL HISTORY)
-                    </h3>
-                    <div id="hashError" class="chart-error hidden">DATA UNAVAILABLE</div>
-                    <div class="relative h-52 md:h-64 w-full">
-                        <canvas id="hashrateChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RICH LIST TABLE -->
-            <div class="panel rounded-sm flex-1 flex flex-col min-h-[500px] md:min-h-[600px]">
-                <div class="p-4 md:p-6 border-b border-gray-800 flex justify-between items-center">
-                    <h2 class="text-sm md:text-base font-bold text-hex-cyan tracking-widest">WHALE WATCH</h2>
-                    <span id="totalTracked" class="text-xs md:text-sm text-gray-400 bg-gray-900 px-3 py-1 rounded border border-gray-800">INIT...</span>
-                </div>
-                <div class="overflow-x-auto flex-1">
-                    <table id="whaleTable">
-                        <thead>
-                            <tr class="bg-black/20">
-                                <th width="5%">#</th>
-                                <th width="30%">ADDRESS</th>
-                                <th width="15%">TAG</th>
-                                <th width="20%">BALANCE (KAS)</th>
-                                <th width="15%" class="hide-mobile">STATUS</th>
-                                <th width="15%" style="text-align:right">% SUPPLY</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="font-mono text-gray-300">
-                            <tr><td colspan="6" class="text-center p-8 text-gray-500">Loading ledger...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- RIGHT COLUMN (Sidebar) -->
-        <div class="lg:col-span-4 flex flex-col gap-4 md:gap-6">
-            
-            <!-- WALLET INSPECTOR -->
-            <div class="panel rounded-sm p-4 flex flex-col gap-2">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <svg class="w-4 h-4 text-hex-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    WALLET INSPECTOR
-                </h3>
-                <div class="flex gap-2">
-                    <input type="text" id="walletInput" placeholder="kaspa:..." class="inspector-input rounded-sm text-xs" />
-                    <button onclick="inspectWallet()" class="inspector-btn rounded-sm font-bold text-xs">GO</button>
-                </div>
-                <div id="inspectorResult" class="hidden mt-2 p-2 bg-gray-900 border border-gray-800 rounded text-xs font-mono">
-                    <div class="flex justify-between text-gray-500"><span>BALANCE:</span><span id="inspBal" class="text-white">...</span></div>
-                    <div class="flex justify-between text-gray-500"><span>VALUE:</span><span id="inspVal" class="text-hex-green">...</span></div>
-                </div>
-            </div>
-
-            <!-- HEAT INDEX -->
-            <div class="panel rounded-sm h-auto min-h-[400px] md:h-[500px] flex flex-col relative z-10">
-                <div class="p-4 border-b border-gray-800 bg-black/20 z-10">
-                    <h3 class="text-sm font-bold text-orange-500 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
-                            KASPA HEAT INDEX
-                        </div>
-                        <div class="tooltip-container cursor-help">
-                            <svg class="w-4 h-4 text-gray-500 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="tooltip-text font-mono">
-                                <strong class="text-orange-400 block mb-1">HEAT INDEX CALCULATION</strong>
-                                • <span class="text-white">Price Action:</span> 24h USD change.<br/>
-                                • <span class="text-white">Relative Strength:</span> Performance vs Bitcoin.<br/>
-                                • <span class="text-white">Momentum:</span> Volume & Trend analysis.<br/>
-                            </div>
-                        </div>
-                    </h3>
-                </div>
-                
-                <div class="flex-1 flex flex-col items-center justify-center relative p-6 md:p-8">
-                    <div class="text-6xl md:text-8xl font-bold font-mono heat-text transition-all duration-500" id="heatScore" style="color: #fff;">--</div>
-                    <div class="text-base md:text-lg font-bold tracking-[0.3em] mb-6 md:mb-8 transition-all duration-500" id="heatLabel" style="color: #555">CALCULATING</div>
-
-                    <div class="w-full bg-gray-900 h-6 md:h-8 rounded-full border border-gray-700 relative overflow-hidden shadow-inner mb-6 md:mb-8">
-                         <div id="heatBar" class="h-full transition-all duration-1000 ease-out" 
-                              style="width: 0%; background: linear-gradient(90deg, #00f3ff, #00ff41, #ffcc00, #ff6600, #ff0000); box-shadow: 0 0 15px rgba(255,255,255,0.2);">
-                         </div>
-                    </div>
-
-                    <div class="w-full grid grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm font-mono text-gray-500 relative z-10">
-                        <div class="text-center p-3 md:p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
-                            <div class="block text-gray-600 mb-1 tracking-wider text-[10px] md:text-xs">PRICE MOMENTUM</div>
-                            <span id="heatMetricPrice" class="text-lg md:text-xl font-bold text-white">--</span>
-                        </div>
-                        <div class="text-center p-3 md:p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
-                            <div class="block text-gray-600 mb-1 tracking-wider text-[10px] md:text-xs">REL STRENGTH</div>
-                            <span id="heatMetricRel" class="text-lg md:text-xl font-bold text-white">--</span>
-                        </div>
-                        <div class="text-center p-3 md:p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
-                            <div class="block text-gray-600 mb-1 tracking-wider text-[10px] md:text-xs">24H VOL</div>
-                            <span id="heatMetricVol" class="text-lg md:text-xl font-bold text-white">--</span>
-                        </div>
-                        <div class="text-center p-3 md:p-4 border border-gray-800 bg-black/60 rounded flex flex-col justify-center">
-                            <div class="block text-gray-600 mb-1 tracking-wider text-[10px] md:text-xs">TREND</div>
-                            <span id="heatMetricDom" class="text-lg md:text-xl font-bold text-white">--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KRC20 MINTING -->
-            <div class="panel rounded-sm flex-1 flex flex-col">
-                <div class="p-4 border-b border-gray-800 bg-black/20">
-                    <h3 class="text-sm font-bold text-gray-400">KRC-20 MINT MONITOR</h3>
-                </div>
-                <div class="px-4 py-3 bg-gray-900/50 text-xs text-gray-500 font-mono grid grid-cols-3 font-bold">
-                    <span>TICKER</span>
-                    <span class="text-right">PROGRESS</span>
-                    <span class="text-right">STATUS</span>
-                </div>
-                <div id="krcList" class="flex-1 overflow-y-auto font-mono">
-                    <!-- JS populates this -->
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="border-t border-gray-900 bg-black py-6 text-center">
-        <div class="text-xs text-gray-600 font-mono">
-            KASLIVE V16.2 CORE // DATA FROM KASPA.ORG, COINGECKO, KASPLEX, BINANCE // DECENTRALIZED MONITOR
-        </div>
-    </footer>
-
-    <!-- Google Translate Script -->
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-          new google.translate.TranslateElement({
-              pageLanguage: 'en', 
-              layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-              autoDisplay: false
-            }, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-    <!-- CORE LOGIC SCRIPT -->
-    <script>
-        /* ==========================================
-           KASLIVE V16.2 - CORE LOGIC
-           ========================================== */
-
-        const API = {
-            kaspa: {
-                base: 'https://api.kaspa.org',
-                blocks: 'https://api.kaspa.org/blocks?limit=10&includeTransactions=false',
-                hashrateHistory: 'https://api.kaspa.org/info/hashrate/history',
-                balance: (addr) => `https://api.kaspa.org/addresses/${addr}/balance`
-            },
-            coingecko: 'https://api.coingecko.com/api/v3',
-            kasplex: 'https://api.kasplex.org/v1/krc20/tokenlist'
-        };
-
-        const state = {
-            whaleData: [],
-            currentKasPrice: 0,
-            btcPrice: 0,
-            lastHeatScore: 50,
-            perfChartInstance: null
-        };
-
-        // COMPREHENSIVE HARDCODED RICH LIST
-        const REAL_ADDRS = [
-            { address: 'kaspa:precqv0krj3r6uyyfa36ga7s0u9jct0v4wg8ctsfde2gkrsgwgw8jgxfzfc98', tag: {name: 'DEV FUND', type:'tag-dev'} },
-            { address: 'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz', tag: {name: 'MEXC', type:'tag-exchange'} },
-            { address: 'kaspa:qpz2vgvlxhmyhmt22h538pjzmvvd52nuut80y5zulgpvyerlskvvwm7n4uk5a', tag: {name: 'Whale 1', type:'tag-whale'} },
-            { address: 'kaspa:qrelgny7sr3vahq69yykxx36m65gvmhryxrlwngfzgu8xkdslum2yxjp3ap8m', tag: {name: 'Gate.io', type:'tag-exchange'} },
-            { address: 'kaspa:qrvum29vk365g0zcd5gx3c7h829etfq2ytdmscjzw4zw04fjfnprcg9c3tges', tag: {name: 'Bybit', type:'tag-exchange'} },
-            { address: 'kaspa:qzadxjufntvckxrvy76pyhvtkuu8lg5ryz252aglmhlyv27pxqplksshzuu9m', tag: {name: 'KuCoin', type:'tag-exchange'} },
-            { address: 'kaspa:qzxrs8gxjgk2q84wlt3xfd057ntws73fptalhy84g85zqfu5lcemvpu04vj3w', tag: {name: 'Uphold', type:'tag-exchange'} },
-            { address: 'kaspa:qpj2x2qfmvj4g6fn0xadv6hafdaqv4fwd3t4uvyw3walwfn50rzysa4lafpma', tag: {name: 'Kraken', type:'tag-exchange'} },
-            { address: 'kaspa:qq2ka745yyj0760fkt3ax3t7hpyqret6pzaypag3afnd3fp8jpv4cmzpx8yrt', tag: {name: 'Whale 2', type:'tag-whale'} },
-            { address: 'kaspa:qqfxn597v5c23td4asz99ky52sha8l2ypq8kmrsqxcu7skhdunncjgup0hdys', tag: null },
-            { address: 'kaspa:qzpt2wp67seprjndmrzu58g4sgkknxp0y5g97y5leupj7ugffqhs6xgxdjwtf', tag: null },
-            { address: 'kaspa:qr8k05f9n6xtrd0eex5lr6878mc5n7dgrtn8xv3frfvuxgfchx9077jtz5tsk', tag: null },
-            { address: 'kaspa:qpap72xed702y4ahw537l3x63788nrh3ea5a0y06we236d5rth43wptqsv0ws', tag: null },
-            { address: 'kaspa:qz06rpdaap56ktn3xf3w70g09s9dphrkmnks027lnshyqd6x5l8tzt8lcpp4k', tag: null },
-            { address: 'kaspa:qqywx2wszmnrsu0mzgav85rdwvzangfpdj9j3ady9jpr7hu4u8c2wl9wqgd6j', tag: {name: 'Bitget', type:'tag-exchange'} },
-            { address: 'kaspa:ppwn9mz7ht2p8w8mqtafvuw0sslqff7svk0e5j5vterutxwd3gmygnqdrppm5', tag: {name: 'Ice River', type:'tag-mining'} },
-            { address: 'kaspa:qr9fqcxp9xjprsm9sv7apy6qc0ja2p676m9gf9fkcww2qmaw4npxzllh7lrw0', tag: {name: 'Kraken 2', type:'tag-exchange'} },
-            { address: 'kaspa:qq2hke25nvxsnnawzlym3nf6y38clrhdefph5xckeuyyzxwh99kavfu77grmg', tag: null },
-            { address: 'kaspa:qpky2f87j7my5ph5taucutm74tfssz8l97m770rqdtnmzmece7r9gf3l2hpze', tag: null },
-            { address: 'kaspa:qq6kjumc6l95hq005yz2gazrqev3pyfjvqefxef93wz6u2makfhmsrct65f6', tag: null },
-            { address: 'kaspa:qrtxzw8j3ydwna6spm7etj7x36dzj06h7q84hxn6ueapphfg8txazcycmnalc', tag: null },
-            { address: 'kaspa:qzew5mu908h4gfw7qgvpux7hlkfqrjz06zazag8nmrykjz59479uqlm8n9q9q', tag: null },
-            { address: 'kaspa:qqn98feqplp4nc92wgq7j7cy6cdnaugnzngeatps7swaxkw0s9e0c7rjjdrxf', tag: null },
-            { address: 'kaspa:qp2sp0vvrwu4s8pw0j68muu2ta5qar5mehf8ehuvljw5zsrakk5cvx4gvqz7z', tag: null },
-            { address: 'kaspa:qpu0zrz92y5m4s0vf8ml0tqrhc85l943t9efghexqd4rt09cfynjzw5rmfdws', tag: null },
-            { address: 'kaspa:ppk66xua7nmq8elv3eglfet0xxcfuks835xdgsm5jlymjhazyu6h5ac62l4ey', tag: {name: 'DAGKnight', type:'tag-dev'} },
-            { address: 'kaspa:qzganetmrpwv88ea0pkma0xvgacw034l6jv9e9kvh0mup47ahqpc24la7yfmf', tag: null },
-            { address: 'kaspa:pqtm55d2a456qws90g096cxnecc7msjmxr8n2ernwues8zfdamkl2kfmxr8gr', tag: {name: 'Rust Fund', type:'tag-dev'} },
-            { address: 'kaspa:qrepacgj2flpflt8f7luh3ru4sykgt8d5k7s0sh4zlflk3glqpwjvq9kx7smk', tag: null },
-            { address: 'kaspa:qpxg04pk29q9pf6uzakcxugdl3td6xkx875p24wkr3hjjgkh9gsp2p5m3akay', tag: null },
-            { address: 'kaspa:qrjjnrk9vd9je8wnlqq9dz7fhmhurgjjed8n2pnzh5jwgjmef5pvzd4vf0lu7', tag: null },
-            { address: 'kaspa:qypnwqfqltw6p8j8x7hj3w962l8a4ha5admykfs7z30fc07vydftmng942wwmmw', tag: null },
-            { address: 'kaspa:qpkf9c9t2vhu7dt037rkmutyjcgg29hlwq25xnxgln6x5uq6ajtnucslxlk9a', tag: null },
-            { address: 'kaspa:qyppcdqxpu3sw49k6xcj8wcqjd98lpvpc8cm30wfnj003ahlhjzkh0s67gjxuv', tag: null },
-            { address: 'kaspa:qyp3ffdjvv6de6cg6jjgyhlg3mt3fngna2vzukdpzvwkaj5j3hctsyqecqf7dh3', tag: {name: 'MARA Pool', type:'tag-mining'} },
-            { address: 'kaspa:qr7vrlhgekw9efxgfq09ca3wqcxlslgxndcpk77pguu2usaa9aa27lhuunewj', tag: {name: 'Uphold 2', type:'tag-exchange'} }
-        ];
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 KasLive Initializing...');
-            
-            // Init Systems
-            initLedger();
-            fetchMarketData();
-            initKRC20();
-            initHashrateChart();
-            updatePerfChart(365); 
-            initBackground();
-            
-            // Polling Intervals
-            setInterval(fetchMarketData, 30000); 
-            setInterval(scanRandomWallet, 3000); 
-        });
-
-        /* --- BACKGROUND ANIMATION --- */
-        function initBackground() {
-            const canvas = document.getElementById('bgCanvas');
-            const ctx = canvas.getContext('2d');
-            let width, height;
-            let particles = [];
-
-            function resize() {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resize);
-            resize();
-
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * width;
-                    this.y = Math.random() * height;
-                    this.size = Math.random() * 2 + 0.5;
-                    this.speedY = Math.random() * 0.5 + 0.1;
-                    this.color = Math.random() > 0.5 ? '#00ff41' : '#00f3ff';
-                }
-                update() {
-                    this.y -= this.speedY;
-                    if(this.y < 0) this.y = height;
-                }
-                draw() {
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-                    ctx.fill();
-                }
-            }
-
-            for(let i=0; i<50; i++) particles.push(new Particle());
-
-            function animate() {
-                ctx.clearRect(0,0,width,height);
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        /* --- WALLET INSPECTOR --- */
-        async function inspectWallet() {
-            const addr = document.getElementById('walletInput').value.trim();
-            const resDiv = document.getElementById('inspectorResult');
-            const valSpan = document.getElementById('inspVal');
-            const balSpan = document.getElementById('inspBal');
-
-            if(!addr) return;
-
-            resDiv.classList.remove('hidden');
-            balSpan.innerText = 'Loading...';
-            valSpan.innerText = '...';
-
-            try {
-                const res = await fetch(API.kaspa.balance(addr));
-                const data = await res.json();
-                if(data && data.balance !== undefined) {
-                    const bal = data.balance / 1e8;
-                    const val = bal * state.currentKasPrice;
-                    balSpan.innerText = bal.toLocaleString() + ' KAS';
-                    valSpan.innerText = '$' + val.toLocaleString(undefined, {maximumFractionDigits:2});
-                } else {
-                    balSpan.innerText = 'Invalid/Empty';
-                    valSpan.innerText = '-';
-                }
-            } catch(e) {
-                balSpan.innerText = 'Error';
-            }
-        }
-
-        /* --- MARKET & RATIOS --- */
-        async function fetchMarketData() {
-            let kasData = null;
-            let btcData = null;
-            let ethData = null;
-            let goldData = null;
-            let silverData = null;
-
-            // 1. Try CoinGecko
-            try {
-                const ids = 'bitcoin,ethereum,kaspa,pax-gold,kinesis-silver';
-                const url = `${API.coingecko}/coins/markets?vs_currency=usd&ids=${ids}`;
-                const res = await fetch(url);
-                if (!res.ok) throw new Error('CG Error');
-                const data = await res.json();
-                
-                kasData = data.find(c => c.id === 'kaspa');
-                btcData = data.find(c => c.id === 'bitcoin');
-                ethData = data.find(c => c.id === 'ethereum');
-                goldData = data.find(c => c.id === 'pax-gold');
-                silverData = data.find(c => c.id === 'kinesis-silver');
-
-            } catch (e) {
-                // console.log("CoinGecko unreachable, switching to fallbacks.");
-                
-                // 2. Fallback: Independent fetches
-                
-                // A. KASPA (Priority)
-                try {
-                    const kRes = await fetch('https://api.kaspa.org/info/price');
-                    if(kRes.ok) {
-                        const kJson = await kRes.json();
-                        if(kJson && kJson.price) {
-                            kasData = {
-                                current_price: kJson.price,
-                                price_change_percentage_24h: 0, 
-                                market_cap: 0,
-                                total_volume: 0
-                            };
-                            try {
-                                const mcRes = await fetch('https://api.kaspa.org/info/marketcap');
-                                if(mcRes.ok) {
-                                    const mcJson = await mcRes.json();
-                                    if(mcJson && mcJson.marketcap) kasData.market_cap = mcJson.marketcap;
-                                }
-                            } catch(e) {}
-                        }
-                    }
-                } catch(ek) { console.warn("Kaspa API failed", ek); }
-
-                // B. Crypto (BTC/ETH) via CoinCap
-                try {
-                    const cRes = await fetch('https://api.coincap.io/v2/assets?ids=bitcoin,ethereum');
-                    if(cRes.ok) {
-                        const cJson = await cRes.json();
-                        if(cJson && cJson.data) {
-                            const btc = cJson.data.find(d => d.id === 'bitcoin');
-                            const eth = cJson.data.find(d => d.id === 'ethereum');
-                            if(btc) btcData = { current_price: parseFloat(btc.priceUsd), price_change_percentage_24h: parseFloat(btc.changePercent24Hr) };
-                            if(eth) ethData = { current_price: parseFloat(eth.priceUsd), price_change_percentage_24h: parseFloat(eth.changePercent24Hr) };
-                        }
-                    }
-                } catch(ec) { console.warn("CoinCap failed", ec); }
-            }
-
-            // Render logic
-            if(kasData) {
-                state.currentKasPrice = kasData.current_price;
-                const pChange = kasData.price_change_percentage_24h || 0;
-                const color = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
-                
-                document.getElementById('mainPrice').innerHTML = 
-                    `$${kasData.current_price.toFixed(4)} <span style="font-size:0.6em; color:${color}">${pChange.toFixed(2)}%</span>`;
-                
-                const ath = kasData.ath ? `$${kasData.ath.toFixed(4)}` : 'N/A';
-                document.getElementById('athDisplay').innerText = `ATH: ${ath}`;
-                
-                // MCAP
-                const mcapChange = kasData.market_cap_change_percentage_24h || 0;
-                const mColor = mcapChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
-                document.getElementById('mcapChange').innerHTML = 
-                    `MCAP: <span style="color:${mColor}">${mcapChange.toFixed(2)}%</span>`;
-            
-                if(btcData && ethData) {
-                    state.btcPrice = btcData.current_price;
-                    updateRatios(kasData, btcData, ethData);
-                    updateHeatIndex(kasData, btcData); 
-                }
-            }
-
-            // Helper to format ticker with change
-            const updateTicker = (elId, name, asset) => {
-                if(asset) {
-                    const price = asset.current_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                    const chg = asset.price_change_percentage_24h || 0;
-                    const color = chg >= 0 ? 'text-green-400' : 'text-red-400';
-                    const sign = chg >= 0 ? '+' : '';
-                    document.getElementById(elId).innerHTML = 
-                        `${name}: <span class="text-white">$${price}</span> <span class="${color} text-xs">(${sign}${chg.toFixed(1)}%)</span>`;
-                }
-            };
-
-            updateTicker('btcTicker', 'BTC', btcData);
-            updateTicker('ethTicker', 'ETH', ethData);
-            updateTicker('goldTicker', 'GOLD', goldData);
-            updateTicker('silverTicker', 'SILVER', silverData);
-        }
-
-        function updateRatios(kas, btc, eth) {
-            const getOld = (cur, pct) => cur / (1 + (pct / 100));
-            
-            // BTC Calculation
-            const curSats = (kas.current_price / btc.current_price) * 1e8;
-            const oldSats = (getOld(kas.current_price, kas.price_change_percentage_24h) / getOld(btc.current_price, btc.price_change_percentage_24h)) * 1e8;
-            const satsChange = ((curSats - oldSats) / oldSats) * 100;
-            
-            const btcEl = document.getElementById('ratioBtcVal');
-            if(btcEl) btcEl.innerHTML = `${Math.floor(curSats)} sats <span style="font-size:0.5em; vertical-align:middle; color:${satsChange>=0?'#ccff00':'#ff3333'}">(${satsChange>0?'+':''}${satsChange.toFixed(2)}%)</span>`;
-            document.getElementById('ratioBtc').style.width = Math.min((curSats / 200) * 100, 100) + '%';
-            
-            // ETH Calculation
-            const curGwei = (kas.current_price / eth.current_price) * 1e9;
-            const oldGwei = (getOld(kas.current_price, kas.price_change_percentage_24h) / getOld(eth.current_price, eth.price_change_percentage_24h)) * 1e9;
-            const gweiChange = ((curGwei - oldGwei) / oldGwei) * 100;
-
-            const ethEl = document.getElementById('ratioEthVal');
-            if(ethEl) ethEl.innerHTML = `${Math.floor(curGwei).toLocaleString()} gwei <span style="font-size:0.5em; vertical-align:middle; color:${gweiChange>=0?'#ccff00':'#ff3333'}">(${gweiChange>0?'+':''}${gweiChange.toFixed(2)}%)</span>`;
-            document.getElementById('ratioEth').style.width = Math.min((curGwei / 60000) * 100, 100) + '%';
-        }
-
-        /* --- HEAT INDEX --- */
-        function updateHeatIndex(kas, btc) {
-            const pChange = kas.price_change_percentage_24h || 0;
-            const bChange = btc.price_change_percentage_24h || 0;
-            const relStrength = pChange - bChange;
-            const volume = kas.total_volume || 0;
-            const volDisplay = (volume / 1e6).toFixed(1) + 'M';
-            
-            let trend = "SIDEWAYS";
-            if(pChange > 3) trend = "BULLISH";
-            if(pChange < -3) trend = "BEARISH";
-
-            const priceFactor = Math.max(Math.min(pChange * 2.5, 25), -25);
-            const strengthFactor = Math.max(Math.min(relStrength * 3, 15), -15);
-            let score = 50 + priceFactor + strengthFactor;
-            score = Math.floor(Math.max(0, Math.min(100, score)));
-
-            const scoreEl = document.getElementById('heatScore');
-            const labelEl = document.getElementById('heatLabel');
-            const barEl = document.getElementById('heatBar');
-            const metricPrice = document.getElementById('heatMetricPrice');
-            const metricRel = document.getElementById('heatMetricRel');
-            const metricVol = document.getElementById('heatMetricVol');
-            const metricDom = document.getElementById('heatMetricDom');
-
-            let color = '#fff';
-            let label = 'NEUTRAL';
-            if(score < 30) { color = '#00f3ff'; label = 'FREEZING'; }
-            else if(score < 45) { color = '#00ffaa'; label = 'COLD'; }
-            else if(score < 55) { color = '#ffffff'; label = 'STABLE'; }
-            else if(score < 70) { color = '#ffcc00'; label = 'WARM'; }
-            else if(score < 85) { color = '#ff6600'; label = 'HOT'; }
-            else { color = '#ff0000'; label = 'SUPERNOVA'; }
-
-            scoreEl.innerText = score;
-            scoreEl.style.color = color;
-            scoreEl.style.textShadow = `0 0 20px ${color}`;
-            labelEl.innerText = label;
-            labelEl.style.color = color;
-            barEl.style.width = score + '%';
-
-            const pSign = pChange >= 0 ? '+' : '';
-            const pColor = pChange >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
-            metricPrice.innerHTML = `<span style="color:${pColor}">${pSign}${pChange.toFixed(2)}%</span>`;
-
-            const rSign = relStrength >= 0 ? '+' : '';
-            const rColor = relStrength >= 0 ? 'var(--hex-green)' : 'var(--hex-alert)';
-            metricRel.innerHTML = `<span style="color:${rColor}">${rSign}${relStrength.toFixed(2)}%</span>`;
-
-            metricVol.innerText = `$${volDisplay}`;
-            
-            const tColor = trend === "BULLISH" ? 'var(--hex-green)' : (trend === "BEARISH" ? 'var(--hex-alert)' : '#aaa');
-            metricDom.innerHTML = `<span style="color:${tColor}">${trend}</span>`;
-        }
-
-        /* --- CHARTS --- */
-        async function initHashrateChart() {
-            try {
-                const res = await fetch(`${API.kaspa.hashrateHistory}?range=all`);
-                if(res.ok) {
-                    const data = await res.json();
-                    const labels = [];
-                    const values = [];
-                    data.forEach((p, i) => {
-                        if(i % 15 === 0) {
-                            labels.push(new Date(p.timestamp * 1000).toISOString().split('T')[0]);
-                            values.push(p.hashrate / 1000); 
-                        }
-                    });
-
-                    const ctxH = document.getElementById('hashrateChart').getContext('2d');
-                    const grad = ctxH.createLinearGradient(0,0,0,200);
-                    grad.addColorStop(0, 'rgba(0,255,65,0.4)');
-                    grad.addColorStop(1, 'rgba(0,255,65,0)');
-
-                    new Chart(ctxH, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Hashrate (PH/s)',
-                                data: values, borderColor:'#00ff41', backgroundColor: grad, 
-                                fill:true, pointRadius:0, tension:0.4, borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: { legend: {display:false}, tooltip: {mode: 'index', intersect: false} },
-                            scales: {
-                                x: { display:false },
-                                y: { grid: {color:'#111'}, ticks: {color:'#444', font: {family:'JetBrains Mono'}} }
-                            },
-                            interaction: { mode: 'nearest', axis: 'x', intersect: false }
-                        }
-                    });
-                }
-            } catch(e) { console.log("Hashrate chart unavailable", e); }
-        }
-
-        async function fetchHistory(id, days) {
-            // 1. Try CoinGecko
-            try {
-                const url = `${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
-                const res = await fetch(url);
-                if(res.ok) {
-                    const data = await res.json();
-                    return data.prices; // [[time, price], ...]
-                }
-            } catch(e) { console.log(`CG history failed for ${id}`); }
-
-            // 2. Fallback to CoinCap
-            try {
-                // Map 'max' to a specific day count (e.g., 2000 days)
-                const dayCount = days === 'max' ? 2000 : days;
-                const end = Date.now();
-                const start = end - (dayCount * 24 * 60 * 60 * 1000);
-                // Interval: d1 for > 1 day
-                const url = `https://api.coincap.io/v2/assets/${id}/history?interval=d1&start=${start}&end=${end}`;
-                const res = await fetch(url);
-                if(res.ok) {
-                    const json = await res.json();
-                    // Convert CoinCap format {time: 123, priceUsd: "123"} to [[123, 123]]
-                    return json.data.map(d => [d.time, parseFloat(d.priceUsd)]);
-                }
-            } catch(e) { console.log(`CoinCap history failed for ${id}`); }
-
-            return null;
-        }
-
-        async function updatePerfChart(days) {
-            // UI Update
-            const btns = document.querySelectorAll('#timeframeControls button');
-            btns.forEach(b => {
-                const txt = b.innerText.toLowerCase();
-                const dStr = String(days);
-                if((days === 365 && txt === '1y') || (days === 'max' && txt === 'all') || txt.includes(dStr)) {
-                    b.classList.add('active');
-                } else {
-                    b.classList.remove('active');
-                }
-            });
-
-            // Loading State
-            const errEl = document.getElementById('perfError');
-            if(errEl) {
-                errEl.innerText = 'LOADING DATA...';
-                errEl.classList.remove('hidden');
-                errEl.style.color = '#ccc';
-            }
-
-            const ids = ['kaspa', 'bitcoin', 'ethereum'];
-            const colors = ['#00ff41', '#f7931a', '#627eea'];
-            const labels = ['KAS', 'BTC', 'ETH'];
-
-            // Fetch Data
-            const results = await Promise.all(ids.map(id => fetchHistory(id, days)));
-
-            // Hide Loading/Error
-            if(errEl) errEl.classList.add('hidden');
-
-            const datasets = results.map((prices, i) => {
-                if(!prices || !prices.length) return null;
-                const start = prices[0][1];
-                
-                // Downsample
-                let modulo = 1;
-                if(days === 90) modulo = 2;
-                if(days === 365 || days === 'max') modulo = 5;
-
-                return {
-                    label: labels[i],
-                    data: prices.filter((_,x) => x % modulo === 0).map(p => ({x: p[0], y: ((p[1]-start)/start)*100})),
-                    borderColor: colors[i], 
-                    borderWidth: i===0?2:1, 
-                    pointRadius:0,
-                    borderDash: i===0 ? [] : [4,4],
-                    tension: 0.1
-                };
-            }).filter(d => d);
-
-            if(datasets.length === 0) {
-                if(errEl) {
-                    errEl.innerText = 'DATA UNAVAILABLE';
-                    errEl.style.color = '#ff3333';
-                    errEl.classList.remove('hidden');
-                }
-                return;
-            }
-
-            const ctxP = document.getElementById('perfChart').getContext('2d');
-            
-            if(state.perfChartInstance) {
-                state.perfChartInstance.destroy();
-            }
-
-            state.perfChartInstance = new Chart(ctxP, {
-                type: 'line',
-                data: { datasets },
-                options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: {labels:{color:'#888', boxWidth:10, font: {family:'Rajdhani'}}} },
-                    scales: {
-                        x: { type:'time', time:{unit: days==30?'day':'month'}, grid:{display:false}, ticks:{color:'#444', font: {size: 10}} },
-                        y: { grid:{color:'#222'}, ticks:{color:'#666', callback:v=>v+'%', font: {family:'JetBrains Mono'}} }
-                    },
-                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
-                }
-            });
-        }
-
-        /* --- LEDGER --- */
-        function initLedger() {
-            state.whaleData = REAL_ADDRS.map((w, i) => ({ ...w, rank: i+1, balance: 0, status: '...' }));
-            renderTable();
-            document.getElementById('totalTracked').innerText = `TRACKING ${REAL_ADDRS.length} WALLETS`;
-            state.whaleData.forEach((w, i) => {
-                setTimeout(() => fetchBalance(i), i * 300);
-            });
-        }
-
-        async function fetchBalance(index) {
-            const wallet = state.whaleData[index];
-            try {
-                const res = await fetch(API.kaspa.balance(wallet.address));
-                const data = await res.json();
-                if(data && data.balance !== undefined) {
-                    state.whaleData[index].balance = Math.floor(data.balance / 1e8);
-                    state.whaleData[index].status = 'Active';
-                    state.whaleData[index].percent = ((state.whaleData[index].balance / 28700000000)*100).toFixed(4);
-                    updateRow(index);
-                }
-            } catch(e) {}
-        }
-
-        function scanRandomWallet() {
-            const i = Math.floor(Math.random() * state.whaleData.length);
-            const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
-            if(row) {
-                row.classList.add('scanning');
-                setTimeout(() => row.classList.remove('scanning'), 500);
-                fetchBalance(i);
-            }
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            state.whaleData.forEach(w => {
-                const tr = document.createElement('tr');
-                const short = w.address.substr(0,8) + '...' + w.address.substr(-6);
-                const tag = w.tag ? `<span class="tag-pill ${w.tag.type}">${w.tag.name}</span>` : `<span style="opacity:0.2">-</span>`;
-                tr.innerHTML = `
-                    <td class="text-gray-500">${w.rank}</td>
-                    <td style="font-family:monospace"><a href="https://explorer.kaspa.org/addresses/${w.address}" target="_blank" class="hover:text-cyan-400 transition-colors">${short}</a></td>
-                    <td>${tag}</td>
-                    <td class="mono-num text-gray-400">${w.balance.toLocaleString()}</td>
-                    <td class="hide-mobile" style="color:var(--hex-cyan); font-size:0.75rem">${w.status}</td>
-                    <td class="mono-num" style="text-align:right; color:#666">${w.percent || 0}%</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function updateRow(i) {
-            const row = document.querySelector(`#whaleTable tbody tr:nth-child(${i+1})`);
-            if(row) {
-                const w = state.whaleData[i];
-                row.cells[3].innerText = w.balance.toLocaleString();
-                row.cells[3].style.color = '#fff';
-                setTimeout(()=>row.cells[3].style.color='#9ca3af', 500);
-                row.cells[5].innerText = w.percent + '%';
-                if(row.cells[4]) row.cells[4].innerText = w.status;
-            }
-        }
-
-        async function initKRC20() {
-            try {
-                const res = await fetch(API.kasplex);
-                const data = await res.json();
-                const list = document.getElementById('krcList');
-                list.innerHTML = '';
-                if(data && data.result) {
-                    data.result.slice(0, 20).forEach(t => {
-                        const pct = (t.minted / t.max * 100).toFixed(1);
-                        const isDone = parseFloat(pct) >= 100;
-                        list.innerHTML += `
-                            <div class="token-card hover:bg-white/5 transition-colors cursor-default">
-                                <div class="font-bold text-gray-300">${t.tick}</div>
-                                <div style="text-align:right; color:#666; font-family:monospace">${pct}%</div>
-                                <div style="text-align:right; font-weight:bold; color:${isDone ? 'var(--hex-blue)' : 'var(--hex-warn)'}">
-                                    ${isDone ? 'DONE' : 'MINT'}
-                                </div>
-                            </div>`;
-                    });
-                }
-            } catch(e) { document.getElementById('krcList').innerHTML = "<div class='p-4 text-center text-red-500'>KRC API OFFLINE</div>"; }
-        }
-    </script>
+<body>
+<div class="grid-bg"></div>
+<div class="app">
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+<div class="brand"><div class="bdot"></div><div class="bname"><span class="w">KAS</span><span class="r">LIVE</span><span class="bver">v21</span></div></div>
+<div class="hp"><span class="pv" id="hPrice">$0.0000</span><span class="pc" id="hChg">...</span></div>
+<div class="hm"><span id="hBtc">BTC --</span><span id="hEth">ETH --</span><span id="hGold">PAXG --</span><span id="hSilver">AGX --</span><span id="hVol">VOL --</span><span id="hMcap">MCAP --</span></div>
+<div class="hdc" id="hDef" style="color:var(--blu)">DEFCON 5</div>
+<div class="sonar-wrap"><div class="sonar-dot" id="sonarDot"></div><span class="sonar-ms" id="sonarMs">UPLINK --</span></div>
+<button class="sbtn" id="sBtn" onclick="toggleSound()">◻ AUDIO</button>
+<button class="wr-btn" onclick="warRoom()">⛶ WAR ROOM</button>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="dash">
+
+<!-- ══ ROW 1: COMMAND STRIP ══ -->
+
+<!-- PRICE -->
+<div class="p">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--grn)"></div>KAS/USD</div><div class="ps" id="prSt">LIVE</div></div>
+<div class="pb">
+<div style="font-family:var(--M);font-size:1.4rem;font-weight:700;color:#fff;line-height:1" id="bigP">$0.0000</div>
+<div style="font-family:var(--M);font-size:.6rem;margin:3px 0" id="bigC"><span class="green">...</span></div>
+<div class="mr"><span class="ml">Volume</span><span class="mv" id="bigV">--</span></div>
+<div class="mr"><span class="ml">MCap</span><span class="mv" id="bigM">--</span></div>
+<div class="mr"><span class="ml">Vol/MCap</span><span class="mv" id="vmR">--%</span></div>
+</div>
+</div>
+
+<!-- DEFCON (2 cols) -->
+<div class="p dc-wrap" style="grid-column:span 2;border-color:rgba(255,42,42,.12)">
+<div class="dc-scan"></div>
+<div class="ph"><div class="pt"><div class="d" style="background:var(--red);animation:glow 1.5s infinite"></div>Supernova Index</div><div class="ps">ALGORITHMIC</div></div>
+<div class="pb" style="text-align:center;justify-content:start;padding-top:4px">
+<div style="font-family:var(--M);font-size:.4rem;color:var(--t3);letter-spacing:3px" id="dcLv">DEFCON 5</div>
+<div class="dc-num skel" id="dcSc" style="color:var(--blu)">&nbsp;</div>
+<div class="dc-lbl" id="dcLb" style="color:var(--t3)">INITIALIZING</div>
+<div class="dc-bar"><div class="dc-bar-f" id="dcBr" style="width:0%"></div></div>
+<div class="dc-fg">
+<div class="dc-f"><div class="dc-fl"><span>Price Momentum</span><span>30%</span></div><div class="dc-fv" id="dfP">--</div><div class="dc-fb"><div class="dc-fb-f" id="dfPB" style="width:0%"></div></div></div>
+<div class="dc-f"><div class="dc-fl"><span>Hashrate Growth</span><span>30%</span></div><div class="dc-fv" id="dfH">--</div><div class="dc-fb"><div class="dc-fb-f" id="dfHB" style="width:0%"></div></div></div>
+<div class="dc-f"><div class="dc-fl"><span>Whale Accumulation</span><span>20%</span></div><div class="dc-fv" id="dfW">--</div><div class="dc-fb"><div class="dc-fb-f" id="dfWB" style="width:0%"></div></div></div>
+<div class="dc-f"><div class="dc-fl"><span>Volume Intensity</span><span>20%</span></div><div class="dc-fv" id="dfV">--</div><div class="dc-fb"><div class="dc-fb-f" id="dfVB" style="width:0%"></div></div></div>
+</div>
+</div>
+</div>
+
+<!-- SHIELD INTEGRITY -->
+<div class="p">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--grn)"></div>Shield</div><div class="ps">HASH vs ATH</div></div>
+<div class="pb" style="align-items:center;text-align:center">
+<div style="font-family:var(--M);font-size:1.8rem;font-weight:700;line-height:1" id="shPct" class="green skel">&nbsp;</div>
+<div style="font-size:.38rem;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:2px 0 4px">Network Defense</div>
+<div class="bar" style="height:5px;width:100%;margin-bottom:4px"><div class="bar-f" id="shBar" style="width:0%;background:linear-gradient(90deg,var(--red),var(--org),var(--grn))"></div></div>
+<div style="display:flex;justify-content:space-between;width:100%;font-family:var(--M);font-size:.38rem;color:var(--t3)">
+<span>NOW <span style="color:var(--t1)" id="shCur">--</span></span>
+<span>ATH <span style="color:var(--t1)" id="shATH">--</span></span>
+</div>
+<div style="border-top:1px solid var(--bd);margin-top:4px;padding-top:3px;width:100%;text-align:left">
+<div class="mr"><span class="ml"><span class="tip-wrap">51% Attack Cost (1hr)<span class="tip-q">?<div class="tip-box"><strong>Attack Cost Index</strong>Estimated cost to sustain a 51% attack for 1 hour, based on current hashrate × hardware efficiency factor. Higher = more secure network.</div></span></span></span><span class="mv" id="atkCost" style="color:var(--red);font-size:.5rem">--</span></div>
+</div>
+</div>
+</div>
+
+<!-- HARD MONEY (2 cols) -->
+<div class="p" style="grid-column:span 2">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--gld)"></div>Hard Money Correlation</div><span class="dec-badge" id="decB">⚡ DECOUPLED</span></div>
+<div class="pb">
+<div style="display:flex;gap:6px">
+<div style="flex:1">
+<div class="hmr"><div class="hmi">◈</div><div><div class="hmn">Kaspa</div><div class="hmp" id="hmKP">--</div></div><div class="hmrt"><div class="hmc" id="hmKC">--</div></div></div>
+<div class="hmr"><div class="hmi">🥇</div><div><div class="hmn" style="color:var(--gold)">Gold</div><div class="hmp" id="hmGP">--</div></div><div class="hmrt"><div class="hmc" id="hmGC">--</div><div class="hms">STR <span id="sG">--</span></div></div></div>
+<div class="hmr"><div class="hmi">🥈</div><div><div class="hmn" style="color:#C0C0C0">Silver</div><div class="hmp" id="hmSP">--</div></div><div class="hmrt"><div class="hmc" id="hmSC">--</div><div class="hms">STR <span id="sS">--</span></div></div></div>
+<div class="hmr"><div class="hmi">₿</div><div><div class="hmn" style="color:var(--btc)">Bitcoin</div><div class="hmp" id="hmBP">--</div></div><div class="hmrt"><div class="hmc" id="hmBC">--</div><div class="hms">STR <span id="sB">--</span></div></div></div>
+</div>
+<div style="border-left:1px solid var(--bd);padding-left:6px;display:flex;flex-direction:column;justify-content:center;min-width:100px">
+<div class="mr"><span class="ml">KAS/BTC</span><span class="mv" id="rBtc" style="font-size:.55rem">--</span></div>
+<div class="mr"><span class="ml">KAS/ETH</span><span class="mv" id="rEth" style="font-size:.55rem">--</span></div>
+<div class="mr"><span class="ml">Flow</span><span class="mv" id="tDir" style="font-size:.55rem">--</span></div>
+<div class="bar" style="height:3px"><div class="bar-f" id="tBar" style="width:0%;background:var(--cyn)"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ══ ROW 2: NOVEL KASPA-NATIVE METRICS ══ -->
+
+<!-- 1. SOMPI / GH -->
+<div class="p hero h-gld">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--gld)"></div>Sompi per GH/s</div><div class="ps">EFFICIENCY</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="sompiGH">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap">sompi per gigahash<span class="tip-q">?<div class="tip-box"><strong>Sompi / GH</strong>Raw mining reward density in Kaspa's native unit. Sompi are to Kaspa what satoshis are to Bitcoin. Higher = more efficient mining.</div></span></span></div>
+<div class="hero-sub" id="sompiSub">Mining reward density</div>
+</div>
+</div>
+
+<!-- 2. DAG WIDTH -->
+<div class="p hero h-cyan">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--cyn)"></div>DAG Width</div><div class="ps">PARALLELISM</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="dagW">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap">parallel blocks / DAA<span class="tip-q">?<div class="tip-box"><strong>DAG Width</strong>Average number of blocks mined in parallel per DAA score. Kaspa's BlockDAG allows multiple blocks simultaneously — this measures that parallelism in real-time.</div></span></span></div>
+<div class="hero-sub" id="dagWSub">BlockDAG spread factor</div>
+</div>
+</div>
+
+<!-- 3. HASH YIELD INDEX -->
+<div class="p hero h-grn">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--grn)"></div>Hash Yield</div><div class="ps">$/PH/DAY</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="hashY">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap">USD per Petahash per Day<span class="tip-q">?<div class="tip-box"><strong>Hash Yield Index</strong>Daily revenue generated per Petahash of mining power. Combines block reward, network hashrate, and current KAS price into a single profitability number.</div></span></span></div>
+<div class="hero-sub" id="hashYSub">Revenue index</div>
+</div>
+</div>
+
+<!-- 4. KAS PER SECOND -->
+<div class="p hero h-org">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--org)"></div>Emission Rate</div><div class="ps">KAS/SEC</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="kasSec">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap">KAS minted per second<span class="tip-q">?<div class="tip-box"><strong>Emission Rate</strong>Real-time KAS creation rate. Calculated from block reward × blocks per second. This is the live inflation pulse of the network.</div></span></span></div>
+<div class="hero-sub" id="kasSecSub">Real-time inflation rate</div>
+</div>
+</div>
+
+<!-- 5. NETWORK DENSITY -->
+<div class="p hero h-prp">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--prp)"></div>Net Density</div><div class="ps">THROUGHPUT</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="netDen">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap"><span id="netDenU">% of 10 BPS capacity</span><span class="tip-q">?<div class="tip-box"><strong>Network Density</strong>How much of Kaspa's theoretical 10 blocks-per-second throughput is being utilized. 100% = running at full capacity.</div></span></span></div>
+<div class="hero-sub" id="netDenSub">DAG load factor</div>
+</div>
+</div>
+
+<!-- 6. DAA VELOCITY -->
+<div class="p hero h-red">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--red)"></div>DAA Velocity</div><div class="ps">SCORE/SEC</div></div>
+<div class="pb" style="align-items:center;justify-content:center">
+<div class="hero-val skel" id="daaV">&nbsp;</div>
+<div class="hero-unit"><span class="tip-wrap">DAA score per second<span class="tip-q">?<div class="tip-box"><strong>DAA Velocity</strong>Rate of Difficulty Adjustment Algorithm score advancement. Measures consensus throughput — how fast the network is processing and ordering blocks.</div></span></span></div>
+<div class="hero-sub" id="daaVSub">Consensus throughput</div>
+</div>
+</div>
+
+<!-- ══ ROW 3: SUPPORTING INTEL ══ -->
+
+<!-- PERFORMANCE CHART (2 cols) -->
+<div class="p" style="grid-column:span 2">
+<div class="ph">
+<div class="pt"><div class="d" style="background:var(--grn)"></div>Relative Performance</div>
+<div class="tf-btns"><button class="tf-b" onclick="updPerf(30)">30D</button><button class="tf-b act" onclick="updPerf(365)">1Y</button><button class="tf-b" onclick="updPerf('max')">ALL</button></div>
+</div>
+<div class="pb" style="padding:3px"><div class="chart-box"><canvas id="perfC"></canvas></div></div>
+</div>
+
+<!-- WHALE TABLE (2 cols) -->
+<div class="p" style="grid-column:span 2">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--cyn)"></div>Whale Watch</div><div class="ps" id="wCt">--</div></div>
+<div class="sy">
+<table class="wt"><thead><tr><th>#</th><th>Address</th><th>Tag</th><th>Balance</th><th>Δ</th><th>%</th></tr></thead>
+<tbody id="tB"><tr><td colspan="6" style="text-align:center;padding:6px;color:var(--t3);font-size:.4rem">Initializing scan...</td></tr></tbody></table>
+</div>
+</div>
+
+<!-- MINING CALC + BLOCKS + SUPPLY (2 cols) -->
+<div class="p" style="grid-column:span 2">
+<div class="ph"><div class="pt"><div class="d" style="background:var(--prp)"></div>Yield Engine / Live Blocks</div></div>
+<div class="pb" style="padding:3px 5px;display:grid;grid-template-columns:1fr 1fr;gap:3px;align-content:start">
+<!-- CALC SIDE -->
+<div>
+<div class="cr"><input type="number" id="cH" class="ci" placeholder="Hash" value="1"><select id="cU" class="cs"><option value="1000">TH/s</option><option value="1">GH/s</option><option value="1000000" selected>PH/s</option></select></div>
+<div class="simr"><span>DIFF SIM</span><span class="simv" id="simL">CURRENT</span></div>
+<input type="range" min="0" max="100" value="0" id="simS" oninput="updSim(this.value)">
+<div class="cres"><div class="cbox"><div class="cbox-v" id="cD">--</div><div class="cbox-l">KAS/Day</div></div><div class="cbox"><div class="cbox-v" id="cDU">--</div><div class="cbox-l">USD/Day</div></div><div class="cbox"><div class="cbox-v" id="cM">--</div><div class="cbox-l">KAS/Mon</div></div><div class="cbox"><div class="cbox-v" id="cMU">--</div><div class="cbox-l">USD/Mon</div></div></div>
+<!-- SUPPLY -->
+<div style="margin-top:4px">
+<div class="mr"><span class="ml">Supply Minted</span><span class="mv" id="supPct" style="font-size:.5rem">--%</span></div>
+<div class="sup-bar"><div class="sup-fill" id="supBar" style="width:0%"><span class="sup-lbl" id="supLbl">--%</span></div></div>
+<div style="display:flex;justify-content:space-between;font-family:var(--M);font-size:.33rem;color:var(--t3)"><span id="supC">--</span><span>/ 28.7B</span></div>
+</div>
+</div>
+<!-- BLOCKS SIDE -->
+<div class="sy" id="bFeed" style="border-left:1px solid var(--bd);padding-left:3px"><div style="padding:6px;text-align:center;color:var(--t3);font-size:.4rem">Listening...</div></div>
+</div>
+</div>
+
+</div><!-- /dash -->
+
+<!-- GHOSTDAG DEBUG (Konami unlocked) -->
+<div class="ghost-panel" id="ghostPanel">
+▸ GhostDAG GOD MODE ACTIVE ▸ Blue Score: <span id="ghBlue">--</span> ▸ DAA Score: <span id="ghDaa">--</span> ▸ BPS: <span id="ghBps">--</span> ▸ Difficulty: <span id="ghDiff">--</span> ▸ Pruning Depth: 371,000 ▸ Merge Set: <span id="ghMerge">--</span> ▸ Header Count: <span id="ghHeaders">--</span>
+</div>
+
+<!-- TICKER -->
+<div class="ticker" id="tkBar" style="position:relative"><div class="ticker-track" id="tkT">
+<span style="font-family:var(--M);font-size:.38rem;color:var(--t3);padding:0 10px">KASLIVE v21 — MACRO INTELLIGENCE TERMINAL — <a href="mailto:dnilgis@gmail.com" style="color:var(--cyn);text-decoration:none">dnilgis</a> — Real-time BlockDAG analytics</span>
+</div><span id="devHint" onclick="triggerKonami()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--M);font-size:.32rem;color:var(--t3);opacity:.25;cursor:pointer;letter-spacing:1px;z-index:2;padding:2px 5px;border:1px solid transparent;transition:.3s" onmouseenter="this.style.opacity='.6';this.style.borderColor='var(--t3)';this.title='↑↑↓↓←→←→BA'" onmouseleave="this.style.opacity='.25';this.style.borderColor='transparent'">DEV</span></div>
+
+</div>
+
+<script>
+const API={kaspa:{blk:'https://api.kaspa.org/blocks?limit=20&includeTransactions=false',hH:'https://api.kaspa.org/info/hashrate/history',bal:a=>`https://api.kaspa.org/addresses/${a}/balance`,dag:'https://api.kaspa.org/info/blockdag',sup:'https://api.kaspa.org/info/coinsupply',hash:'https://api.kaspa.org/info/hashrate'},cg:'https://api.coingecko.com/api/v3',cp:'https://cryptopanic.com/api/free/v1/posts/?currencies=KAS&kind=news&public=true'};
+const MAX=28700000000;
+const S={wd:[],wb:{},kp:0,bp:0,nh:0,hh:[],hATH:0,br:77,kasChg:0,btcChg:0,goldChg:0,kv:0,km:0,bps:10,lastBlue:0,lastDaa:0,lastDaaT:0,daaV:0,dagWidth:0};
+
+const ADDRS=[
+{a:'kaspa:precqv0krj3r6uyyfa36ga7s0u9jct0v4wg8ctsfde2gkrsgwgw8jgxfzfc98',t:{n:'DEV FUND',c:'tag-dev'}},
+{a:'kaspa:qpzpfwcsqsxhxwup26r55fd0ghqlhyugz8cp6y3wxuddc02vcxtjg75pspnwz',t:{n:'MEXC',c:'tag-exchange'}},
+{a:'kaspa:qpz2vgvlxhmyhmt22h538pjzmvvd52nuut80y5zulgpvyerlskvvwm7n4uk5a',t:{n:'Whale 1',c:'tag-whale'}},
+{a:'kaspa:qrelgny7sr3vahq69yykxx36m65gvmhryxrlwngfzgu8xkdslum2yxjp3ap8m',t:{n:'Gate.io',c:'tag-exchange'}},
+{a:'kaspa:qrvum29vk365g0zcd5gx3c7h829etfq2ytdmscjzw4zw04fjfnprcg9c3tges',t:{n:'Bybit',c:'tag-exchange'}},
+{a:'kaspa:qzadxjufntvckxrvy76pyhvtkuu8lg5ryz252aglmhlyv27pxqplksshzuu9m',t:{n:'KuCoin',c:'tag-exchange'}},
+{a:'kaspa:qzxrs8gxjgk2q84wlt3xfd057ntws73fptalhy84g85zqfu5lcemvpu04vj3w',t:{n:'Uphold',c:'tag-exchange'}},
+{a:'kaspa:qpj2x2qfmvj4g6fn0xadv6hafdaqv4fwd3t4uvyw3walwfn50rzysa4lafpma',t:{n:'Kraken',c:'tag-exchange'}},
+{a:'kaspa:qq2ka745yyj0760fkt3ax3t7hpyqret6pzaypag3afnd3fp8jpv4cmzpx8yrt',t:{n:'Whale 2',c:'tag-whale'}},
+{a:'kaspa:qqfxn597v5c23td4asz99ky52sha8l2ypq8kmrsqxcu7skhdunncjgup0hdys',t:null},
+{a:'kaspa:qzpt2wp67seprjndmrzu58g4sgkknxp0y5g97y5leupj7ugffqhs6xgxdjwtf',t:null},
+{a:'kaspa:qr8k05f9n6xtrd0eex5lr6878mc5n7dgrtn8xv3frfvuxgfchx9077jtz5tsk',t:null},
+{a:'kaspa:qpap72xed702y4ahw537l3x63788nrh3ea5a0y06we236d5rth43wptqsv0ws',t:null},
+{a:'kaspa:qz06rpdaap56ktn3xf3w70g09s9dphrkmnks027lnshyqd6x5l8tzt8lcpp4k',t:null},
+{a:'kaspa:qqywx2wszmnrsu0mzgav85rdwvzangfpdj9j3ady9jpr7hu4u8c2wl9wqgd6j',t:{n:'Bitget',c:'tag-exchange'}},
+{a:'kaspa:ppwn9mz7ht2p8w8mqtafvuw0sslqff7svk0e5j5vterutxwd3gmygnqdrppm5',t:{n:'Ice River',c:'tag-mining'}},
+{a:'kaspa:qr9fqcxp9xjprsm9sv7apy6qc0ja2p676m9gf9fkcww2qmaw4npxzllh7lrw0',t:{n:'Kraken 2',c:'tag-exchange'}},
+{a:'kaspa:qq2hke25nvxsnnawzlym3nf6y38clrhdefph5xckeuyyzxwh99kavfu77grmg',t:null},
+{a:'kaspa:qpky2f87j7my5ph5taucutm74tfssz8l97m770rqdtnmzmece7r9gf3l2hpze',t:null},
+{a:'kaspa:qq6kjumc6l95hq005yz2gazrqev3pyfjvqefxef93wz6u2makfhmsrct65f6',t:null},
+{a:'kaspa:qrtxzw8j3ydwna6spm7etj7x36dzj06h7q84hxn6ueapphfg8txazcycmnalc',t:null},
+{a:'kaspa:qzew5mu908h4gfw7qgvpux7hlkfqrjz06zazag8nmrykjz59479uqlm8n9q9q',t:null},
+{a:'kaspa:qqn98feqplp4nc92wgq7j7cy6cdnaugnzngeatps7swaxkw0s9e0c7rjjdrxf',t:null},
+{a:'kaspa:qp2sp0vvrwu4s8pw0j68muu2ta5qar5mehf8ehuvljw5zsrakk5cvx4gvqz7z',t:null},
+{a:'kaspa:qpu0zrz92y5m4s0vf8ml0tqrhc85l943t9efghexqd4rt09cfynjzw5rmfdws',t:null},
+{a:'kaspa:ppk66xua7nmq8elv3eglfet0xxcfuks835xdgsm5jlymjhazyu6h5ac62l4ey',t:{n:'DAGKnight',c:'tag-dev'}},
+{a:'kaspa:qzganetmrpwv88ea0pkma0xvgacw034l6jv9e9kvh0mup47ahqpc24la7yfmf',t:null},
+{a:'kaspa:pqtm55d2a456qws90g096cxnecc7msjmxr8n2ernwues8zfdamkl2kfmxr8gr',t:{n:'Rust Fund',c:'tag-dev'}},
+{a:'kaspa:qrepacgj2flpflt8f7luh3ru4sykgt8d5k7s0sh4zlflk3glqpwjvq9kx7smk',t:null},
+{a:'kaspa:qpxg04pk29q9pf6uzakcxugdl3td6xkx875p24wkr3hjjgkh9gsp2p5m3akay',t:null},
+{a:'kaspa:qrjjnrk9vd9je8wnlqq9dz7fhmhurgjjed8n2pnzh5jwgjmef5pvzd4vf0lu7',t:null},
+{a:'kaspa:qypnwqfqltw6p8j8x7hj3w962l8a4ha5admykfs7z30fc07vydftmng942wwmmw',t:null},
+{a:'kaspa:qpkf9c9t2vhu7dt037rkmutyjcgg29hlwq25xnxgln6x5uq6ajtnucslxlk9a',t:null},
+{a:'kaspa:qyppcdqxpu3sw49k6xcj8wcqjd98lpvpc8cm30wfnj003ahlhjzkh0s67gjxuv',t:null},
+{a:'kaspa:qyp3ffdjvv6de6cg6jjgyhlg3mt3fngna2vzukdpzvwkaj5j3hctsyqecqf7dh3',t:{n:'MARA Pool',c:'tag-mining'}},
+{a:'kaspa:qr7vrlhgekw9efxgfq09ca3wqcxlslgxndcpk77pguu2usaa9aa27lhuunewj',t:{n:'Uphold 2',c:'tag-exchange'}}
+];
+
+/* ═══ AUDIO ═══ */
+let aC=null,sOn=false;
+function toggleSound(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume();sOn=!sOn;const b=document.getElementById('sBtn');b.textContent=sOn?'◼ AUDIO':'◻ AUDIO';b.classList.toggle('on',sOn);if(sOn)ping(600,.15,'sine')}
+function ping(f,d,t){if(!sOn||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t||'sine';o.frequency.setValueAtTime(f,aC.currentTime);g.gain.setValueAtTime(.05,aC.currentTime);g.gain.exponentialRampToValueAtTime(.001,aC.currentTime+d);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d)}catch(e){}}
+function sonarB(){ping(800+Math.random()*400,.06,'triangle')}
+function sonarW(){ping(200,.3,'sine')}
+
+/* ═══ VALUE FLASH ═══ */
+function flash(el,dir){if(!el)return;el.classList.remove('flash-up','flash-down','flash-neutral');void el.offsetWidth;el.classList.add(dir==='up'?'flash-up':dir==='down'?'flash-down':'flash-neutral')}
+function setVal(id,val,oldVal){const el=document.getElementById(id);if(!el)return;el.classList.remove('skel');el.textContent=val;if(oldVal!==undefined&&val!==oldVal){const n=parseFloat(String(val).replace(/[^0-9.\-]/g,''));const o=parseFloat(String(oldVal).replace(/[^0-9.\-]/g,''));if(!isNaN(n)&&!isNaN(o))flash(el,n>o?'up':n<o?'down':'neutral');else flash(el,'neutral')}}
+function setHTML(id,html){const el=document.getElementById(id);if(!el)return;el.classList.remove('skel');el.innerHTML=html}
+function unskel(id){const el=document.getElementById(id);if(el)el.classList.remove('skel')}
+
+/* ═══ SIGNAL LOST (staged error system) ═══ */
+async function safeFetch(url,timeout=8000){const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{signal:ctrl.signal});clearTimeout(t);if(!r.ok)throw new Error(r.status);return r}catch(e){clearTimeout(t);throw e}}
+
+// Staged: first fail = amber "CONNECTING...", 3+ fails = red "SIGNAL LOST"
+const failCt={};
+function sigWarn(id){
+const k=id;failCt[k]=(failCt[k]||0)+1;
+const el=document.getElementById(id);if(!el)return;
+if(failCt[k]>=3){el.innerHTML='<span class="sig-err">SIGNAL LOST</span>'}
+else{el.classList.remove('skel');if(el.textContent==='SIGNAL LOST'||el.innerHTML.includes('sig-err'))return;
+// Don't overwrite good data with connecting msg
+if(el.textContent&&el.textContent!=='--'&&el.textContent.trim()!==''&&!el.textContent.includes('CONNECTING'))return;
+el.innerHTML='<span style="font-family:var(--M);font-size:.4rem;color:var(--org);letter-spacing:.5px;animation:glow 1.5s infinite">CONNECTING…</span>'}}
+function sigOK(id){failCt[id]=0}
+
+/* ═══ FULL DATA CACHE ═══ */
+const CACHE_TTL=600000; // 10 min
+function setCache(k,v){try{localStorage.setItem('kl_'+k,JSON.stringify({ts:Date.now(),d:v}))}catch(e){}}
+function getCache(k){try{const c=JSON.parse(localStorage.getItem('kl_'+k));if(c&&Date.now()-c.ts<CACHE_TTL)return c.d}catch(e){}return null}
+function loadCachedState(){
+const net=getCache('net');if(net){if(net.nh)S.nh=net.nh;if(net.bps)S.bps=net.bps;if(net.lastDaa)S.lastDaa=net.lastDaa;if(net.hATH)S.hATH=net.hATH;if(net.dagWidth)S.dagWidth=net.dagWidth;updSh();updNov();
+if(S.dagWidth>0){setVal('dagW',S.dagWidth.toFixed(1)+'×');}}
+const blk=getCache('blk');if(blk){const f=document.getElementById('bFeed');f.innerHTML='';blk.slice(0,12).forEach(b=>{f.innerHTML+=`<div class="blk"><span class="blk-id">#${b.bs}</span><span class="blk-t">${b.t}</span></div>`})}
+}
+
+/* ═══ BOOT SEQUENCE ═══ */
+const bootLog=[
+'KASLIVE v21 — MACRO INTELLIGENCE TERMINAL',
+'> Connecting to Kaspa mainnet...',
+'> Node handshake ··· ESTABLISHED',
+'> Syncing BlockDAG state...',
+'> Loading whale ledger (36 addresses)...',
+'> CoinGecko market feed ··· ONLINE',
+'> CryptoPanic news stream ··· LINKED',
+'> Hashrate telemetry ··· ACTIVE',
+'> DEFCON algorithm ··· ARMED',
+'> All systems nominal. Terminal ready.',
+];
+function runBoot(){const tk=document.getElementById('tkT');if(!tk)return;let i=0;const step=()=>{if(i<bootLog.length){tk.innerHTML=`<span style="font-family:var(--M);font-size:.38rem;color:${i===bootLog.length-1?'var(--grn)':'var(--t3)'};padding:0 10px">${bootLog[i]}</span>`;i++;setTimeout(step,i===bootLog.length?1200:350)}else{fetchNews()}};step()}
+
+/* ═══ INIT ═══ */
+document.addEventListener('DOMContentLoaded',()=>{
+console.log('🔴 KasLive v21');
+loadCachedState();
+runBoot();
+initW();fetchMkt();fetchNet();fetchSup();fetchBlk();loadHATH();
+setInterval(fetchMkt,30000);setInterval(scanWh,3000);setInterval(fetchBlk,5000);
+setInterval(fetchNet,10000);setInterval(fetchSup,60000);setInterval(fetchNews,120000);
+setInterval(calcDC,30000);
+});
+
+/* ═══ NETWORK + DAG WIDTH ═══ */
+async function fetchNet(){
+try{const r=await safeFetch(API.kaspa.dag);if(r.ok){const d=await r.json();
+if(d.virtualDaaScore){const daa=parseInt(d.virtualDaaScore);
+if(S.lastDaa>0&&S.lastDaaT>0){const el=(Date.now()-S.lastDaaT)/1000;if(el>0)S.daaV=(daa-S.lastDaa)/el;}
+S.lastDaa=daa;S.lastDaaT=Date.now();}
+if(d.bps)S.bps=d.bps;sigOK('netDen');
+}}catch(e){sigWarn('netDen')}
+try{const r=await safeFetch(API.kaspa.hash);if(r.ok){const d=await r.json();if(d.hashrate){
+S.nh=d.hashrate;S.hh.push({ts:Date.now(),v:d.hashrate});if(S.hh.length>200)S.hh.shift();
+if(d.hashrate>S.hATH)S.hATH=d.hashrate;updSh();updNov();sigOK('shPct');
+}}}catch(e){sigWarn('shPct')}
+try{const r=await safeFetch(API.kaspa.blk);if(r.ok){const bk=await r.json();
+const g={};bk.forEach(b=>{const ds=b.daaScore||b.blueScore;if(!g[ds])g[ds]=0;g[ds]++});
+const c=Object.values(g);if(c.length>0){
+const oldW=S.dagWidth;S.dagWidth=c.reduce((a,b)=>a+b,0)/c.length;const mx=Math.max(...c);
+setVal('dagW',S.dagWidth.toFixed(1)+'×',oldW>0?oldW.toFixed(1)+'×':undefined);
+document.getElementById('dagWSub').textContent=`Peak ${mx}× | ${c.length} DAA scores`;sigOK('dagW');
+}}}catch(e){sigWarn('dagW')}
+setCache('net',{nh:S.nh,bps:S.bps,lastDaa:S.lastDaa,hATH:S.hATH,dagWidth:S.dagWidth});
+}
+
+function updSh(){
+const c=S.nh,a=S.hATH;if(!a||!c)return;
+const p=Math.min(100,(c/a)*100);
+const el=document.getElementById('shPct');el.classList.remove('skel');const oldTxt=el.textContent;const newTxt=p.toFixed(1)+'%';el.textContent=newTxt;el.style.color=p>=90?'var(--grn)':p>=70?'var(--org)':'var(--red)';if(oldTxt&&oldTxt!==newTxt&&oldTxt!=='')flash(el,p>=90?'up':'down');
+document.getElementById('shBar').style.width=p+'%';
+const f=v=>v>=1e6?(v/1e6).toFixed(2)+' EH/s':v>=1e3?(v/1e3).toFixed(2)+' PH/s':v.toFixed(2)+' TH/s';
+document.getElementById('shCur').textContent=f(c);document.getElementById('shATH').textContent=f(a);
+}
+
+function updNov(){
+const h=S.nh,p=S.kp,br=S.br,bps=S.bps;
+if(h>0){const spg=(br*1e8*bps)/h;const old=document.getElementById('sompiGH').textContent;setVal('sompiGH',Math.round(spg).toLocaleString(),old);
+document.getElementById('sompiSub').textContent=`${(spg/1e8).toFixed(6)} KAS/GH`;}
+if(h>0&&p>0){const phS=1000/h;const dK=86400*br*bps*phS;const dU=dK*p;const old=document.getElementById('hashY').textContent;setVal('hashY','$'+dU.toFixed(2),old);
+document.getElementById('hashYSub').textContent=`${Math.round(dK).toLocaleString()} KAS/PH/day`;}
+const kps=br*bps;const oldK=document.getElementById('kasSec').textContent;setVal('kasSec',kps.toFixed(0),oldK);
+document.getElementById('kasSecSub').textContent=`$${(kps*p).toFixed(2)}/sec minted`;
+const den=(bps/10)*100;const oldD=document.getElementById('netDen').textContent;setVal('netDen',den.toFixed(0)+'%',oldD);
+document.getElementById('netDenU').textContent=`${bps.toFixed(1)} of 10 BPS`;
+document.getElementById('netDenSub').textContent=`${(bps*86400).toLocaleString()} blocks/day`;
+if(S.daaV>0){const oldDaa=document.getElementById('daaV').textContent;setVal('daaV',S.daaV.toFixed(2),oldDaa);
+document.getElementById('daaVSub').textContent=`Score: ${S.lastDaa.toLocaleString()}`;}
+}
+
+/* ═══ SUPPLY ═══ */
+async function fetchSup(){
+try{const r=await safeFetch(API.kaspa.sup);if(!r.ok)return;const d=await r.json();let c=0;
+if(d.circulatingSupply)c=parseFloat(d.circulatingSupply)/1e8;else if(d.circulatingSompiSupply)c=parseFloat(d.circulatingSompiSupply)/1e8;
+if(c>0){const pct=((c/MAX)*100).toFixed(2);
+document.getElementById('supPct').textContent=pct+'%';document.getElementById('supLbl').textContent=pct+'%';
+document.getElementById('supBar').style.width=pct+'%';document.getElementById('supC').textContent=(c/1e9).toFixed(2)+'B';
+}}catch(e){}}
+
+/* ═══ MARKET ═══ */
+const CG_CACHE_KEY='kl_cg_cache',CG_CACHE_TTL=300000; // 5 min
+function getCGCache(){try{const c=JSON.parse(localStorage.getItem(CG_CACHE_KEY));if(c&&Date.now()-c.ts<CG_CACHE_TTL)return c.data}catch(e){}return null}
+function setCGCache(data){try{localStorage.setItem(CG_CACHE_KEY,JSON.stringify({ts:Date.now(),data}))}catch(e){}}
+
+async function fetchMkt(){
+let kas=null,btc=null,eth=null,paxg=null,slv=null;
+try{const r=await safeFetch(`${API.cg}/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,lode-silver&order=market_cap_desc&sparkline=false`);if(!r.ok)throw 0;const d=await r.json();
+kas=d.find(c=>c.id==='kaspa');btc=d.find(c=>c.id==='bitcoin');eth=d.find(c=>c.id==='ethereum');paxg=d.find(c=>c.id==='pax-gold');slv=d.find(c=>c.id==='lode-silver');
+setCGCache({kas,btc,eth,paxg,slv});}
+catch(e){
+// Try localStorage cache first
+const cache=getCGCache();
+if(cache){kas=cache.kas;btc=cache.btc;eth=cache.eth;paxg=cache.paxg;slv=cache.slv}
+else{try{const r=await safeFetch('https://api.kaspa.org/info/price');if(r.ok){const j=await r.json();if(j&&j.price)kas={current_price:j.price,price_change_percentage_24h:0}}}catch(ek){sigWarn('bigP')}}
+}
+
+if(kas){const oldP=S.kp;S.kp=kas.current_price;S.kasChg=kas.price_change_percentage_24h||0;S.kv=kas.total_volume||0;S.km=kas.market_cap||0;
+const up=S.kasChg>=0;const newP='$'+kas.current_price.toFixed(4);
+setVal('hPrice',newP,oldP>0?'$'+oldP.toFixed(4):undefined);
+const bP=document.getElementById('bigP');bP.textContent=newP;if(oldP>0)flash(bP,kas.current_price>oldP?'up':kas.current_price<oldP?'down':'neutral');
+const ce=document.getElementById('hChg');ce.textContent=(up?'+':'')+S.kasChg.toFixed(2)+'%';ce.className='pc '+(up?'green':'red');
+setHTML('bigC',`<span class="${up?'green':'red'}">${up?'+':''}${S.kasChg.toFixed(2)}%</span>`);
+document.getElementById('bigV').textContent='$'+(S.kv/1e6).toFixed(1)+'M';
+document.getElementById('bigM').textContent='$'+(S.km/1e9).toFixed(2)+'B';
+if(S.km>0&&S.kv>0)document.getElementById('vmR').textContent=(S.kv/S.km*100).toFixed(2)+'%';
+document.getElementById('hVol').textContent='VOL $'+(S.kv/1e6).toFixed(0)+'M';
+document.getElementById('hMcap').textContent='MCAP $'+(S.km/1e9).toFixed(1)+'B';
+}
+if(btc){S.bp=btc.current_price;S.btcChg=btc.price_change_percentage_24h||0}
+if(kas&&btc&&eth)updR(kas,btc,eth);
+const tk=(id,nm,d)=>{if(!d)return;const ch=d.price_change_percentage_24h||0;document.getElementById(id).innerHTML=`${nm} $${d.current_price.toLocaleString(undefined,{maximumFractionDigits:0})} <span class="${ch>=0?'green':'red'}">${ch>=0?'+':''}${ch.toFixed(1)}%</span>`};
+tk('hBtc','BTC',btc);tk('hEth','ETH',eth);tk('hGold','PAXG',paxg);tk('hSilver','AGX',slv);
+updHM(kas,btc,paxg,slv);updTr();updNov();calcDC();
+}
+
+function updR(kas,btc,eth){
+const gp=(c,p)=>c/(1+(p/100));
+const cs=(kas.current_price/btc.current_price)*1e8;const os=(gp(kas.current_price,kas.price_change_percentage_24h)/gp(btc.current_price,btc.price_change_percentage_24h))*1e8;const sc=((cs-os)/os)*100;
+document.getElementById('rBtc').innerHTML=`${Math.floor(cs)} <span class="mu">sats</span> <span style="font-size:.4rem" class="${sc>=0?'green':'red'}">${sc>0?'+':''}${sc.toFixed(1)}%</span>`;
+const cg=(kas.current_price/eth.current_price)*1e9;const og=(gp(kas.current_price,kas.price_change_percentage_24h)/gp(eth.current_price,eth.price_change_percentage_24h))*1e9;const gc=((cg-og)/og)*100;
+document.getElementById('rEth').innerHTML=`${Math.floor(cg).toLocaleString()} <span class="mu">gwei</span> <span style="font-size:.4rem" class="${gc>=0?'green':'red'}">${gc>0?'+':''}${gc.toFixed(1)}%</span>`;
+}
+
+function updHM(kas,btc,paxg,slv){
+if(!kas)return;const kc=kas.price_change_percentage_24h||0;
+document.getElementById('hmKP').textContent='$'+kas.current_price.toFixed(4);
+document.getElementById('hmKC').innerHTML=`<span class="${kc>=0?'green':'red'}">${kc>=0?'+':''}${kc.toFixed(2)}%</span>`;
+let dec=false;
+if(paxg){const gc=paxg.price_change_percentage_24h||0;S.goldChg=gc;
+document.getElementById('hmGP').textContent='$'+paxg.current_price.toLocaleString(undefined,{maximumFractionDigits:0});
+document.getElementById('hmGC').innerHTML=`<span class="${gc>=0?'green':'red'}">${gc>=0?'+':''}${gc.toFixed(2)}%</span>`;
+const gd=kc-gc;document.getElementById('sG').innerHTML=`<span class="${gd>=0?'green':'red'}">${gd>=0?'+':''}${gd.toFixed(1)}%</span>`;
+if(kc>0&&gc<0)dec=true;}
+if(slv){const sc=slv.price_change_percentage_24h||0;
+document.getElementById('hmSP').textContent='$'+slv.current_price.toFixed(2);
+document.getElementById('hmSC').innerHTML=`<span class="${sc>=0?'green':'red'}">${sc>=0?'+':''}${sc.toFixed(2)}%</span>`;
+const sd=kc-sc;document.getElementById('sS').innerHTML=`<span class="${sd>=0?'green':'red'}">${sd>=0?'+':''}${sd.toFixed(1)}%</span>`;
+if(kc>0&&sc<0)dec=true;}
+if(btc){const bc=btc.price_change_percentage_24h||0;
+document.getElementById('hmBP').textContent='$'+btc.current_price.toLocaleString(undefined,{maximumFractionDigits:0});
+document.getElementById('hmBC').innerHTML=`<span class="${bc>=0?'green':'red'}">${bc>=0?'+':''}${bc.toFixed(2)}%</span>`;
+const bd=kc-bc;document.getElementById('sB').innerHTML=`<span class="${bd>=0?'green':'red'}">${bd>=0?'+':''}${bd.toFixed(1)}%</span>`;
+if(kc>0&&bc<0)dec=true;}
+document.getElementById('decB').style.display=dec?'inline-block':'none';
+}
+
+function updTr(){const v=S.kv;if(!v)return;document.getElementById('tBar').style.width=Math.min(100,(v/300000000)*100)+'%';const inf=S.kasChg>=0;document.getElementById('tBar').style.background=inf?'var(--cyn)':'var(--red)';document.getElementById('tDir').innerHTML=inf?'<span class="green">▲ INFLOW</span>':'<span class="red">▼ OUTFLOW</span>'}
+
+/* ═══ DEFCON ═══ */
+function calcDC(){
+const pR=Math.max(0,Math.min(100,50+(S.kasChg*5)));
+let hR=50;const hH=S.hh;if(hH.length>=4){const rr=hH.slice(-3),ol=hH.slice(0,Math.max(1,hH.length-3));const ar=rr.reduce((a,b)=>a+b.v,0)/rr.length,ao=ol.reduce((a,b)=>a+b.v,0)/ol.length;if(ao>0)hR=Math.max(0,Math.min(100,50+(((ar-ao)/ao)*100)*10))}
+let wR=50,wD=0;const t10=S.wd.slice(0,10).filter(w=>w.bal>0);if(t10.length>0){t10.forEach(w=>{wD+=(w.bal-(S.wb[w.addr]||w.bal))});wR=Math.max(0,Math.min(100,50+(wD/2000000)))}
+let vR=0;if(S.kv>0)vR=Math.max(0,Math.min(100,(S.kv/150000000)*100));
+const raw=pR*.3+hR*.3+wR*.2+vR*.2,sc=Math.max(0,Math.min(100,Math.round(raw)));
+let lv,lb,cl;if(sc>=85){lv='DEFCON 1';lb='SUPERNOVA';cl='#ff2a2a'}else if(sc>=70){lv='DEFCON 2';lb='IGNITION';cl='#ff8800'}else if(sc>=50){lv='DEFCON 3';lb='WARMING';cl='#fbbf24'}else if(sc>=30){lv='DEFCON 4';lb='ACCUMULATION';cl='#49EACB'}else{lv='DEFCON 5';lb='DORMANT';cl='#3b82f6'}
+document.getElementById('dcLv').textContent=lv;document.getElementById('dcLv').style.color=cl;
+const ds=document.getElementById('dcSc');const oldSc=ds.textContent;ds.classList.remove('skel');ds.classList.add('live');ds.textContent=sc;ds.style.color=cl;ds.style.textShadow=`0 0 40px ${cl}50`;if(oldSc&&oldSc!==String(sc))flash(ds,sc>parseInt(oldSc)?'up':'down');
+document.getElementById('dcLb').textContent=lb;document.getElementById('dcLb').style.color=cl;
+document.getElementById('dcBr').style.width=sc+'%';
+document.getElementById('hDef').textContent=`${lv}: ${lb}`;document.getElementById('hDef').style.color=cl;document.getElementById('hDef').style.borderColor=cl+'40';
+const rf=(vi,bi,txt,r)=>{document.getElementById(vi).innerHTML=`<span class="${r>=50?'green':'red'}">${txt}</span>`;const b=document.getElementById(bi);b.style.width=r+'%';b.style.background=r>=60?'var(--grn)':r>=40?'var(--yel)':'var(--red)'};
+rf('dfP','dfPB',(S.kasChg>=0?'+':'')+S.kasChg.toFixed(2)+'%',pR);
+const hg=hH.length>=2?(((hH[hH.length-1].v/hH[0].v)-1)*100):0;
+rf('dfH','dfHB',(hg>=0?'+':'')+hg.toFixed(1)+'%',hR);
+rf('dfW','dfWB',(wD>=0?'+':'-')+(Math.abs(wD)/1e6).toFixed(1)+'M',wR);
+rf('dfV','dfVB','$'+(S.kv/1e6).toFixed(0)+'M',vR);
+}
+
+/* ═══ NEWS ═══ */
+async function fetchNews(){
+try{const r=await safeFetch(API.cp);if(!r.ok)throw 0;const d=await r.json();
+if(d&&d.results&&d.results.length>0){const items=d.results.slice(0,14);
+const tt=document.getElementById('tkT');
+let h='';for(let p=0;p<2;p++)items.forEach(i=>{const src=i.source?i.source.title:'';h+=`<span class="ti" onclick="window.open('${i.url}','_blank')"><span class="td"></span>${esc(i.title)}<span style="font-size:.32rem;color:var(--t3);text-transform:uppercase;letter-spacing:.3px">${esc(src)}</span></span>`});
+tt.innerHTML=h;
+}}catch(e){
+failCt.news=(failCt.news||0)+1;
+const tt=document.getElementById('tkT');
+if(failCt.news>=3)tt.innerHTML=`<span style="font-family:var(--M);font-size:.38rem;padding:0 10px"><span class="sig-err">NEWS FEED OFFLINE</span> · <a href="https://cryptopanic.com/news/kaspa/" target="_blank" style="color:var(--cyn);text-decoration:none">CryptoPanic</a> · <a href="mailto:dnilgis@gmail.com" style="color:var(--cyn);text-decoration:none">dnilgis</a></span>`;
+else if(!tt.querySelector('.ti'))tt.innerHTML=`<span style="font-family:var(--M);font-size:.38rem;color:var(--org);padding:0 10px;animation:glow 1.5s infinite">Connecting to news feed…</span>`}}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+/* ═══ WHALES ═══ */
+function initW(){S.wd=ADDRS.map((w,i)=>({addr:w.a,tag:w.t,rank:i+1,bal:0,prev:0,pct:'0'}));renderW();document.getElementById('wCt').textContent=`${ADDRS.length} WALLETS`;S.wd.forEach((_,i)=>setTimeout(()=>fetchBal(i,true),i*300))}
+async function fetchBal(i,init=false){try{const r=await fetch(API.kaspa.bal(S.wd[i].addr));const d=await r.json();if(d&&d.balance!==undefined){const nb=Math.floor(d.balance/1e8);const ob=S.wd[i].bal;S.wd[i].prev=ob;S.wd[i].bal=nb;S.wd[i].pct=((nb/MAX)*100).toFixed(4);if(init)S.wb[S.wd[i].addr]=nb;if(!init&&ob>0&&Math.abs(nb-ob)>100000)sonarW();updWR(i)}}catch(e){}}
+function scanWh(){const i=Math.floor(Math.random()*S.wd.length);const r=document.querySelector(`#tB tr:nth-child(${i+1})`);if(r){r.classList.add('scanning');setTimeout(()=>r.classList.remove('scanning'),500);fetchBal(i)}}
+function renderW(){const tb=document.getElementById('tB');tb.innerHTML='';S.wd.forEach(w=>{const tr=document.createElement('tr');const sh=w.addr.substring(0,8)+'…'+w.addr.slice(-4);const tg=w.tag?`<span class="tag ${w.tag.c}">${w.tag.n}</span>`:'';const d=w.bal-(S.wb[w.addr]||w.bal);const ds=d===0?'':d>0?`<span class="green">+${(d/1e6).toFixed(1)}M</span>`:`<span class="red">${(d/1e6).toFixed(1)}M</span>`;tr.innerHTML=`<td style="color:var(--t3)">${w.rank}</td><td><a href="https://explorer.kaspa.org/addresses/${w.addr}" target="_blank">${sh}</a></td><td>${tg}</td><td style="color:var(--t1)">${w.bal>0?w.bal.toLocaleString():'…'}</td><td style="font-size:.38rem">${ds}</td><td style="text-align:right;color:var(--t3);font-size:.38rem">${w.pct}%</td>`;tb.appendChild(tr)})}
+function updWR(i){const r=document.querySelector(`#tB tr:nth-child(${i+1})`);if(!r)return;const w=S.wd[i];const cell=r.cells[3];const oldVal=cell.textContent;cell.textContent=w.bal.toLocaleString();if(oldVal&&oldVal!=='…'&&oldVal!==w.bal.toLocaleString()){flash(cell,w.bal>w.prev?'up':w.bal<w.prev?'down':'neutral')}const d=w.bal-(S.wb[w.addr]||w.bal);r.cells[4].innerHTML=d===0?'':d>0?`<span class="green">+${(d/1e6).toFixed(1)}M</span>`:`<span class="red">${(d/1e6).toFixed(1)}M</span>`;r.cells[5].textContent=w.pct+'%'}
+
+/* ═══ CHART ═══ */
+let perfCh=null;
+async function fetchHist(id,days){try{const r=await fetch(`${API.cg}/coins/${id}/market_chart?vs_currency=usd&days=${days}`);if(r.ok)return(await r.json()).prices}catch(e){}return null}
+async function updPerf(days){document.querySelectorAll('.tf-btns button').forEach(b=>{const t=b.textContent.toLowerCase();b.classList.toggle('act',(days===365&&t==='1y')||(days==='max'&&t==='all')||t.includes(String(days)))});
+const ids=['kaspa','bitcoin','ethereum'],colors=['#49EACB','#f7931a','#627eea'],labels=['KAS','BTC','ETH'];
+const res=await Promise.all(ids.map(id=>fetchHist(id,days)));
+const ds=res.map((p,i)=>{if(!p||!p.length)return null;const s=p[0][1];let m=1;if(days===365||days==='max')m=5;return{label:labels[i],data:p.filter((_,x)=>x%m===0).map(pp=>({x:pp[0],y:((pp[1]-s)/s)*100})),borderColor:colors[i],borderWidth:i===0?2:1,pointRadius:0,borderDash:i===0?[]:[4,4],tension:.1}}).filter(Boolean);
+if(perfCh)perfCh.destroy();
+perfCh=new Chart(document.getElementById('perfC'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#555',boxWidth:6,font:{family:'Outfit',size:8}}}},scales:{x:{type:'time',time:{unit:days===30?'day':'month'},grid:{display:false},ticks:{color:'#2a2a2a',font:{size:7}}},y:{grid:{color:'#0f0f0f'},ticks:{color:'#333',callback:v=>v+'%',font:{family:'JetBrains Mono',size:7}}}},interaction:{mode:'nearest',axis:'x',intersect:false}}});
+}
+setTimeout(()=>updPerf(365),1500);
+
+/* ═══ BLOCKS ═══ */
+async function fetchBlk(){try{const r=await safeFetch(API.kaspa.blk);const d=await r.json();const f=document.getElementById('bFeed');f.innerHTML='';if(d.length>0){const nb=parseInt(d[0].blueScore);if(S.lastBlue>0&&nb>S.lastBlue)sonarB();S.lastBlue=nb}
+const cached=[];d.slice(0,12).forEach(b=>{const t=new Date(parseInt(b.timestamp)).toLocaleTimeString();cached.push({bs:b.blueScore,t,h:b.hash});f.innerHTML+=`<div class="blk" onclick="window.open('https://explorer.kaspa.org/blocks/${b.hash}','_blank')"><span class="blk-id">#${b.blueScore}</span><span class="blk-t">${t}</span></div>`});
+setCache('blk',cached);sigOK('bFeed')}catch(e){
+failCt.bFeed=(failCt.bFeed||0)+1;
+if(failCt.bFeed>=3)document.getElementById('bFeed').innerHTML='<div style="padding:6px;text-align:center"><span class="sig-err">BLOCK FEED OFFLINE</span></div>';
+else if(!document.getElementById('bFeed').querySelector('.blk'))document.getElementById('bFeed').innerHTML='<div style="padding:6px;text-align:center;font-family:var(--M);font-size:.4rem;color:var(--org);animation:glow 1.5s infinite">CONNECTING…</div>'}}
+
+/* ═══ CALC ═══ */
+function updSim(v){document.getElementById('simL').textContent=v==0?'CURRENT':`+${v}%`;document.getElementById('simL').style.color=v>0?'var(--org)':'var(--cyn)';calcM()}
+function calcM(){const h=parseFloat(document.getElementById('cH').value)||0;const u=parseFloat(document.getElementById('cU').value);const sim=parseInt(document.getElementById('simS').value)||0;const ugh=h*u;const nh=(S.nh||1)*(1+(sim/100));const sh=ugh/nh;const dk=86400*S.br*S.bps*sh;const du=dk*S.kp;document.getElementById('cD').textContent=dk.toLocaleString(undefined,{maximumFractionDigits:0});document.getElementById('cDU').textContent='$'+du.toLocaleString(undefined,{maximumFractionDigits:2});document.getElementById('cM').textContent=(dk*30).toLocaleString(undefined,{maximumFractionDigits:0});document.getElementById('cMU').textContent='$'+(du*30).toLocaleString(undefined,{maximumFractionDigits:2})}
+document.getElementById('cH').addEventListener('input',calcM);
+
+/* ═══ HASH ATH ═══ */
+async function loadHATH(){try{const r=await fetch(`${API.kaspa.hH}?range=all`);if(!r.ok)return;const d=await r.json();let mx=0;d.forEach(p=>{if(p.hashrate>mx)mx=p.hashrate});if(mx>S.hATH){S.hATH=mx;updSh()}}catch(e){}}
+
+/* ═══ 1. WAR ROOM (Fullscreen) ═══ */
+function warRoom(){const el=document.documentElement;
+if(!document.fullscreenElement){el.requestFullscreen?.()??el.webkitRequestFullscreen?.()??el.msRequestFullscreen?.();if(sOn)ping(400,.2,'sine')}
+else{document.exitFullscreen?.()??document.webkitExitFullscreen?.()}}
+
+/* ═══ 2. IDLE COMMANDER (60s screensaver) ═══ */
+let idleTimer=null,isIdle=false;
+function resetIdle(){if(isIdle){isIdle=false;document.body.classList.remove('idle-mode');document.querySelectorAll('.idle-dim').forEach(el=>el.classList.remove('idle-dim'));if(sOn)ping(600,.08,'sine');}
+clearTimeout(idleTimer);idleTimer=setTimeout(goIdle,60000)}
+function goIdle(){isIdle=true;document.body.classList.add('idle-mode');
+document.querySelectorAll('.dash .p').forEach(p=>{const dominated=['dcSc','dcLb','bigP','bFeed','hPrice'].some(id=>p.querySelector('#'+id));
+if(!dominated)p.classList.add('idle-dim')})}
+document.addEventListener('mousemove',resetIdle);document.addEventListener('keydown',resetIdle);document.addEventListener('click',resetIdle);
+resetIdle();
+
+/* ═══ 3. CLICK-TO-COPY ═══ */
+document.addEventListener('click',function(e){
+const a=e.target.closest('#tB a');if(!a)return;e.preventDefault();
+const row=a.closest('tr');if(!row)return;
+const href=a.getAttribute('href')||'';const addr=href.split('/addresses/')[1]||a.textContent;
+navigator.clipboard.writeText(addr).then(()=>{
+row.classList.add('copy-flash');const balCell=row.cells[3];const orig=balCell.innerHTML;
+balCell.innerHTML='<span class="copied-badge">✓ COPIED</span>';
+if(sOn)ping(1200,.06,'sine');
+setTimeout(()=>{balCell.innerHTML=orig;row.classList.remove('copy-flash')},1000)}).catch(()=>{window.open(href,'_blank')})});
+
+/* ═══ 4. 51% ATTACK COST ═══ */
+// kHeavyHash ASIC rental rate: ~$120/PH/hr (NiceHash equiv, includes power)
+// KS5 Pro: 21 TH/s, ~$0.20/hr power, amortized rental ~$2.50/TH/hr
+// 51% attack needs 51% of network hashrate rented for 1 hour
+function updAtkCost(){
+if(S.nh<=0)return;
+const netPH=S.nh/1000;
+const costHr=netPH*0.51*120; // $120/PH/hr rental × 51% of network
+const el=document.getElementById('atkCost');
+if(costHr>=1e9)el.textContent='$'+(costHr/1e9).toFixed(2)+'B';
+else if(costHr>=1e6)el.textContent='$'+(costHr/1e6).toFixed(1)+'M';
+else if(costHr>=1e3)el.textContent='$'+(costHr/1e3).toFixed(0)+'K';
+else el.textContent='$'+Math.round(costHr);
+}
+
+/* ═══ 5. ACTIVE SONAR (Latency Ping) ═══ */
+async function pingUplink(){
+const dot=document.getElementById('sonarDot'),ms=document.getElementById('sonarMs');
+const t0=performance.now();
+try{await safeFetch(API.kaspa.dag,5000);const lat=Math.round(performance.now()-t0);
+dot.className='sonar-dot'+(lat>500?' crit':lat>200?' warn':'');
+ms.textContent=`${lat}ms`;ms.style.color=lat>500?'var(--red)':lat>200?'var(--yel)':'var(--grn)';
+}catch(e){dot.className='sonar-dot crit';ms.textContent='OFFLINE';ms.style.color='var(--red)'}}
+setInterval(pingUplink,5000);setTimeout(pingUplink,2000);
+
+/* ═══ 6. GEIGER COUNTER ═══ */
+let geigerOn=false,geigerIv=null;
+function startGeiger(){if(geigerOn||!sOn)return;geigerOn=true;
+geigerIv=setInterval(()=>{if(!sOn){stopGeiger();return}
+const bps=S.bps||1;const clicks=Math.max(1,Math.round(bps/2));
+for(let i=0;i<clicks;i++){setTimeout(()=>{
+const f=2000+Math.random()*4000;ping(f,.01,'square');
+},Math.random()*400)}},500)}
+function stopGeiger(){geigerOn=false;if(geigerIv)clearInterval(geigerIv);geigerIv=null}
+// Geiger activates when audio is on + BPS detected
+const origToggle=toggleSound;
+toggleSound=function(){origToggle();if(sOn)startGeiger();else stopGeiger()};
+
+/* ═══ 7. KONAMI CODE ═══ */
+const konami=[38,38,40,40,37,39,37,39,66,65];let kIdx=0;let matrixOn=false;
+function triggerKonami(){matrixOn=!matrixOn;activateMatrix()}
+document.addEventListener('keydown',function(e){
+if(e.keyCode===konami[kIdx]){kIdx++;if(kIdx===konami.length){kIdx=0;matrixOn=!matrixOn;activateMatrix()}}else{kIdx=0}});
+function activateMatrix(){
+document.body.classList.toggle('matrix-mode',matrixOn);
+const dh=document.getElementById('devHint');if(dh){dh.textContent=matrixOn?'GOD':'DEV';dh.style.opacity=matrixOn?'.8':'.25';dh.style.color=matrixOn?'#00ff41':''}
+if(sOn){ping(200,.1,'sawtooth');setTimeout(()=>ping(300,.1,'sawtooth'),100);setTimeout(()=>ping(400,.15,'sawtooth'),200)}
+if(matrixOn)updGhost()}
+function updGhost(){
+const gp=document.getElementById('ghostPanel');if(!gp)return;
+document.getElementById('ghBlue').textContent=S.lastBlue?S.lastBlue.toLocaleString():'--';
+document.getElementById('ghDaa').textContent=S.lastDaa?S.lastDaa.toLocaleString():'--';
+document.getElementById('ghBps').textContent=S.bps?S.bps.toFixed(1):'--';
+const d=S.nh;document.getElementById('ghDiff').textContent=d?d>=1e6?(d/1e6).toFixed(4)+' EH':d>=1e3?(d/1e3).toFixed(2)+' PH':d.toFixed(2)+' TH':'--';
+document.getElementById('ghMerge').textContent=S.dagWidth?Math.round(S.dagWidth*S.bps):'--';
+document.getElementById('ghHeaders').textContent=S.lastDaa?S.lastDaa.toLocaleString():'--';
+}
+// Keep ghost panel updated
+setInterval(()=>{if(matrixOn)updGhost()},5000);
+
+/* ═══ HOOK: Attack Cost into Shield update ═══ */
+const origUpdSh=updSh;
+updSh=function(){origUpdSh();updAtkCost()};
+</script>
 </body>
 </html>
