@@ -31,6 +31,7 @@
         <span id="hBtc">BTC --</span>
         <span id="hEth">ETH --</span>
         <span id="hGold">PAXG --</span>
+        <span id="hSilver">KAG --</span>
         <span id="hVol">VOL --</span>
         <span id="hMcap">MCAP --</span>
     </div>
@@ -143,7 +144,7 @@
             </div>
             <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;width:100%;text-align:left">
                 <div class="metric-row">
-                    <span class="metric-label">51% Attack Cost (1hr) <span class="tip-trigger" data-tip="Attack Cost Index|Estimated cost to sustain a 51% attack for 1 hour. Higher = more secure network.">?</span></span>
+                    <span class="metric-label">51% Attack Cost <span class="tip-trigger" data-tip="51% Attack Cost|Estimated cost to acquire and run 51% of the network hashrate for 1 hour. Includes hardware (~$300/TH for kHeavyHash ASICs) plus energy (~85W/TH at $0.07/kWh). Theoretical — no rental market exists for kHeavyHash.">?</span></span>
                     <span class="metric-value" id="atkCost" style="color:var(--red)">--</span>
                 </div>
             </div>
@@ -153,7 +154,7 @@
     <!-- HARD MONEY (2 cols) -->
     <div class="panel col-2">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Hard Money Correlation <span class="tip-trigger" data-tip="Hard Money Correlation|Tracks KAS 24h performance relative to Gold, Bitcoin, and Ethereum. α = alpha (KAS outperformance spread). DECOUPLED badge appears when KAS diverges by more than 4% from all tracked assets.">?</span></div>
+            <div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Hard Money Correlation <span class="tip-trigger" data-tip="Hard Money Correlation|Tracks KAS 24h performance relative to Gold, Silver, Bitcoin, and Ethereum. α = alpha (KAS outperformance spread). DECOUPLED badge appears when KAS diverges by more than 4% from all tracked assets.">?</span></div>
             <span class="decouple-badge" id="decB">⚡ DECOUPLED</span>
         </div>
         <div class="panel-body">
@@ -161,6 +162,7 @@
                 <div style="flex:1">
                     <div class="hm-row"><div class="hm-icon">◈</div><div class="hm-info"><div class="hm-name">Kaspa</div><div class="hm-price" id="hmKP">--</div></div><div class="hm-right"><div class="hm-change" id="hmKC">--</div></div></div>
                     <div class="hm-row"><div class="hm-icon">🥇</div><div class="hm-info"><div class="hm-name" style="color:var(--gld)">Gold (PAXG)</div><div class="hm-price" id="hmGP">--</div></div><div class="hm-right"><div class="hm-change" id="hmGC">--</div><div class="hm-strength">α <span id="sG">--</span></div></div></div>
+                    <div class="hm-row"><div class="hm-icon">🥈</div><div class="hm-info"><div class="hm-name" style="color:#c0c0c0">Silver (KAG)</div><div class="hm-price" id="hmSP">--</div></div><div class="hm-right"><div class="hm-change" id="hmSC">--</div><div class="hm-strength">α <span id="sS">--</span></div></div></div>
                     <div class="hm-row"><div class="hm-icon">₿</div><div class="hm-info"><div class="hm-name" style="color:var(--btc)">Bitcoin</div><div class="hm-price" id="hmBP">--</div></div><div class="hm-right"><div class="hm-change" id="hmBC">--</div><div class="hm-strength">α <span id="sB">--</span></div></div></div>
                     <div class="hm-row"><div class="hm-icon">⟠</div><div class="hm-info"><div class="hm-name" style="color:#627eea">Ethereum</div><div class="hm-price" id="hmEP">--</div></div><div class="hm-right"><div class="hm-change" id="hmEC">--</div><div class="hm-strength">α <span id="sE">--</span></div></div></div>
                 </div>
@@ -176,12 +178,12 @@
 
     <!-- ══ ROW 2: NOVEL KASPA-NATIVE METRICS ══ -->
 
-    <!-- SOMPI / GH -->
+    <!-- SOMPI / TH -->
     <div class="panel hero-card h-gld">
-        <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Sompi / GH</div><div class="panel-status">EFFICIENCY</div></div>
+        <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Sompi / TH</div><div class="panel-status">EFFICIENCY</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="sompiGH">&nbsp;</div>
-            <div class="hero-unit">sompi per gigahash <span class="tip-trigger" data-tip="Sompi / GH|Raw mining reward density. Sompi are to Kaspa what satoshis are to Bitcoin. Higher = more efficient mining.">?</span></div>
+            <div class="hero-unit">sompi per terahash/sec <span class="tip-trigger" data-tip="Sompi / TH|Sompi earned per second by 1 TH/s of hashpower. Sompi are to Kaspa what satoshis are to Bitcoin. Higher = more rewarding per unit of mining hardware.">?</span></div>
             <div class="hero-sub" id="sompiSub">Mining reward density</div>
         </div>
     </div>
@@ -221,7 +223,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--prp)"></div>Net Density</div><div class="panel-status">THROUGHPUT</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="netDen">&nbsp;</div>
-            <div class="hero-unit"><span id="netDenU">% of 10 BPS capacity</span> <span class="tip-trigger" data-tip="Network Density|How much of Kaspa's 10 blocks-per-second throughput is being utilized. 100% = full capacity.">?</span></div>
+            <div class="hero-unit"><span id="netDenU">% of 10 BPS target</span> <span class="tip-trigger" data-tip="Network Density|Actual blocks per second vs the 10 BPS target rate. 100% = network hitting its design throughput. Values near 100% are normal — Kaspa is designed to run at 10 BPS. This is NOT a congestion metric.">?</span></div>
             <div class="hero-sub" id="netDenSub">DAG load factor</div>
         </div>
     </div>
@@ -252,7 +254,7 @@
     <!-- PERFORMANCE CHART (3 cols) -->
     <div class="panel col-3">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--grn)"></div>Relative Performance</div>
+            <div class="panel-title"><div class="dot" style="background:var(--grn)"></div>Relative Performance <span class="tip-trigger" data-tip="Relative Performance|Normalized % change from period start for KAS vs BTC, ETH, Gold, and Silver. All lines start at 0% — shows who outperformed over the selected timeframe.">?</span></div>
             <div class="timeframe-btns">
                 <button class="tf-btn" onclick="updPerf(30)">30D</button>
                 <button class="tf-btn active" onclick="updPerf(365)">1Y</button>
@@ -272,7 +274,7 @@
         </div>
         <div class="scroll-y">
             <table class="whale-table">
-                <thead><tr><th>#</th><th>Address</th><th>Tag</th><th>Balance (KAS)</th><th>Δ</th><th style="text-align:right">Supply %</th></tr></thead>
+                <thead><tr><th>#</th><th>Address</th><th>Tag</th><th>Balance (KAS)</th><th>Δ Session</th><th style="text-align:right">Supply %</th></tr></thead>
                 <tbody id="tB"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">Initializing scan...</td></tr></tbody>
             </table>
         </div>
@@ -288,9 +290,9 @@
             <div class="calc-row">
                 <input type="number" id="cH" class="calc-input" placeholder="Hashrate" value="1">
                 <select id="cU" class="calc-select">
-                    <option value="1">GH/s</option>
-                    <option value="1000">TH/s</option>
-                    <option value="1000000" selected>PH/s</option>
+                    <option value="0.001">GH/s</option>
+                    <option value="1">TH/s</option>
+                    <option value="1000" selected>PH/s</option>
                 </select>
             </div>
             <div class="sim-row"><span>DIFFICULTY SIM</span><span class="sim-val" id="simL">CURRENT</span></div>
@@ -315,7 +317,7 @@
     <!-- KHEAVYHASH INTERACTIVE (3 cols) -->
     <div class="panel col-3">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--ylw)"></div>kHeavyHash Lab <span class="tip-trigger" data-tip="kHeavyHash Algorithm|Kaspa's Proof-of-Work mining algorithm. Miners run this millions of times per second to find a hash with enough leading zeros. Steps: Keccak-256 → 64×64 matrix multiplication → Keccak-256. The 'Heavy' matrix multiply makes it ASIC-friendly.">?</span></div>
+            <div class="panel-title"><div class="dot" style="background:var(--ylw)"></div>kHeavyHash Lab <span class="tip-trigger" data-tip="kHeavyHash Algorithm|Interactive demo of Kaspa's Proof-of-Work algorithm. Steps: Keccak-256 → 64×64 matrix multiplication → Keccak-256. The 'Heavy' matrix multiply makes it ASIC-friendly. Note: uses a representative matrix for education — real mining uses a different derived matrix.">?</span></div>
             <div class="panel-status">INTERACTIVE</div>
         </div>
         <div class="panel-body">

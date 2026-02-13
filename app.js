@@ -29,7 +29,7 @@ const S = {
     netHash: 0,
     hashHistory: [],
     hashATH: 0,
-    blockReward: 77,
+    blockReward: 0, // calculated dynamically from emission schedule
     kasChange: 0,
     btcChange: 0,
     kasVol: 0,
@@ -39,6 +39,7 @@ const S = {
     lastDaa: 0,
     lastDaaTime: 0,
     daaVelocity: 0,
+    daaVelHistory: [],
     dagWidth: 0
 };
 
@@ -159,6 +160,23 @@ function sigOK(id) { failCounts[id] = 0; }
 const CACHE_TTL = 600000;
 function setCache(k, v) { try { localStorage.setItem('kl_' + k, JSON.stringify({ ts: Date.now(), d: v })); } catch (e) {} }
 function getCache(k) { try { const c = JSON.parse(localStorage.getItem('kl_' + k)); if (c && Date.now() - c.ts < CACHE_TTL) return c.d; } catch (e) {} return null; }
+
+/* ═══ BLOCK REWARD (Chromatic Halving Schedule) ═══ */
+// Kaspa emission: 440 KAS/sec at genesis, halves yearly in 12 monthly steps.
+// Each month: emission *= (1/2)^(1/12). Per-block = emission_per_sec / BPS.
+const KASPA_GENESIS = 1636243200000; // Nov 7 2021 (mainnet genesis)
+const INITIAL_EMISSION = 440; // KAS per second at genesis
+const MONTH_MS = 30.4375 * 86400 * 1000; // avg month in ms
+const HALVING_FACTOR = Math.pow(0.5, 1 / 12); // ≈0.94387 per month
+
+function calcBlockReward() {
+    const elapsed = Date.now() - KASPA_GENESIS;
+    const months = Math.floor(elapsed / MONTH_MS);
+    const emissionPerSec = INITIAL_EMISSION * Math.pow(HALVING_FACTOR, months);
+    const bps = S.bps || 10;
+    S.blockReward = emissionPerSec / bps;
+    return S.blockReward;
+}
 
 /* ═══ AUDIO ═══ */
 let audioCtx = null, soundOn = false;
@@ -313,6 +331,7 @@ function runBoot() {
 /* ═══ INIT ═══ */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🔴 KasLive v22 initializing…');
+    calcBlockReward();
     runBoot();
     initWhales();
     fetchMarket();
@@ -356,12 +375,17 @@ async function fetchNetwork() {
             const daa = parseInt(d.virtualDaaScore);
             if (S.lastDaa > 0 && S.lastDaaTime > 0) {
                 const elapsed = (Date.now() - S.lastDaaTime) / 1000;
-                if (elapsed > 0) S.daaVelocity = (daa - S.lastDaa) / elapsed;
+                if (elapsed > 0) {
+                    const instant = (daa - S.lastDaa) / elapsed;
+                    S.daaVelHistory.push(instant);
+                    if (S.daaVelHistory.length > 6) S.daaVelHistory.shift(); // keep last 6 samples (~60s at 10s polling)
+                    S.daaVelocity = S.daaVelHistory.reduce((a, b) => a + b, 0) / S.daaVelHistory.length;
+                }
             }
             S.lastDaa = daa;
             S.lastDaaTime = Date.now();
         }
-        if (d.bps) { S.bps = d.bps; updatePulseRate(); if (soundOn) syncHeartbeatInterval(); }
+        if (d.bps) { S.bps = d.bps; calcBlockReward(); updatePulseRate(); if (soundOn) syncHeartbeatInterval(); }
         sigOK('netDen');
     } catch (e) { sigWarn('netDen'); }
 
@@ -424,20 +448,27 @@ function updateShield() {
 
 function updateAttackCost() {
     if (S.netHash <= 0) return;
-    const netPH = S.netHash / 1000;
-    const costHr = netPH * 0.51 * 120; // $120/PH/hr rental × 51%
-    $('atkCost').textContent = fmtUSD(costHr);
+    // Energy-cost model for 51% attack (1 hour)
+    // Assumes: ~85W per TH/s (IceRiver KS-series efficiency), $0.07/kWh global avg
+    const attackTH = S.netHash * 0.51; // S.netHash already in TH/s
+    const watts = attackTH * 85; // total wattage needed
+    const kWh = (watts / 1000) * 1; // 1 hour
+    const energyCost = kWh * 0.07;
+    // Plus: hardware acquisition (rough $300/TH for kHeavyHash ASICs)
+    const hwCost = attackTH * 300;
+    const totalCost = energyCost + hwCost;
+    $('atkCost').textContent = fmtUSD(totalCost);
 }
 
 function updateNovelMetrics() {
     const h = S.netHash, p = S.kasPrice, br = S.blockReward, bps = S.bps;
 
-    // Sompi per GH
+    // Sompi per TH (per second)
     if (h > 0) {
         const spg = (br * 1e8 * bps) / h;
         const old = $('sompiGH').textContent;
         setVal('sompiGH', Math.round(spg).toLocaleString(), old);
-        $('sompiSub').textContent = `${(spg / 1e8).toFixed(6)} KAS/GH`;
+        $('sompiSub').textContent = `${(spg / 1e8).toFixed(6)} KAS/TH/s`;
     }
 
     // Hash Yield ($/PH/day)
@@ -460,7 +491,7 @@ function updateNovelMetrics() {
     const density = (bps / 10) * 100;
     const oldD = $('netDen').textContent;
     setVal('netDen', density.toFixed(0) + '%', oldD);
-    $('netDenU').textContent = `${bps.toFixed(1)} of 10 BPS`;
+    $('netDenU').textContent = `${bps.toFixed(1)} of 10 BPS target`;
     $('netDenSub').textContent = `${(bps * 86400).toLocaleString()} blocks/day`;
 
     // DAA Velocity
@@ -499,19 +530,20 @@ function getCGCache() { try { const c = JSON.parse(localStorage.getItem(CG_CACHE
 function setCGCache(data) { try { localStorage.setItem(CG_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch (e) {} }
 
 async function fetchMarket() {
-    let kas = null, btc = null, eth = null, paxg = null;
+    let kas = null, btc = null, eth = null, paxg = null, kag = null;
 
     try {
-        const r = await safeFetch(`${API.coingecko}/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold&order=market_cap_desc&sparkline=false`);
+        const r = await safeFetch(`${API.coingecko}/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,kaspa,pax-gold,kinesis-silver&order=market_cap_desc&sparkline=false`);
         const d = await r.json();
         kas = d.find(c => c.id === 'kaspa');
         btc = d.find(c => c.id === 'bitcoin');
         eth = d.find(c => c.id === 'ethereum');
         paxg = d.find(c => c.id === 'pax-gold');
-        setCGCache({ kas, btc, eth, paxg });
+        kag = d.find(c => c.id === 'kinesis-silver');
+        setCGCache({ kas, btc, eth, paxg, kag });
     } catch (e) {
         const cache = getCGCache();
-        if (cache) { kas = cache.kas; btc = cache.btc; eth = cache.eth; paxg = cache.paxg; }
+        if (cache) { kas = cache.kas; btc = cache.btc; eth = cache.eth; paxg = cache.paxg; kag = cache.kag; }
         else {
             try {
                 const r = await safeFetch(API.kaspa.price);
@@ -568,8 +600,9 @@ async function fetchMarket() {
     tickStat('hBtc', 'BTC', btc);
     tickStat('hEth', 'ETH', eth);
     tickStat('hGold', 'PAXG', paxg);
+    tickStat('hSilver', 'KAG', kag);
 
-    updateHardMoney(kas, btc, eth, paxg);
+    updateHardMoney(kas, btc, eth, paxg, kag);
     updateFlow();
     updateNovelMetrics();
     calcDefcon();
@@ -591,7 +624,7 @@ function updateRatios(kas, btc, eth) {
     $('rEth').innerHTML = `${Math.floor(curGwei).toLocaleString()} <span class="metric-unit">gwei</span> <span style="font-size:.75rem" class="${gweiChange >= 0 ? 'green' : 'red'}">${gweiChange > 0 ? '+' : ''}${gweiChange.toFixed(1)}%</span>`;
 }
 
-function updateHardMoney(kas, btc, eth, paxg) {
+function updateHardMoney(kas, btc, eth, paxg, kag) {
     if (!kas) return;
     const kc = kas.price_change_percentage_24h || 0;
     $('hmKP').textContent = '$' + kas.current_price.toFixed(4);
@@ -606,6 +639,15 @@ function updateHardMoney(kas, btc, eth, paxg) {
         const gd = kc - gc; // alpha: KAS relative outperformance vs gold
         $('sG').innerHTML = `<span class="${gd >= 0 ? 'green' : 'red'}">${gd >= 0 ? '+' : ''}${gd.toFixed(1)}%</span>`;
         maxSpread = Math.max(maxSpread, Math.abs(gd));
+    }
+
+    if (kag) {
+        const sc = kag.price_change_percentage_24h || 0;
+        $('hmSP').textContent = '$' + kag.current_price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        $('hmSC').innerHTML = `<span class="${sc >= 0 ? 'green' : 'red'}">${sc >= 0 ? '+' : ''}${sc.toFixed(2)}%</span>`;
+        const sd = kc - sc;
+        $('sS').innerHTML = `<span class="${sd >= 0 ? 'green' : 'red'}">${sd >= 0 ? '+' : ''}${sd.toFixed(1)}%</span>`;
+        maxSpread = Math.max(maxSpread, Math.abs(sd));
     }
 
     if (btc) {
@@ -819,38 +861,61 @@ function updateWhaleRow(i) {
 
 /* ═══ PERFORMANCE CHART ═══ */
 let perfChart = null;
+let perfCache = {};
+let perfLoading = false;
+
 async function fetchHist(id, days) {
+    const key = `${id}_${days}`;
+    if (perfCache[key] && Date.now() - perfCache[key].ts < 300000) return perfCache[key].data; // 5 min cache
     try {
         const r = await fetch(`${API.coingecko}/coins/${id}/market_chart?vs_currency=usd&days=${days}`);
-        if (r.ok) return (await r.json()).prices;
-    } catch (e) {}
-    return null;
+        if (!r.ok) return perfCache[key]?.data || null; // return stale cache on error
+        const data = (await r.json()).prices;
+        perfCache[key] = { data, ts: Date.now() };
+        return data;
+    } catch (e) {
+        return perfCache[key]?.data || null;
+    }
 }
 
 async function updPerf(days) {
-    document.querySelectorAll('.timeframe-btns button').forEach(b => {
-        const t = b.textContent.toLowerCase();
-        b.classList.toggle('active', (days === 365 && t === '1y') || (days === 'max' && t === 'all') || t.includes(String(days)));
+    if (perfLoading) return; // debounce
+    perfLoading = true;
+
+    // Update button active state
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    const clickedBtn = [...document.querySelectorAll('.tf-btn')].find(b => {
+        const t = b.textContent.trim().toUpperCase();
+        return (days === 30 && t === '30D') || (days === 365 && t === '1Y') || (days === 'max' && t === 'ALL');
     });
+    if (clickedBtn) clickedBtn.classList.add('active');
 
-    const ids = ['kaspa', 'bitcoin', 'ethereum'];
-    const colors = ['#49EACB', '#f7931a', '#627eea'];
-    const labels = ['KAS', 'BTC', 'ETH'];
+    const ids =    ['kaspa',   'bitcoin', 'ethereum', 'pax-gold', 'kinesis-silver'];
+    const colors = ['#49EACB', '#f7931a', '#627eea',  '#fbbf24',  '#c0c0c0'];
+    const labels = ['KAS',     'BTC',     'ETH',      'GOLD',     'SILVER'];
+    const widths = [2.5,       1.5,       1.5,        1.5,        1.5];
+    const dashes = [[],        [5,5],     [5,5],      [4,3],      [4,3]];
 
-    const results = await Promise.all(ids.map(id => fetchHist(id, days)));
+    // Stagger fetches slightly to avoid CoinGecko rate limit
+    const results = [];
+    for (let i = 0; i < ids.length; i++) {
+        results.push(await fetchHist(ids[i], days));
+        if (i < ids.length - 1) await new Promise(r => setTimeout(r, 200));
+    }
 
     const datasets = results.map((prices, i) => {
         if (!prices || !prices.length) return null;
         const start = prices[0][1];
+        if (start === 0) return null;
         let mod = 1;
         if (days === 365 || days === 'max') mod = 5;
         return {
             label: labels[i],
             data: prices.filter((_, x) => x % mod === 0).map(p => ({ x: p[0], y: ((p[1] - start) / start) * 100 })),
             borderColor: colors[i],
-            borderWidth: i === 0 ? 2.5 : 1.5,
+            borderWidth: widths[i],
             pointRadius: 0,
-            borderDash: i === 0 ? [] : [5, 5],
+            borderDash: dashes[i],
             tension: .1
         };
     }).filter(Boolean);
@@ -862,7 +927,11 @@ async function updPerf(days) {
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-                legend: { labels: { color: '#666', boxWidth: 8, font: { family: 'Outfit', size: 11 } } }
+                legend: { labels: { color: '#666', boxWidth: 8, font: { family: 'Outfit', size: 11 } } },
+                tooltip: {
+                    mode: 'index', intersect: false,
+                    callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toFixed(1)}%` }
+                }
             },
             scales: {
                 x: { type: 'time', time: { unit: days === 30 ? 'day' : 'month' }, grid: { display: false }, ticks: { color: '#333', font: { size: 10 } } },
@@ -871,6 +940,8 @@ async function updPerf(days) {
             interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
     });
+
+    perfLoading = false;
 }
 
 /* ═══ BLOCKS ═══ */
@@ -935,9 +1006,9 @@ function calcMining() {
     const hashInput = parseFloat($('cH').value) || 0;
     const unit = parseFloat($('cU').value);
     const sim = parseInt($('simS').value) || 0;
-    const userGH = hashInput * unit;
-    const netHash = (S.netHash || 1) * (1 + (sim / 100));
-    const share = userGH / netHash;
+    const userTH = hashInput * unit; // converted to TH/s by option values
+    const netHash = (S.netHash || 1) * (1 + (sim / 100)); // TH/s
+    const share = userTH / netHash;
     const dailyKAS = 86400 * S.blockReward * S.bps * share;
     const dailyUSD = dailyKAS * S.kasPrice;
 
