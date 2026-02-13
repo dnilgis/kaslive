@@ -53,7 +53,7 @@
     <!-- ══ ROW 0: LIVE DAG VISUALIZER ══ -->
     <div class="panel col-6 dag-panel">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--grn);animation:pulse 1.5s infinite"></div>Live BlockDAG</div>
+            <div class="panel-title"><div class="dot" style="background:var(--grn);animation:pulse 1.5s infinite"></div>Live BlockDAG <span class="tip-trigger" data-tip="Live BlockDAG Visualizer|Real-time animation of blocks being added to Kaspa's DAG. Block spawn rate matches the network's actual BPS. Parallel lanes represent DAG width — multiple blocks mined simultaneously.">?</span></div>
             <div style="display:flex;align-items:center;gap:12px">
                 <span class="panel-status" id="dagBpsLabel">-- BPS</span>
                 <label class="dag-toggle-wrap">
@@ -94,7 +94,7 @@
     <div class="panel col-2 defcon-wrap" style="border-color:rgba(255,42,42,.15)">
         <div class="defcon-scan"></div>
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--red);animation:pulse 1.5s infinite"></div>Supernova Index</div>
+            <div class="panel-title"><div class="dot" style="background:var(--red);animation:pulse 1.5s infinite"></div>Supernova Index <span class="tip-trigger" data-tip="Supernova / DEFCON Index|Algorithmic composite score: Price Momentum (30%), Hashrate Growth (30%), Whale Accumulation (20%), Volume Intensity (20%). DEFCON 1 = maximum bullish confluence.">?</span></div>
             <div class="panel-status">ALGORITHMIC</div>
         </div>
         <div class="panel-body" style="text-align:center;justify-content:start">
@@ -130,7 +130,7 @@
     <!-- SHIELD INTEGRITY -->
     <div class="panel">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--grn)"></div>Shield Integrity</div>
+            <div class="panel-title"><div class="dot" style="background:var(--grn)"></div>Shield Integrity <span class="tip-trigger" data-tip="Shield Integrity|Current hashrate as a percentage of its all-time high. Higher = stronger network security. Drops signal miner capitulation.">?</span></div>
             <div class="panel-status">HASH vs ATH</div>
         </div>
         <div class="panel-body" style="align-items:center;text-align:center;justify-content:center">
@@ -143,11 +143,7 @@
             </div>
             <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;width:100%;text-align:left">
                 <div class="metric-row">
-                    <span class="metric-label">
-                        <span class="tip-wrap">51% Attack Cost (1hr)
-                            <span class="tip-trigger">?<div class="tip-content"><strong>Attack Cost Index</strong>Estimated cost to sustain a 51% attack for 1 hour. Higher = more secure network.</div></span>
-                        </span>
-                    </span>
+                    <span class="metric-label">51% Attack Cost (1hr) <span class="tip-trigger" data-tip="Attack Cost Index|Estimated cost to sustain a 51% attack for 1 hour. Higher = more secure network.">?</span></span>
                     <span class="metric-value" id="atkCost" style="color:var(--red)">--</span>
                 </div>
             </div>
@@ -157,21 +153,21 @@
     <!-- HARD MONEY (2 cols) -->
     <div class="panel col-2">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Hard Money Correlation</div>
+            <div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Hard Money Correlation <span class="tip-trigger" data-tip="Hard Money Correlation|Tracks KAS 24h performance relative to Gold, Bitcoin, and Ethereum. α = alpha (KAS outperformance spread). DECOUPLED badge appears when KAS diverges by more than 4% from all tracked assets.">?</span></div>
             <span class="decouple-badge" id="decB">⚡ DECOUPLED</span>
         </div>
         <div class="panel-body">
             <div style="display:flex;gap:14px">
                 <div style="flex:1">
                     <div class="hm-row"><div class="hm-icon">◈</div><div class="hm-info"><div class="hm-name">Kaspa</div><div class="hm-price" id="hmKP">--</div></div><div class="hm-right"><div class="hm-change" id="hmKC">--</div></div></div>
-                    <div class="hm-row"><div class="hm-icon">🥇</div><div class="hm-info"><div class="hm-name" style="color:var(--gld)">Gold (PAXG)</div><div class="hm-price" id="hmGP">--</div></div><div class="hm-right"><div class="hm-change" id="hmGC">--</div><div class="hm-strength">STR <span id="sG">--</span></div></div></div>
-                    <div class="hm-row"><div class="hm-icon">₿</div><div class="hm-info"><div class="hm-name" style="color:var(--btc)">Bitcoin</div><div class="hm-price" id="hmBP">--</div></div><div class="hm-right"><div class="hm-change" id="hmBC">--</div><div class="hm-strength">STR <span id="sB">--</span></div></div></div>
-                    <div class="hm-row"><div class="hm-icon">⟠</div><div class="hm-info"><div class="hm-name" style="color:#627eea">Ethereum</div><div class="hm-price" id="hmEP">--</div></div><div class="hm-right"><div class="hm-change" id="hmEC">--</div><div class="hm-strength">STR <span id="sE">--</span></div></div></div>
+                    <div class="hm-row"><div class="hm-icon">🥇</div><div class="hm-info"><div class="hm-name" style="color:var(--gld)">Gold (PAXG)</div><div class="hm-price" id="hmGP">--</div></div><div class="hm-right"><div class="hm-change" id="hmGC">--</div><div class="hm-strength">α <span id="sG">--</span></div></div></div>
+                    <div class="hm-row"><div class="hm-icon">₿</div><div class="hm-info"><div class="hm-name" style="color:var(--btc)">Bitcoin</div><div class="hm-price" id="hmBP">--</div></div><div class="hm-right"><div class="hm-change" id="hmBC">--</div><div class="hm-strength">α <span id="sB">--</span></div></div></div>
+                    <div class="hm-row"><div class="hm-icon">⟠</div><div class="hm-info"><div class="hm-name" style="color:#627eea">Ethereum</div><div class="hm-price" id="hmEP">--</div></div><div class="hm-right"><div class="hm-change" id="hmEC">--</div><div class="hm-strength">α <span id="sE">--</span></div></div></div>
                 </div>
                 <div class="hm-ratios">
                     <div class="metric-row"><span class="metric-label">KAS/BTC</span><span class="metric-value" id="rBtc" style="font-size:.85rem">--</span></div>
                     <div class="metric-row"><span class="metric-label">KAS/ETH</span><span class="metric-value" id="rEth" style="font-size:.85rem">--</span></div>
-                    <div class="metric-row"><span class="metric-label">Flow</span><span class="metric-value" id="tDir" style="font-size:.85rem">--</span></div>
+                    <div class="metric-row"><span class="metric-label">Pressure</span><span class="metric-value" id="tDir" style="font-size:.85rem">--</span></div>
                     <div class="bar"><div class="bar-fill" id="tBar" style="width:0%;background:var(--cyn)"></div></div>
                 </div>
             </div>
@@ -185,7 +181,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--gld)"></div>Sompi / GH</div><div class="panel-status">EFFICIENCY</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="sompiGH">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap">sompi per gigahash<span class="tip-trigger">?<div class="tip-content"><strong>Sompi / GH</strong>Raw mining reward density. Sompi are to Kaspa what satoshis are to Bitcoin. Higher = more efficient mining.</div></span></span></div>
+            <div class="hero-unit">sompi per gigahash <span class="tip-trigger" data-tip="Sompi / GH|Raw mining reward density. Sompi are to Kaspa what satoshis are to Bitcoin. Higher = more efficient mining.">?</span></div>
             <div class="hero-sub" id="sompiSub">Mining reward density</div>
         </div>
     </div>
@@ -195,7 +191,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--cyn)"></div>DAG Width</div><div class="panel-status">PARALLELISM</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="dagW">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap">parallel blocks / DAA<span class="tip-trigger">?<div class="tip-content"><strong>DAG Width</strong>Average blocks mined in parallel per DAA score. Kaspa's BlockDAG allows multiple simultaneous blocks — this measures that parallelism.</div></span></span></div>
+            <div class="hero-unit">parallel blocks / DAA <span class="tip-trigger" data-tip="DAG Width|Average blocks mined in parallel per DAA score. Kaspa's BlockDAG allows multiple simultaneous blocks — this measures that parallelism.">?</span></div>
             <div class="hero-sub" id="dagWSub">BlockDAG spread factor</div>
         </div>
     </div>
@@ -205,7 +201,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--grn)"></div>Hash Yield</div><div class="panel-status">$/PH/DAY</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="hashY">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap">USD per Petahash per Day<span class="tip-trigger">?<div class="tip-content"><strong>Hash Yield Index</strong>Daily revenue per Petahash. Combines block reward, hashrate, and KAS price into one profitability number.</div></span></span></div>
+            <div class="hero-unit">USD per Petahash per Day <span class="tip-trigger" data-tip="Hash Yield Index|Daily revenue per Petahash. Combines block reward, hashrate, and KAS price into one profitability number.">?</span></div>
             <div class="hero-sub" id="hashYSub">Revenue index</div>
         </div>
     </div>
@@ -215,7 +211,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--org)"></div>Emission Rate</div><div class="panel-status">KAS/SEC</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="kasSec">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap">KAS minted per second<span class="tip-trigger">?<div class="tip-content"><strong>Emission Rate</strong>Real-time KAS creation rate from block rewards × blocks per second. The live inflation pulse of the network.</div></span></span></div>
+            <div class="hero-unit">KAS minted per second <span class="tip-trigger" data-tip="Emission Rate|Real-time KAS creation rate from block rewards × blocks per second. The live inflation pulse of the network.">?</span></div>
             <div class="hero-sub" id="kasSecSub">Real-time inflation</div>
         </div>
     </div>
@@ -225,7 +221,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--prp)"></div>Net Density</div><div class="panel-status">THROUGHPUT</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="netDen">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap"><span id="netDenU">% of 10 BPS capacity</span><span class="tip-trigger">?<div class="tip-content"><strong>Network Density</strong>How much of Kaspa's 10 blocks-per-second throughput is being utilized. 100% = full capacity.</div></span></span></div>
+            <div class="hero-unit"><span id="netDenU">% of 10 BPS capacity</span> <span class="tip-trigger" data-tip="Network Density|How much of Kaspa's 10 blocks-per-second throughput is being utilized. 100% = full capacity.">?</span></div>
             <div class="hero-sub" id="netDenSub">DAG load factor</div>
         </div>
     </div>
@@ -235,7 +231,7 @@
         <div class="panel-header"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>DAA Velocity</div><div class="panel-status">SCORE/SEC</div></div>
         <div class="panel-body" style="align-items:center;justify-content:center">
             <div class="hero-val skel" id="daaV">&nbsp;</div>
-            <div class="hero-unit"><span class="tip-wrap">DAA score per second<span class="tip-trigger">?<div class="tip-content"><strong>DAA Velocity</strong>Rate of Difficulty Adjustment Algorithm score advancement. Measures consensus throughput — how fast blocks are ordered.</div></span></span></div>
+            <div class="hero-unit">DAA score per second <span class="tip-trigger" data-tip="DAA Velocity|Rate of Difficulty Adjustment Algorithm score advancement. Measures consensus throughput — how fast blocks are ordered.">?</span></div>
             <div class="hero-sub" id="daaVSub">Consensus throughput</div>
         </div>
     </div>
@@ -271,7 +267,7 @@
     <!-- WHALE TABLE (3 cols) -->
     <div class="panel col-3" style="max-height:500px">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--cyn)"></div>Whale Watch</div>
+            <div class="panel-title"><div class="dot" style="background:var(--cyn)"></div>Whale Watch <span class="tip-trigger" data-tip="Whale Watch|Live balance tracking of 36 known addresses: exchanges, dev funds, mining pools, and large holders. Δ column shows balance changes since page load. Click any address to copy.">?</span></div>
             <div class="panel-status" id="wCt">--</div>
         </div>
         <div class="scroll-y">
@@ -285,7 +281,7 @@
     <!-- MINING CALC + SUPPLY (3 cols) -->
     <div class="panel col-3">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--prp)"></div>Yield Engine</div>
+            <div class="panel-title"><div class="dot" style="background:var(--prp)"></div>Yield Engine <span class="tip-trigger" data-tip="Mining Calculator|Enter your hashrate to estimate daily/monthly KAS and USD earnings. Difficulty Sim slider models future difficulty increases to stress-test profitability.">?</span></div>
             <div class="panel-status">MINING CALC</div>
         </div>
         <div class="panel-body">
@@ -319,7 +315,7 @@
     <!-- KHEAVYHASH INTERACTIVE (3 cols) -->
     <div class="panel col-3">
         <div class="panel-header">
-            <div class="panel-title"><div class="dot" style="background:var(--ylw)"></div>kHeavyHash Lab</div>
+            <div class="panel-title"><div class="dot" style="background:var(--ylw)"></div>kHeavyHash Lab <span class="tip-trigger" data-tip="kHeavyHash Algorithm|Kaspa's Proof-of-Work mining algorithm. Miners run this millions of times per second to find a hash with enough leading zeros. Steps: Keccak-256 → 64×64 matrix multiplication → Keccak-256. The 'Heavy' matrix multiply makes it ASIC-friendly.">?</span></div>
             <div class="panel-status">INTERACTIVE</div>
         </div>
         <div class="panel-body">
@@ -391,6 +387,7 @@
 
 </div>
 
+<div id="tooltip"></div>
 <script src="app.js"></script>
 </body>
 </html>

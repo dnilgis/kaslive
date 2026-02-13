@@ -597,45 +597,59 @@ function updateHardMoney(kas, btc, eth, paxg) {
     $('hmKP').textContent = '$' + kas.current_price.toFixed(4);
     $('hmKC').innerHTML = `<span class="${kc >= 0 ? 'green' : 'red'}">${kc >= 0 ? '+' : ''}${kc.toFixed(2)}%</span>`;
 
-    let decoupled = false;
+    let maxSpread = 0; // track largest KAS-vs-others divergence
 
     if (paxg) {
         const gc = paxg.price_change_percentage_24h || 0;
         $('hmGP').textContent = '$' + paxg.current_price.toLocaleString(undefined, { maximumFractionDigits: 0 });
         $('hmGC').innerHTML = `<span class="${gc >= 0 ? 'green' : 'red'}">${gc >= 0 ? '+' : ''}${gc.toFixed(2)}%</span>`;
-        const gd = kc - gc;
+        const gd = kc - gc; // alpha: KAS relative outperformance vs gold
         $('sG').innerHTML = `<span class="${gd >= 0 ? 'green' : 'red'}">${gd >= 0 ? '+' : ''}${gd.toFixed(1)}%</span>`;
-        if (kc > 0 && gc < 0) decoupled = true;
+        maxSpread = Math.max(maxSpread, Math.abs(gd));
     }
 
     if (btc) {
         const bc = btc.price_change_percentage_24h || 0;
         $('hmBP').textContent = '$' + btc.current_price.toLocaleString(undefined, { maximumFractionDigits: 0 });
         $('hmBC').innerHTML = `<span class="${bc >= 0 ? 'green' : 'red'}">${bc >= 0 ? '+' : ''}${bc.toFixed(2)}%</span>`;
-        const bd = kc - bc;
+        const bd = kc - bc; // alpha: KAS relative outperformance vs BTC
         $('sB').innerHTML = `<span class="${bd >= 0 ? 'green' : 'red'}">${bd >= 0 ? '+' : ''}${bd.toFixed(1)}%</span>`;
-        if (kc > 0 && bc < 0) decoupled = true;
+        maxSpread = Math.max(maxSpread, Math.abs(bd));
     }
 
     if (eth) {
         const ec = eth.price_change_percentage_24h || 0;
         $('hmEP').textContent = '$' + eth.current_price.toLocaleString(undefined, { maximumFractionDigits: 0 });
         $('hmEC').innerHTML = `<span class="${ec >= 0 ? 'green' : 'red'}">${ec >= 0 ? '+' : ''}${ec.toFixed(2)}%</span>`;
-        const ed = kc - ec;
+        const ed = kc - ec; // alpha: KAS relative outperformance vs ETH
         $('sE').innerHTML = `<span class="${ed >= 0 ? 'green' : 'red'}">${ed >= 0 ? '+' : ''}${ed.toFixed(1)}%</span>`;
-        if (kc > 0 && ec < 0) decoupled = true;
+        maxSpread = Math.max(maxSpread, Math.abs(ed));
     }
 
-    $('decB').style.display = decoupled ? 'inline-block' : 'none';
+    // DECOUPLED: fires when KAS diverges from ALL tracked assets by >4% spread
+    $('decB').style.display = maxSpread > 4 ? 'inline-block' : 'none';
 }
 
 function updateFlow() {
     const v = S.kasVol;
-    if (!v) return;
-    $('tBar').style.width = Math.min(100, (v / 300000000) * 100) + '%';
-    const inf = S.kasChange >= 0;
-    $('tBar').style.background = inf ? 'var(--cyn)' : 'var(--red)';
-    $('tDir').innerHTML = inf ? '<span class="green">▲ INFLOW</span>' : '<span class="red">▼ OUTFLOW</span>';
+    const mc = S.kasMcap;
+    if (!v || !mc) return;
+
+    // Volume/MCap ratio — measures trading intensity
+    const vmRatio = (v / mc) * 100;
+    // Bar: 0-20% Vol/MCap mapped to 0-100% width (20%+ is extreme)
+    $('tBar').style.width = Math.min(100, (vmRatio / 20) * 100) + '%';
+
+    const bullish = S.kasChange >= 0;
+    $('tBar').style.background = bullish ? 'var(--cyn)' : 'var(--red)';
+    // Honest labeling: buying vs selling pressure based on price direction + volume
+    if (vmRatio > 10) {
+        $('tDir').innerHTML = bullish ? '<span class="green">▲ HIGH BUY PRESSURE</span>' : '<span class="red">▼ HIGH SELL PRESSURE</span>';
+    } else if (vmRatio > 3) {
+        $('tDir').innerHTML = bullish ? '<span class="green">▲ BUY PRESSURE</span>' : '<span class="red">▼ SELL PRESSURE</span>';
+    } else {
+        $('tDir').innerHTML = '<span style="color:var(--t3)">◆ LOW ACTIVITY</span>';
+    }
 }
 
 /* ═══ DEFCON ═══ */
@@ -659,7 +673,11 @@ function calcDefcon() {
     }
 
     let volR = 0;
-    if (S.kasVol > 0) volR = Math.max(0, Math.min(100, (S.kasVol / 150000000) * 100));
+    if (S.kasVol > 0 && S.kasMcap > 0) {
+        // Vol/MCap ratio: 10%+ = max intensity (scales with market cap)
+        const vmPct = (S.kasVol / S.kasMcap) * 100;
+        volR = Math.max(0, Math.min(100, (vmPct / 10) * 100));
+    }
 
     const raw = priceR * .3 + hashR * .3 + whaleR * .2 + volR * .2;
     const score = Math.max(0, Math.min(100, Math.round(raw)));
@@ -1106,6 +1124,101 @@ function updateGhost() {
     $('ghHeaders').textContent = S.lastDaa ? S.lastDaa.toLocaleString() : '--';
 }
 setInterval(() => { if (matrixOn) updateGhost(); }, 5000);
+
+/* ══════════════════════════════════════════════
+   TOOLTIP ENGINE — fixed-position, never clipped
+   Works on hover (desktop) + tap (mobile)
+   ══════════════════════════════════════════════ */
+(() => {
+    const tip = document.getElementById('tooltip');
+    if (!tip) return;
+    let activeTrigger = null;
+    let hideTimer = null;
+
+    function showTip(trigger) {
+        const data = trigger.getAttribute('data-tip');
+        if (!data) return;
+
+        // Parse "Title|Body" format
+        const parts = data.split('|');
+        const title = parts[0] || '';
+        const body = parts[1] || '';
+        tip.innerHTML = (title ? '<strong>' + title + '</strong>' : '') + body;
+
+        // Activate
+        if (activeTrigger) activeTrigger.classList.remove('active');
+        activeTrigger = trigger;
+        trigger.classList.add('active');
+        tip.classList.add('show');
+
+        // Position: above trigger, centered, clamped to viewport
+        const rect = trigger.getBoundingClientRect();
+        const tipW = 240;
+        const tipH = tip.offsetHeight || 80;
+
+        let left = rect.left + rect.width / 2 - tipW / 2;
+        let top = rect.top - tipH - 8;
+
+        // If too close to top, show below instead
+        if (top < 8) {
+            top = rect.bottom + 8;
+        }
+
+        // Clamp horizontal to viewport
+        const vw = window.innerWidth;
+        if (left < 12) left = 12;
+        if (left + tipW > vw - 12) left = vw - tipW - 12;
+
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+    }
+
+    function hideTip() {
+        tip.classList.remove('show');
+        if (activeTrigger) {
+            activeTrigger.classList.remove('active');
+            activeTrigger = null;
+        }
+    }
+
+    // Desktop: hover
+    document.addEventListener('mouseover', e => {
+        const trigger = e.target.closest('.tip-trigger');
+        if (trigger && trigger.hasAttribute('data-tip')) {
+            clearTimeout(hideTimer);
+            showTip(trigger);
+        }
+    });
+    document.addEventListener('mouseout', e => {
+        const trigger = e.target.closest('.tip-trigger');
+        if (trigger) {
+            hideTimer = setTimeout(hideTip, 150);
+        }
+    });
+
+    // Mobile: tap to toggle
+    document.addEventListener('click', e => {
+        const trigger = e.target.closest('.tip-trigger');
+        if (trigger && trigger.hasAttribute('data-tip')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (activeTrigger === trigger) {
+                hideTip();
+            } else {
+                showTip(trigger);
+            }
+        } else {
+            // Tap elsewhere dismisses
+            if (activeTrigger) hideTip();
+        }
+    });
+
+    // Dismiss on scroll
+    window.addEventListener('scroll', () => { if (activeTrigger) hideTip(); }, { passive: true });
+    document.querySelectorAll('.scroll-y').forEach(el => {
+        el.addEventListener('scroll', () => { if (activeTrigger) hideTip(); }, { passive: true });
+    });
+})();
 
 /* ══════════════════════════════════════════════
    kHeavyHash INTERACTIVE LAB
